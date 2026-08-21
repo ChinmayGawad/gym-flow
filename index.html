@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GymFlow - Smart Gym</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<header class="navbar">
+
+    <div class="logo">
+        <i class="fa-solid fa-dumbbell"></i>
+        <span>GYMFLOW</span>
+    </div>
+
+    <nav>
+        <a href="#" class="active">
+            <i class="fa-solid fa-house"></i>
+            Home
+        </a>
+
+        <a href="#prediction">
+            <i class="fa-solid fa-calendar"></i>
+            Schedule
+        </a>
+
+        <a href="#history">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            History
+        </a>
+
+        <a href="#">
+            <i class="fa-solid fa-user"></i>
+            Profile
+        </a>
+    </nav>
+
+    <button class="profile-btn">
+        <i class="fa-solid fa-user"></i>
+    </button>
+
+</header>
+
+
+<!-- ================= MAIN ================= -->
+
+<main class="container">
+
+    <!-- Welcome -->
+
+    <section class="welcome">
+
+        <div>
+            <h1>Good Evening, Sahil 👋</h1>
+
+            <p>
+                Check the crowd before you visit.
+            </p>
+        </div>
+
+    </section>
+
+
+    <!-- ================= CURRENT CROWD ================= -->
+
+    <section class="crowd-card">
+
+        <div class="crowd-info">
+
+            <span class="small-title">
+                CURRENT CROWD
+            </span>
+
+            <div class="people-count">
+
+                <span id="currentPeople">42</span>
+
+                <span class="capacity">
+                    / 60
+                </span>
+
+            </div>
+
+            <p class="people-text">
+                People in Gym
+            </p>
+
+            <div class="status" id="crowdStatus">
+                <span class="status-dot"></span>
+                MODERATE
+            </div>
+
+            <div class="progress-container">
+
+                <div
+                    class="progress-bar"
+                    id="progressBar"
+                    style="width:70%">
+                </div>
+
+            </div>
+
+            <span class="percentage" id="percentage">
+                70% Occupied
+            </span>
+
+        </div>
+
+
+        <div class="gym-image">
+
+            <i class="fa-solid fa-person-running"></i>
+
+            <i class="fa-solid fa-dumbbell"></i>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= STATS ================= -->
+
+    <section class="stats">
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+
+            <div>
+                <h2 id="peopleStat">42</h2>
+                <p>People Inside</p>
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                <i class="fa-regular fa-clock"></i>
+            </div>
+
+            <div>
+                <h2 id="waitingTime">10 min</h2>
+                <p>Estimated Waiting Time</p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= BEST TIME ================= -->
+
+    <section class="best-time">
+
+        <div>
+
+            <span class="small-title">
+                BEST TIME TO VISIT TODAY
+            </span>
+
+            <h2>
+                10:00 AM – 11:00 AM
+            </h2>
+
+            <p>
+                Expected crowd:
+                <strong>25 people</strong>
+
+                <span class="low-badge">
+                    LOW
+                </span>
+            </p>
+
+        </div>
+
+
+        <div class="calendar-icon">
+
+            <i class="fa-regular fa-calendar-days"></i>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= BUTTON ================= -->
+
+    <div class="button-container">
+
+        <button
+            class="main-button"
+            id="viewCrowdBtn">
+
+            VIEW TODAY'S CROWD
+
+            <i class="fa-solid fa-arrow-right"></i>
+
+        </button>
+
+    </div>
+
+
+
+    <!-- ================= PREDICTION ================= -->
+
+    <section
+        class="prediction"
+        id="prediction">
+
+        <div class="section-header">
+
+            <div>
+
+                <span class="small-title">
+                    CROWD PREDICTION
+                </span>
+
+                <h2>
+                    Today's Gym Crowd
+                </h2>
+
+            </div>
+
+            <span class="date">
+                21 August 2026
+            </span>
+
+        </div>
+
+
+        <div class="prediction-list">
+
+            <div class="prediction-row">
+
+                <span>6 AM</span>
+
+                <div class="prediction-bar">
+                    <div style="width:31%"></div>
+                </div>
+
+                <span>18 people</span>
+
+            </div>
+
+
+            <div class="prediction-row">
+
+                <span>8 AM</span>
+
+                <div class="prediction-bar">
+                    <div style="width:52%"></div>
+                </div>
+
+                <span>30 people</span>
+
+            </div>
+
+
+            <div class="prediction-row">
+
+                <span>10 AM</span>
+
+                <div class="prediction-bar">
+                    <div style="width:43%"></div>
+                </div>
+
+                <span>25 people</span>
+
+            </div>
+
+
+            <div class="prediction-row">
+
+                <span>12 PM</span>
+
+                <div class="prediction-bar">
+                    <div style="width:47%"></div>
+                </div>
+
+                <span>28 people</span>
+
+            </div>
+
+
+            <div class="prediction-row">
+
+                <span>2 PM</span>
+
+                <div class="prediction-bar">
+                    <div style="width:34%"></div>
+                </div>
+
+                <span>20 people</span>
+
+            </div>
+
+
+            <div class="prediction-row high">
+
+                <span>5 PM</span>
+
+                <div class="prediction-bar">
+                    <div style="width:83%"></div>
+                </div>
+
+                <span>50 people</span>
+
+            </div>
+
+
+            <div class="prediction-row highest">
+
+                <span>7 PM</span>
+
+                <div class="prediction-bar">
+                    <div style="width:96%"></div>
+                </div>
+
+                <span>58 people</span>
+
+            </div>
+
+
+            <div class="prediction-row">
+
+                <span>9 PM</span>
+
+                <div class="prediction-bar">
+                    <div style="width:53%"></div>
+                </div>
+
+                <span>32 people</span>
+
+            </div>
+
+        </div>
+
+
+        <div class="recommendation">
+
+            <div class="star">
+                <i class="fa-solid fa-star"></i>
+            </div>
+
+            <div>
+
+                <span>
+                    RECOMMENDED TIME
+                </span>
+
+                <h3>
+                    10:00 AM – 11:00 AM
+                </h3>
+
+                <p>
+                    Expected crowd: 25 people
+                </p>
+
+            </div>
+
+            <span class="low-badge">
+                LOW
+            </span>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= HISTORY ================= -->
+
+    <section
+        class="history"
+        id="history">
+
+        <div class="section-header">
+
+            <div>
+
+                <span class="small-title">
+                    YOUR ACTIVITY
+                </span>
+
+                <h2>
+                    Recent Gym Visits
+                </h2>
+
+            </div>
+
+            <button class="view-history">
+                View All
+            </button>
+
+        </div>
+
+
+        <div class="history-list">
+
+            <div class="history-item">
+
+                <div class="history-icon">
+                    <i class="fa-regular fa-calendar"></i>
+                </div>
+
+                <div>
+                    <strong>21 August 2026</strong>
+                    <p>7:15 PM → 8:40 PM</p>
+                </div>
+
+                <span>
+                    1h 25m
+                </span>
+
+            </div>
+
+
+            <div class="history-item">
+
+                <div class="history-icon">
+                    <i class="fa-regular fa-calendar"></i>
+                </div>
+
+                <div>
+                    <strong>20 August 2026</strong>
+                    <p>10:20 AM → 11:35 AM</p>
+                </div>
+
+                <span>
+                    1h 15m
+                </span>
+
+            </div>
+
+
+            <div class="history-item">
+
+                <div class="history-icon">
+                    <i class="fa-regular fa-calendar"></i>
+                </div>
+
+                <div>
+                    <strong>19 August 2026</strong>
+                    <p>7:00 PM → 8:10 PM</p>
+                </div>
+
+                <span>
+                    1h 10m
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+const currentPeople = document.getElementById("currentPeople");
+const peopleStat = document.getElementById("peopleStat");
+const percentage = document.getElementById("percentage");
+const progressBar = document.getElementById("progressBar");
+const crowdStatus = document.getElementById("crowdStatus");
+const waitingTime = document.getElementById("waitingTime");
+
+const capacity = 60;
+
+
+// Update dashboard
+
+function updateDashboard(people) {
+
+    if (people < 0) {
+        people = 0;
+    }
+
+    if (people > capacity) {
+        people = capacity;
+    }
+
+
+    currentPeople.textContent = people;
+
+    peopleStat.textContent = people;
+
+
+    const percent = Math.round(
+        (people / capacity) * 100
+    );
+
+
+    percentage.textContent =
+        percent + "% Occupied";
+
+
+    progressBar.style.width =
+        percent + "%";
+
+
+    // Crowd status
+
+    if (percent < 40) {
+
+        crowdStatus.innerHTML =
+            '<span class="status-dot"></span> LOW';
+
+        crowdStatus.className =
+            "status low";
+
+        waitingTime.textContent =
+            "0–5 min";
+
+    }
+
+    else if (percent < 75) {
+
+        crowdStatus.innerHTML =
+            '<span class="status-dot"></span> MODERATE';
+
+        crowdStatus.className =
+            "status moderate";
+
+        waitingTime.textContent =
+            "10 min";
+
+    }
+
+    else {
+
+        crowdStatus.innerHTML =
+            '<span class="status-dot"></span> HIGH';
+
+        crowdStatus.className =
+            "status high";
+
+        waitingTime.textContent =
+            "15–25 min";
+
+    }
+
+}
+
+
+// Simulate live gym activity
+
+setInterval(() => {
+
+    let people =
+        parseInt(currentPeople.textContent);
+
+    const change =
+        Math.random() > 0.5 ? 1 : -1;
+
+    people += change;
+
+    updateDashboard(people);
+
+}, 5000);
+
+
+// View crowd button
+
+document
+    .getElementById("viewCrowdBtn")
+    .addEventListener("click", function () {
+
+        document
+            .getElementById("prediction")
+            .scrollIntoView({
+                behavior: "smooth"
+            });
+
+    });
+
+
+</script>
+
+</body>
+</html>
