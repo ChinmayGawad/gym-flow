@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["bun"]
+
+[phases.build]
+cmds = [
+  "bun install",
+  "cd client && bun run build"
+]
+
+[start]
+cmd = "cd client && bun run start"
