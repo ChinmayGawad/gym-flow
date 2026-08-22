@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import {
   Dumbbell,
   Home,
@@ -19,6 +19,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
+  const location = useLocation();
   const { data: session } = useSession();
 
   const handleSignOut = async () => {
@@ -32,6 +33,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
   const user = session?.user as (NonNullable<typeof session>['user'] & { role?: string }) | undefined;
   const isAdmin = user?.role === 'admin';
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : user?.email ? user.email.charAt(0).toUpperCase() : 'M';
+  const isHistoryActive = location.pathname === '/history' || location.pathname === '/log-workout';
 
   return (
     <>
@@ -88,19 +90,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             Schedule
           </NavLink>
 
-          <NavLink
+          <Link
             to="/history"
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
-                isActive
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-white/60'
-              }`
-            }
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              isHistoryActive
+                ? 'bg-white text-zinc-900 shadow-xs'
+                : 'text-zinc-500 hover:text-zinc-900 hover:bg-white/60'
+            }`}
           >
             <Clock className="h-3.5 w-3.5" />
             History
-          </NavLink>
+          </Link>
 
           {/* Admin-Only Members Link */}
           {isAdmin && (
@@ -234,27 +234,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
           )}
         </NavLink>
 
-        <NavLink
+        <Link
           to="/history"
-          className={({ isActive }) =>
-            `flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] font-semibold transition-colors ${
-              isActive ? 'text-zinc-900' : 'text-zinc-400 hover:text-zinc-700'
-            }`
-          }
+          className={`flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] font-semibold transition-colors ${
+            isHistoryActive ? 'text-zinc-900' : 'text-zinc-400 hover:text-zinc-700'
+          }`}
         >
-          {({ isActive }) => (
-            <>
-              <div
-                className={`p-1 rounded-xl mb-0.5 transition-colors ${
-                  isActive ? 'bg-zinc-900 text-white' : ''
-                }`}
-              >
-                <Clock className="w-4 h-4" />
-              </div>
-              <span>History</span>
-            </>
-          )}
-        </NavLink>
+          <div
+            className={`p-1 rounded-xl mb-0.5 transition-colors ${
+              isHistoryActive ? 'bg-zinc-900 text-white' : ''
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+          </div>
+          <span>History</span>
+        </Link>
 
         {/* Mobile Admin-Only Members Link */}
         {isAdmin && (

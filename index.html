@@ -405,73 +405,27 @@
                 </span>
 
                 <h2>
-                    Recent Gym Visits
+                    Workout Check-In History
                 </h2>
 
             </div>
 
-            <button class="view-history">
-                View All
+            <button class="view-history" id="logWorkoutBtn" style="background:#171717; color:white; font-weight:700; border:none; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-plus"></i>
+                Log Workout
             </button>
 
         </div>
 
 
-        <div class="history-list">
-
-            <div class="history-item">
-
-                <div class="history-icon">
-                    <i class="fa-regular fa-calendar"></i>
+        <div class="history-list" id="historyList">
+            <div id="emptyHistory" style="padding: 40px 20px; text-align: center; color: #888;">
+                <div style="width: 50px; height: 50px; border-radius: 12px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-size: 20px; color: #666;">
+                    <i class="fa-solid fa-dumbbell"></i>
                 </div>
-
-                <div>
-                    <strong>21 August 2026</strong>
-                    <p>7:15 PM → 8:40 PM</p>
-                </div>
-
-                <span>
-                    1h 25m
-                </span>
-
+                <h4 style="color: #171717; font-size: 15px; font-weight: 700; margin-bottom: 4px;">No Workout Activity Recorded</h4>
+                <p style="font-size: 12px; max-width: 340px; margin: 0 auto; color: #777;">Activity history will only appear when you manually log your training session, exercises, and duration.</p>
             </div>
-
-
-            <div class="history-item">
-
-                <div class="history-icon">
-                    <i class="fa-regular fa-calendar"></i>
-                </div>
-
-                <div>
-                    <strong>20 August 2026</strong>
-                    <p>10:20 AM → 11:35 AM</p>
-                </div>
-
-                <span>
-                    1h 15m
-                </span>
-
-            </div>
-
-
-            <div class="history-item">
-
-                <div class="history-icon">
-                    <i class="fa-regular fa-calendar"></i>
-                </div>
-
-                <div>
-                    <strong>19 August 2026</strong>
-                    <p>7:00 PM → 8:10 PM</p>
-                </div>
-
-                <span>
-                    1h 10m
-                </span>
-
-            </div>
-
         </div>
 
     </section>
@@ -588,6 +542,44 @@ document
                 behavior: "smooth"
             });
     });
+
+// Manual Workout Log Handler
+const logWorkoutBtn = document.getElementById("logWorkoutBtn");
+const historyList = document.getElementById("historyList");
+const emptyHistory = document.getElementById("emptyHistory");
+
+if (logWorkoutBtn) {
+    logWorkoutBtn.addEventListener("click", function () {
+        const workoutName = prompt("Enter Workout Type (e.g. Chest & Triceps, Leg Day, HIIT):", "Chest & Triceps");
+        if (!workoutName) return;
+        const durationInput = prompt("Enter duration in minutes (e.g. 60):", "60");
+        const duration = parseInt(durationInput, 10) || 60;
+        const hours = Math.floor(duration / 60);
+        const mins = duration % 60;
+        const durationText = hours > 0 ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`) : `${mins}m`;
+
+        if (emptyHistory) {
+            emptyHistory.style.display = "none";
+        }
+
+        const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        const timeNow = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.innerHTML = `
+            <div class="history-icon">
+                <i class="fa-solid fa-dumbbell"></i>
+            </div>
+            <div>
+                <strong>${workoutName}</strong>
+                <p>${today} • ${timeNow}</p>
+            </div>
+            <span>${durationText}</span>
+        `;
+        historyList.prepend(item);
+    });
+}
 
 
 // ================= AUTH GATE LOGIC =================

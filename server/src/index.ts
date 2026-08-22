@@ -345,14 +345,6 @@ app.post('/api/gym/checkin-toggle', async (req, res) => {
           lastCheckInAt: new Date(),
         },
       });
-
-      // Create new VisitLog record
-      await prisma.visitLog.create({
-        data: {
-          userId,
-          checkInTime: new Date(),
-        },
-      });
     } else {
       // Member is checking OUT
       await prisma.user.update({
@@ -361,31 +353,6 @@ app.post('/api/gym/checkin-toggle', async (req, res) => {
           isCheckedIn: false,
         },
       });
-
-      // Close open visit log
-      const openLog = await prisma.visitLog.findFirst({
-        where: {
-          userId,
-          checkOutTime: null,
-        },
-        orderBy: { checkInTime: 'desc' },
-      });
-
-      if (openLog) {
-        const checkOutTime = new Date();
-        const durationMinutes = Math.max(
-          1,
-          Math.round((checkOutTime.getTime() - openLog.checkInTime.getTime()) / (1000 * 60))
-        );
-
-        await prisma.visitLog.update({
-          where: { id: openLog.id },
-          data: {
-            checkOutTime,
-            durationMinutes,
-          },
-        });
-      }
     }
 
     // Return updated gym metrics
@@ -414,7 +381,7 @@ app.post('/api/gym/checkin-toggle', async (req, res) => {
   }
 });
 
-// 3. GET /api/user/visits - Fetch Member's Workout Visit History & Database Logs
+// 3. GET /api/user/visits - Fetch Member's Workout Visit History & Database Logs (Manual Entries Only)
 app.get('/api/user/visits', async (req, res) => {
   try {
     let userId: string | null = null;
@@ -441,15 +408,10 @@ app.get('/api/user/visits', async (req, res) => {
       });
     }
 
-    // Return general recent visit logs from database
-    const generalVisits = await prisma.visitLog.findMany({
-      take: 15,
-      orderBy: { checkInTime: 'desc' },
-    });
-
+    // Unauthenticated: return empty list
     return res.json({
       success: true,
-      visits: generalVisits,
+      visits: [],
     });
   } catch (error: any) {
     console.error('Error fetching user visit logs:', error);
@@ -597,13 +559,6 @@ app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
           lastCheckInAt: new Date(),
         },
       });
-
-      await prisma.visitLog.create({
-        data: {
-          userId: id,
-          checkInTime: new Date(),
-        },
-      });
     } else {
       await prisma.user.update({
         where: { id },
@@ -611,30 +566,6 @@ app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
           isCheckedIn: false,
         },
       });
-
-      const openLog = await prisma.visitLog.findFirst({
-        where: {
-          userId: id,
-          checkOutTime: null,
-        },
-        orderBy: { checkInTime: 'desc' },
-      });
-
-      if (openLog) {
-        const checkOutTime = new Date();
-        const durationMinutes = Math.max(
-          1,
-          Math.round((checkOutTime.getTime() - openLog.checkInTime.getTime()) / (1000 * 60))
-        );
-
-        await prisma.visitLog.update({
-          where: { id: openLog.id },
-          data: {
-            checkOutTime,
-            durationMinutes,
-          },
-        });
-      }
     }
 
     const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
@@ -652,6 +583,19 @@ app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
   } catch (error: any) {
     console.error('Error toggling member check-in by admin:', error);
     return res.status(500).json({ error: 'Failed to update member check-in status.' });
+  }
+});
+
+// Delete a manually logged workout session
+app.delete('/api/user/visits/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.visitLog.delete({
+      where: { id },
+    });
+    return res.json({ success: true, message: 'Workout log deleted.' });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to delete workout log.' });
   }
 });
 

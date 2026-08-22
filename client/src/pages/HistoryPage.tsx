@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Calendar,
@@ -13,11 +12,11 @@ import {
   ArrowLeft,
   CheckCircle,
   PlusCircle,
+  Trash2,
 } from 'lucide-react';
-
-import { LogWorkoutModal, WorkoutLogData } from '@/components/history/LogWorkoutModal';
 import { Skeleton } from '@/components/ui/skeleton';
-
+import { LogWorkoutModal, WorkoutLogData } from '@/components/history/LogWorkoutModal';
+import { API_BASE } from '@/lib/api-config';
 
 interface VisitRecord {
   id: string;
@@ -31,102 +30,39 @@ interface VisitRecord {
   notes?: string;
 }
 
-const INITIAL_VISITS: VisitRecord[] = [
-  {
-    id: 'v1',
-    date: '21 August 2026',
-    checkIn: '7:15 PM',
-    checkOut: '8:40 PM',
-    duration: '1h 25m',
-    workoutType: 'Chest & Triceps Hypertrophy',
-    calories: 420,
-    period: 'this_month',
-  },
-  {
-    id: 'v2',
-    date: '20 August 2026',
-    checkIn: '10:20 AM',
-    checkOut: '11:35 AM',
-    duration: '1h 15m',
-    workoutType: 'Back & Biceps Pull Day',
-    calories: 380,
-    period: 'this_month',
-  },
-  {
-    id: 'v3',
-    date: '19 August 2026',
-    checkIn: '7:00 PM',
-    checkOut: '8:10 PM',
-    duration: '1h 10m',
-    workoutType: 'Legs & Core Strength',
-    calories: 490,
-    period: 'this_month',
-  },
-  {
-    id: 'v4',
-    date: '17 August 2026',
-    checkIn: '6:30 AM',
-    checkOut: '7:45 AM',
-    duration: '1h 15m',
-    workoutType: 'Full Body HIIT & Cardio',
-    calories: 520,
-    period: 'this_month',
-  },
-  {
-    id: 'v5',
-    date: '15 August 2026',
-    checkIn: '5:45 PM',
-    checkOut: '7:00 PM',
-    duration: '1h 15m',
-    workoutType: 'Shoulders & Arms',
-    calories: 360,
-    period: 'this_month',
-  },
-  {
-    id: 'v6',
-    date: '29 July 2026',
-    checkIn: '6:15 PM',
-    checkOut: '7:30 PM',
-    duration: '1h 15m',
-    workoutType: 'Upper Body Power',
-    calories: 410,
-    period: 'last_month',
-  },
-  {
-    id: 'v7',
-    date: '26 July 2026',
-    checkIn: '10:00 AM',
-    checkOut: '11:20 AM',
-    duration: '1h 20m',
-    workoutType: 'Deadlifts & Functional Core',
-    calories: 460,
-    period: 'last_month',
-  },
-];
-
 export const HistoryPage: React.FC = () => {
+  const location = useLocation();
   const [filter, setFilter] = useState<'all' | 'this_month' | 'last_month'>('all');
-  const [visits, setVisits] = useState<VisitRecord[]>(INITIAL_VISITS);
+  const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [justLogged, setJustLogged] = useState(false);
+  const [justLogged, setJustLogged] = useState(Boolean(location.state?.justLogged));
   const [isLoading, setIsLoading] = useState(false);
 
-  // 1. Fetch live database visit records on mount
+  // Clear justLogged notification after 5s
+  React.useEffect(() => {
+    if (justLogged) {
+      const timer = setTimeout(() => setJustLogged(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [justLogged]);
+
+  // 1. Fetch live database manual visit records on mount
   React.useEffect(() => {
     const fetchVisits = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch('/api/user/visits', {
+        const res = await fetch(`${API_BASE}/api/user/visits`, {
           credentials: 'include',
         });
         if (res.ok) {
           const data = await res.json();
           if (data.visits && data.visits.length > 0) {
             const mappedVisits: VisitRecord[] = data.visits.map((v: any) => {
-              const checkInDate = new Date(v.checkInTime);
+              const checkInDate = new Date(v.checkInTime || v.createdAt);
+              const now = new Date();
               const isThisMonth =
-                checkInDate.getMonth() === new Date().getMonth() &&
-                checkInDate.getFullYear() === new Date().getFullYear();
+                checkInDate.getMonth() === now.getMonth() &&
+                checkInDate.getFullYear() === now.getFullYear();
 
               const hours = Math.floor((v.durationMinutes || 60) / 60);
               const mins = (v.durationMinutes || 60) % 60;
@@ -161,10 +97,15 @@ export const HistoryPage: React.FC = () => {
             });
 
             setVisits(mappedVisits);
+          } else {
+            setVisits([]);
           }
+        } else {
+          setVisits([]);
         }
       } catch (err) {
-        console.warn('Could not fetch visit logs from database, using local fallback:', err);
+        console.warn('Could not fetch visit logs from database:', err);
+        setVisits([]);
       } finally {
         setIsLoading(false);
       }
@@ -187,9 +128,17 @@ export const HistoryPage: React.FC = () => {
 
     const optimisticRecord: VisitRecord = {
       id: `v-${Date.now()}`,
-      date: 'Today, 22 August 2026',
-      checkIn: 'Just Now',
-      checkOut: 'In Progress',
+      date: new Date().toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }),
+      checkIn: new Date().toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      }),
+      checkOut: 'Completed',
       duration: formattedDuration,
       workoutType: data.workoutType,
       calories: data.calories,
@@ -199,10 +148,9 @@ export const HistoryPage: React.FC = () => {
 
     setVisits((prev) => [optimisticRecord, ...prev]);
     setJustLogged(true);
-    setTimeout(() => setJustLogged(false), 5000);
 
     try {
-      const res = await fetch('/api/user/visits', {
+      const res = await fetch(`${API_BASE}/api/user/visits`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -227,6 +175,19 @@ export const HistoryPage: React.FC = () => {
     }
   };
 
+  // 3. Delete a manually entered workout
+  const handleDeleteWorkout = async (id: string) => {
+    setVisits((prev) => prev.filter((v) => v.id !== id));
+    try {
+      await fetch(`${API_BASE}/api/user/visits/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error('Error deleting workout record:', err);
+    }
+  };
+
   // Dynamic calculated metrics from database logs
   const thisMonthVisits = visits.filter((v) => v.period === 'this_month');
   const totalCaloriesBurned = visits.reduce((acc, curr) => acc + (curr.calories || 0), 0);
@@ -241,8 +202,11 @@ export const HistoryPage: React.FC = () => {
     return acc + 60;
   }, 0);
   const avgDurationMinutes =
-    visits.length > 0 ? Math.round(totalDurationMins / visits.length) : 60;
-  const avgDurationFormatted = `${Math.floor(avgDurationMinutes / 60)}h ${avgDurationMinutes % 60}m`;
+    visits.length > 0 ? Math.round(totalDurationMins / visits.length) : 0;
+  const avgDurationFormatted =
+    avgDurationMinutes > 0
+      ? `${Math.floor(avgDurationMinutes / 60)}h ${avgDurationMinutes % 60}m`
+      : '0m';
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -268,13 +232,13 @@ export const HistoryPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Log Workout Button triggers Modal */}
+        {/* Trigger Card Layout Modal with Backdrop Blur */}
         <Button
           onClick={() => setIsLogModalOpen(true)}
           className="h-10 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-2 self-start md:self-auto shadow-xs cursor-pointer"
         >
           <PlusCircle className="w-4 h-4" />
-          Log Workout Session
+          <span>Log Workout Session</span>
         </Button>
       </div>
 
@@ -285,7 +249,7 @@ export const HistoryPage: React.FC = () => {
         </div>
       )}
 
-      {/* Workout Selection Modal */}
+      {/* Log Workout Modal with Backdrop Blur & Card Layout */}
       <LogWorkoutModal
         isOpen={isLogModalOpen}
         onClose={() => setIsLogModalOpen(false)}
@@ -315,9 +279,9 @@ export const HistoryPage: React.FC = () => {
               <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
                 {thisMonthVisits.length} Visits
               </span>
-              <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
-                <TrendingUp className="w-3 h-3" />
-                +2 vs last month
+              <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3 h-3 text-zinc-400" />
+                {thisMonthVisits.length > 0 ? `${thisMonthVisits.length} recorded this month` : 'No logs recorded'}
               </span>
             </Card>
 
@@ -332,7 +296,7 @@ export const HistoryPage: React.FC = () => {
                 {avgDurationFormatted}
               </span>
               <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
-                Consistent sessions
+                {visits.length > 0 ? 'Consistent sessions' : 'Log a session to track'}
               </span>
             </Card>
 
@@ -347,7 +311,7 @@ export const HistoryPage: React.FC = () => {
                 {totalCaloriesBurned.toLocaleString()} kcal
               </span>
               <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
-                Burned this month
+                {visits.length > 0 ? 'Burned across logs' : 'Energy expenditure'}
               </span>
             </Card>
 
@@ -361,8 +325,8 @@ export const HistoryPage: React.FC = () => {
               <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
                 {Math.min(visits.length, 5)} Days
               </span>
-              <span className="text-[11px] text-amber-700 font-semibold mt-1 block">
-                Active weekly routine
+              <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
+                {visits.length > 0 ? 'Active logged routine' : 'Start your streak!'}
               </span>
             </Card>
           </>
@@ -378,7 +342,7 @@ export const HistoryPage: React.FC = () => {
               Activity History
             </h3>
             <p className="text-xs text-zinc-500 mt-0.5">
-              Showing {filteredVisits.length} recorded workout sessions.
+              Showing {filteredVisits.length} manually recorded workout sessions.
             </p>
           </div>
 
@@ -391,7 +355,7 @@ export const HistoryPage: React.FC = () => {
                   : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
-              All Records
+              All Records ({visits.length})
             </button>
             <button
               onClick={() => setFilter('this_month')}
@@ -401,7 +365,7 @@ export const HistoryPage: React.FC = () => {
                   : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
-              August 2026
+              This Month ({thisMonthVisits.length})
             </button>
             <button
               onClick={() => setFilter('last_month')}
@@ -411,15 +375,15 @@ export const HistoryPage: React.FC = () => {
                   : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
-              July 2026
+              Last Month
             </button>
           </div>
         </div>
 
-        {/* Visit Items List */}
+        {/* Visit Items List / Empty State */}
         {isLoading ? (
           <div className="divide-y divide-zinc-100">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div
                 key={i}
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 px-3"
@@ -438,12 +402,31 @@ export const HistoryPage: React.FC = () => {
               </div>
             ))}
           </div>
+        ) : filteredVisits.length === 0 ? (
+          <div className="py-14 px-4 text-center flex flex-col items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-zinc-100 border border-zinc-200/70 flex items-center justify-center text-zinc-400 mb-3.5 shadow-xs">
+              <Dumbbell className="w-6 h-6 text-zinc-400" />
+            </div>
+            <h4 className="text-base font-black text-zinc-900 tracking-tight">
+              No Workout Activity Recorded
+            </h4>
+            <p className="text-xs text-zinc-500 max-w-sm mt-1 mb-5 leading-relaxed font-medium">
+              Your activity history is currently empty. Workouts will only appear here when you manually log your training sessions, exercises, duration, and calories.
+            </p>
+            <Button
+              onClick={() => setIsLogModalOpen(true)}
+              className="h-9.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-2 shadow-xs cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Log Your First Workout</span>
+            </Button>
+          </div>
         ) : (
           <div className="divide-y divide-zinc-100">
             {filteredVisits.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-zinc-50/70 px-3 rounded-xl transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-zinc-50/70 px-3 rounded-xl transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 shrink-0">
@@ -453,7 +436,7 @@ export const HistoryPage: React.FC = () => {
                     <span className="text-xs font-bold text-zinc-900 block">
                       {item.workoutType}
                     </span>
-                    <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 mt-0.5">
                       <span className="font-semibold text-zinc-700">{item.date}</span>
                       <span>•</span>
                       <span className="tabular-nums">{item.checkIn} → {item.checkOut}</span>
@@ -474,6 +457,13 @@ export const HistoryPage: React.FC = () => {
                   <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200/80 tabular-nums">
                     {item.duration}
                   </span>
+                  <button
+                    onClick={() => handleDeleteWorkout(item.id)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                    title="Delete workout log"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -484,4 +474,3 @@ export const HistoryPage: React.FC = () => {
     </div>
   );
 };
-

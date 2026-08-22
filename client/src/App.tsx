@@ -4,6 +4,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { HomePage } from '@/pages/HomePage';
 import { SchedulePage } from '@/pages/SchedulePage';
 import { HistoryPage } from '@/pages/HistoryPage';
+import { LogWorkoutPage } from '@/pages/LogWorkoutPage';
 import { MembersPage } from '@/pages/MembersPage';
 import { AuthPage } from '@/pages/AuthPage';
 import { AdminRoute } from '@/components/auth/AdminRoute';
@@ -117,6 +118,7 @@ export function App() {
                 element={<SchedulePage capacity={occupancy.capacity} />}
               />
               <Route path="/history" element={<HistoryPage />} />
+              <Route path="/log-workout" element={<LogWorkoutPage />} />
               <Route
                 path="/members"
                 element={
