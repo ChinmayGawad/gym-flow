@@ -1,16 +1,30 @@
 import React from 'react';
 import { MEMBERSHIP_PLANS, MembershipPlan } from '@/types/plans';
-import { Sparkles } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface WelcomeSectionProps {
   userName?: string;
   plan?: string;
+  isLoading?: boolean;
 }
 
 export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
   userName = 'Sahil',
   plan,
+  isLoading = false,
 }) => {
+  if (isLoading) {
+    return (
+      <section className="mb-6 space-y-2">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-8 w-56 rounded-xl" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+        </div>
+        <Skeleton className="h-4 w-80 rounded-md" />
+      </section>
+    );
+  }
+
   const planKey = (plan as MembershipPlan) || 'basic';
   const planConfig = MEMBERSHIP_PLANS[planKey] || MEMBERSHIP_PLANS.basic;
 
@@ -43,4 +57,5 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
     </section>
   );
 };
+
 

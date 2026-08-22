@@ -17,9 +17,12 @@ import {
 } from 'lucide-react';
 import { HourlyPrediction } from '@/types/occupancy';
 import { AttendanceWaveChart } from '@/components/schedule/AttendanceWaveChart';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 interface SchedulePageProps {
   capacity?: number;
+  isLoading?: boolean;
 }
 
 const SCHEDULE_CURVE = [
@@ -42,7 +45,7 @@ const SCHEDULE_CURVE = [
   { id: '17', time: '10 PM', factor: 0.25 },
 ];
 
-export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => {
+export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoading = false }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening'>('all');
 
   const fullHourlySchedule: HourlyPrediction[] = SCHEDULE_CURVE.map((item) => {
@@ -112,54 +115,68 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
 
       {/* Recommended Time Highlights (3 Bento Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Morning Quiet Window */}
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 uppercase">
-              Morning Window
-            </span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
-            6:00 AM – 7:30 AM
-          </h4>
-          <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-            Avg. ~{morningLowAvg} people. Ideal for power racks and cardio with 0–5 min wait times.
-          </p>
-        </Card>
+        {isLoading ? (
+          [1, 2, 3].map((i) => (
+            <Card key={i} className="p-5 bg-white border border-black/[0.06] shadow-card space-y-3">
+              <Skeleton className="h-5 w-24 rounded-full" />
+              <Skeleton className="h-5 w-36 rounded-lg" />
+              <Skeleton className="h-3 w-full rounded-sm" />
+              <Skeleton className="h-3 w-4/5 rounded-sm" />
+            </Card>
+          ))
+        ) : (
+          <>
+            {/* Morning Quiet Window */}
+            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 uppercase">
+                  Morning Window
+                </span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              </div>
+              <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
+                6:00 AM – 7:30 AM
+              </h4>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                Avg. ~{morningLowAvg} people. Ideal for power racks and cardio with 0–5 min wait times.
+              </p>
+            </Card>
 
-        {/* Afternoon Quiet Window */}
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 uppercase">
-              Afternoon Window
-            </span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          </div>
-          <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
-            1:30 PM – 3:30 PM
-          </h4>
-          <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-            Avg. ~{afternoonLowAvg} people. Lowest floor traffic and quiet equipment availability.
-          </p>
-        </Card>
+            {/* Afternoon Quiet Window */}
+            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 uppercase">
+                  Afternoon Window
+                </span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              </div>
+              <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
+                1:30 PM – 3:30 PM
+              </h4>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                Avg. ~{afternoonLowAvg} people. Lowest floor traffic and quiet equipment availability.
+              </p>
+            </Card>
 
-        {/* Peak Rush Warning */}
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-widest text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80 uppercase">
-              Peak Rush Hours
-            </span>
-            <AlertTriangle className="w-4 h-4 text-rose-600" />
-          </div>
-          <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
-            5:30 PM – 8:00 PM
-          </h4>
-          <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-            Capacity reaches 85%–97% (~{eveningPeakAvg} people). Expected equipment wait 15–25 mins.
-          </p>
-        </Card>
+            {/* Peak Rush Warning */}
+            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold tracking-widest text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80 uppercase">
+                  Peak Rush Hours
+                </span>
+                <AlertTriangle className="w-4 h-4 text-rose-600" />
+              </div>
+              <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
+                5:30 PM – 8:00 PM
+              </h4>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                Capacity reaches 85%–97% (~{eveningPeakAvg} people). Expected equipment wait 15–25 mins.
+              </p>
+            </Card>
+          </>
+        )}
       </div>
+
 
       {/* Main Chart Container Card */}
       <Card className="p-6 md:p-8 bg-white border border-black/[0.06] shadow-card rounded-2xl">

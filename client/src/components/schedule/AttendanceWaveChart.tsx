@@ -1,22 +1,42 @@
 import React, { useState, useRef } from 'react';
 import { HourlyPrediction } from '@/types/occupancy';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AttendanceWaveChartProps {
   data: HourlyPrediction[];
   capacity: number;
-  activeFilter: 'all' | 'morning' | 'afternoon' | 'evening';
+  activeFilter?: 'all' | 'morning' | 'afternoon' | 'evening';
+  isLoading?: boolean;
 }
 
 export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
   data,
   capacity,
+  isLoading = false,
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  if (isLoading) {
+    return (
+      <div className="w-full h-[290px] flex items-end justify-between gap-2 px-8 pb-8 pt-4">
+        {[40, 55, 70, 60, 45, 50, 65, 55, 40, 50, 75, 90, 95, 100, 80, 60, 35].map((h, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+            <Skeleton
+              className="w-full max-w-[24px] rounded-t-lg"
+              style={{ height: `${h}%` }}
+            />
+            <Skeleton className="h-2.5 w-6 rounded-xs" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (!data || data.length === 0) {
     return null;
   }
+
 
   // Chart coordinate space
   const width = 850;

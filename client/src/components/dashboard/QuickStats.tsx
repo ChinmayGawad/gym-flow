@@ -1,12 +1,14 @@
 import React from 'react';
 import { Users, Clock, UserCheck, Building2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface QuickStatsProps {
   peopleCount: number;
   capacity?: number;
   totalRegisteredMembers?: number;
   waitTime: string;
+  isLoading?: boolean;
 }
 
 export const QuickStats: React.FC<QuickStatsProps> = ({
@@ -14,7 +16,24 @@ export const QuickStats: React.FC<QuickStatsProps> = ({
   capacity = 30,
   totalRegisteredMembers = 35,
   waitTime,
+  isLoading = false,
 }) => {
+  if (isLoading) {
+    return (
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="p-5 flex items-center gap-4 bg-white border border-black/[0.06] shadow-card">
+            <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-6 w-20 rounded-md" />
+              <Skeleton className="h-3 w-28 rounded-sm" />
+            </div>
+          </Card>
+        ))}
+      </section>
+    );
+  }
+
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
       {/* Stat Card 1: People Inside */}
@@ -79,5 +98,6 @@ export const QuickStats: React.FC<QuickStatsProps> = ({
     </section>
   );
 };
+
 
 

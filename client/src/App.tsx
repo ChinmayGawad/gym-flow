@@ -23,17 +23,59 @@ export function App() {
   const isAdmin = user?.role === 'admin';
   const isLoggedIn = !!user;
 
-  // 1. Session check loading state
+  // 1. Session check skeleton loading screen
   if (isPending) {
     return (
-      <div className="min-h-screen bg-gym-canvas flex flex-col items-center justify-center font-sans gap-3">
-        <div className="w-12 h-12 rounded-2xl bg-gym-dark text-white flex items-center justify-center shadow-md animate-pulse">
-          <Dumbbell className="w-6 h-6" />
-        </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-gym-dark">
-          <Loader2 className="w-4 h-4 animate-spin text-gym-dark" />
-          <span>Verifying GymFlow session...</span>
-        </div>
+      <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans">
+        {/* Skeleton Top Navbar */}
+        <header className="h-[72px] w-full border-b border-black/[0.06] bg-white/70 px-4 sm:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shadow-card animate-pulse">
+              <Dumbbell className="w-5 h-5 text-white" />
+            </div>
+            <div className="h-5 w-24 rounded-lg bg-zinc-200/80 animate-shimmer" />
+          </div>
+          <div className="hidden md:flex items-center gap-2">
+            <div className="h-8 w-20 rounded-xl bg-zinc-200/60 animate-shimmer" />
+            <div className="h-8 w-24 rounded-xl bg-zinc-200/60 animate-shimmer" />
+            <div className="h-8 w-20 rounded-xl bg-zinc-200/60 animate-shimmer" />
+          </div>
+          <div className="h-9 w-9 rounded-full bg-zinc-200/70 animate-shimmer" />
+        </header>
+
+        {/* Skeleton Page Content */}
+        <main className="w-[90%] max-w-[1100px] mx-auto py-8 md:py-12 space-y-6 flex-1">
+          {/* Welcome skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-zinc-100">
+            <div className="space-y-2">
+              <div className="h-7 w-56 rounded-xl bg-zinc-200/80 animate-shimmer" />
+              <div className="h-4 w-72 rounded-lg bg-zinc-200/50 animate-shimmer" />
+            </div>
+            <div className="h-7 w-28 rounded-full bg-zinc-200/60 animate-shimmer" />
+          </div>
+
+          {/* Crowd Hero Card Skeleton */}
+          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-black/[0.06] shadow-card flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-3 w-full md:w-1/2">
+              <div className="h-4 w-28 rounded-lg bg-zinc-200/60 animate-shimmer" />
+              <div className="h-9 w-44 rounded-xl bg-zinc-200/80 animate-shimmer" />
+              <div className="h-4 w-60 rounded-lg bg-zinc-200/50 animate-shimmer" />
+              <div className="h-10 w-40 rounded-xl bg-zinc-200/70 animate-shimmer mt-2" />
+            </div>
+            <div className="w-36 h-36 rounded-full bg-zinc-200/60 animate-shimmer shrink-0" />
+          </div>
+
+          {/* Quick Stats Grid Skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-5 rounded-2xl bg-white border border-black/[0.06] shadow-card space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-zinc-200/70 animate-shimmer" />
+                <div className="h-3 w-20 rounded-md bg-zinc-200/60 animate-shimmer" />
+                <div className="h-7 w-24 rounded-lg bg-zinc-200/80 animate-shimmer" />
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }
@@ -42,6 +84,7 @@ export function App() {
   if (!isLoggedIn) {
     return <AuthPage />;
   }
+
 
   // 3. Authenticated App Experience
   return (

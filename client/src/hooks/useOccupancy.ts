@@ -14,6 +14,7 @@ export function useOccupancy(initialPeople = 18, initialCapacity = DEFAULT_CAPAC
   const [isAutoSimulating, setIsAutoSimulating] = useState<boolean>(false);
   const [gymName, setGymName] = useState<string>('GymFlow Fitness');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
   // Fetch live gym status from backend
   const fetchStatus = useCallback(async () => {
@@ -44,8 +45,11 @@ export function useOccupancy(initialPeople = 18, initialCapacity = DEFAULT_CAPAC
       }
     } catch {
       // Offline fallback: graceful degradation
+    } finally {
+      setIsInitialLoading(false);
     }
   }, []);
+
 
   useEffect(() => {
     fetchStatus();
@@ -190,6 +194,7 @@ export function useOccupancy(initialPeople = 18, initialCapacity = DEFAULT_CAPAC
   return {
     ...data,
     isLoading,
+    isInitialLoading,
     refreshStatus: fetchStatus,
     toggleSelfCheckIn,
     updateCapacity,
@@ -198,5 +203,6 @@ export function useOccupancy(initialPeople = 18, initialCapacity = DEFAULT_CAPAC
     decrement,
     toggleAutoSimulating,
   };
+
 }
 

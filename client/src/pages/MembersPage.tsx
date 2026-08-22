@@ -33,6 +33,8 @@ import { EditMemberModal, EditableMember } from '@/components/admin/EditMemberMo
 import { CapacitySettingsModal } from '@/components/admin/CapacitySettingsModal';
 import { MEMBERSHIP_PLANS, MembershipPlan } from '@/types/plans';
 import { useOccupancy } from '@/hooks/useOccupancy';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 interface GymMember {
   id: string;
@@ -493,13 +495,38 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
 
         {/* Member Directory Content */}
         {isLoading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-6 h-6 text-zinc-900 animate-spin" />
-            <span className="text-xs text-zinc-500 font-semibold">
-              Loading gym members directory...
-            </span>
+          <div className="divide-y divide-zinc-100">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 px-3"
+              >
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  {/* Avatar squircle skeleton */}
+                  <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
+                  <div className="space-y-2 flex-1 max-w-sm">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-32 rounded-lg" />
+                      <Skeleton className="h-4 w-20 rounded-full" />
+                      <Skeleton className="h-4 w-16 rounded-full" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-3 w-40 rounded-md" />
+                      <Skeleton className="h-3 w-24 rounded-md" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  <Skeleton className="h-8 w-24 rounded-xl" />
+                  <Skeleton className="h-8 w-14 rounded-xl" />
+                  <Skeleton className="h-8 w-14 rounded-xl" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredMembers.length === 0 ? (
+
           <div className="py-16 text-center">
             <Users className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
             <h3 className="text-sm font-extrabold text-zinc-900">

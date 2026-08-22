@@ -14,6 +14,8 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 
+import { Skeleton } from '@/components/ui/skeleton';
+
 interface CrowdCardProps {
   data: OccupancyData;
   isAdmin?: boolean;
@@ -22,6 +24,7 @@ interface CrowdCardProps {
   onOpenCapacityModal?: () => void;
   onOpenAuth?: () => void;
   isLoadingCheckIn?: boolean;
+  isLoading?: boolean;
 }
 
 export const CrowdCard: React.FC<CrowdCardProps> = ({
@@ -32,7 +35,41 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
   onOpenCapacityModal,
   onOpenAuth,
   isLoadingCheckIn = false,
+  isLoading = false,
 }) => {
+  if (isLoading) {
+    return (
+      <Card className="p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center min-h-[260px] bg-white border border-black/[0.06] shadow-card">
+        <div className="w-full md:w-[60%] space-y-4">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-32 rounded-lg" />
+            <Skeleton className="h-2 w-2 rounded-full" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <Skeleton className="h-12 w-28 rounded-xl" />
+            <Skeleton className="h-6 w-16 rounded-lg" />
+          </div>
+          <Skeleton className="h-4 w-48 rounded-lg" />
+          <div className="flex items-center gap-3 pt-1">
+            <Skeleton className="h-8 w-24 rounded-full" />
+            <Skeleton className="h-8 w-32 rounded-xl" />
+          </div>
+          <div className="pt-2 max-w-[340px] space-y-1.5">
+            <Skeleton className="h-2 w-full rounded-full" />
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-20 rounded-md" />
+              <Skeleton className="h-3 w-24 rounded-md" />
+            </div>
+          </div>
+        </div>
+        <div className="hidden sm:flex flex-col items-center justify-center w-full md:w-[220px] p-6 rounded-2xl bg-zinc-50/70 border border-zinc-200/50 mt-6 md:mt-0">
+          <Skeleton className="w-32 h-32 rounded-full" />
+          <Skeleton className="h-3 w-24 rounded-md mt-3" />
+        </div>
+      </Card>
+    );
+  }
+
   const {
     peopleCount,
     capacity,

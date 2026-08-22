@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 
 import { LogWorkoutModal, WorkoutLogData } from '@/components/history/LogWorkoutModal';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 interface VisitRecord {
   id: string;
@@ -292,66 +294,79 @@ export const HistoryPage: React.FC = () => {
 
       {/* Analytics Highlights */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-3">
-            <Calendar className="w-4.5 h-4.5" />
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
-            This Month
-          </span>
-          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
-            {thisMonthVisits.length} Visits
-          </span>
-          <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
-            <TrendingUp className="w-3 h-3" />
-            +2 vs last month
-          </span>
-        </Card>
+        {isLoading ? (
+          [1, 2, 3, 4].map((i) => (
+            <Card key={i} className="p-5 bg-white border border-black/[0.06] shadow-card space-y-3">
+              <Skeleton className="w-9 h-9 rounded-xl" />
+              <Skeleton className="h-3 w-20 rounded-md" />
+              <Skeleton className="h-7 w-28 rounded-lg" />
+              <Skeleton className="h-3 w-24 rounded-md" />
+            </Card>
+          ))
+        ) : (
+          <>
+            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+              <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-3">
+                <Calendar className="w-4.5 h-4.5" />
+              </div>
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+                This Month
+              </span>
+              <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+                {thisMonthVisits.length} Visits
+              </span>
+              <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3 h-3" />
+                +2 vs last month
+              </span>
+            </Card>
 
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-3">
-            <Clock className="w-4.5 h-4.5" />
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
-            Avg Duration
-          </span>
-          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
-            {avgDurationFormatted}
-          </span>
-          <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
-            Consistent sessions
-          </span>
-        </Card>
+            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+              <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-3">
+                <Clock className="w-4.5 h-4.5" />
+              </div>
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+                Avg Duration
+              </span>
+              <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+                {avgDurationFormatted}
+              </span>
+              <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
+                Consistent sessions
+              </span>
+            </Card>
 
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-orange-50/70 border border-orange-200/60 flex items-center justify-center text-orange-600 mb-3">
-            <Flame className="w-4.5 h-4.5" />
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
-            Est. Calories
-          </span>
-          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
-            {totalCaloriesBurned.toLocaleString()} kcal
-          </span>
-          <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
-            Burned this month
-          </span>
-        </Card>
+            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+              <div className="w-9 h-9 rounded-xl bg-orange-50/70 border border-orange-200/60 flex items-center justify-center text-orange-600 mb-3">
+                <Flame className="w-4.5 h-4.5" />
+              </div>
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+                Est. Calories
+              </span>
+              <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+                {totalCaloriesBurned.toLocaleString()} kcal
+              </span>
+              <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
+                Burned this month
+              </span>
+            </Card>
 
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-amber-50/70 border border-amber-200/60 flex items-center justify-center text-amber-600 mb-3">
-            <Award className="w-4.5 h-4.5" />
-          </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
-            Current Streak
-          </span>
-          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
-            {Math.min(visits.length, 5)} Days
-          </span>
-          <span className="text-[11px] text-amber-700 font-semibold mt-1 block">
-            Active weekly routine
-          </span>
-        </Card>
+            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+              <div className="w-9 h-9 rounded-xl bg-amber-50/70 border border-amber-200/60 flex items-center justify-center text-amber-600 mb-3">
+                <Award className="w-4.5 h-4.5" />
+              </div>
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+                Current Streak
+              </span>
+              <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+                {Math.min(visits.length, 5)} Days
+              </span>
+              <span className="text-[11px] text-amber-700 font-semibold mt-1 block">
+                Active weekly routine
+              </span>
+            </Card>
+          </>
+        )}
       </div>
 
       {/* History Table / List Card */}
@@ -402,45 +417,69 @@ export const HistoryPage: React.FC = () => {
         </div>
 
         {/* Visit Items List */}
-        <div className="divide-y divide-zinc-100">
-          {filteredVisits.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-zinc-50/70 px-3 rounded-xl transition-colors"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 shrink-0">
-                  <Dumbbell className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-zinc-900 block">
-                    {item.workoutType}
-                  </span>
-                  <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
-                    <span className="font-semibold text-zinc-700">{item.date}</span>
-                    <span>•</span>
-                    <span className="tabular-nums">{item.checkIn} → {item.checkOut}</span>
-                    {item.notes && (
-                      <>
-                        <span>•</span>
-                        <span className="text-emerald-700 font-medium italic">"{item.notes}"</span>
-                      </>
-                    )}
+        {isLoading ? (
+          <div className="divide-y divide-zinc-100">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 px-3"
+              >
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                  <div className="space-y-2 flex-1 max-w-sm">
+                    <Skeleton className="h-4 w-44 rounded-lg" />
+                    <Skeleton className="h-3 w-56 rounded-md" />
                   </div>
                 </div>
+                <div className="flex items-center gap-2.5 self-end sm:self-auto shrink-0">
+                  <Skeleton className="h-7 w-20 rounded-lg" />
+                  <Skeleton className="h-7 w-16 rounded-full" />
+                </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="divide-y divide-zinc-100">
+            {filteredVisits.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-zinc-50/70 px-3 rounded-xl transition-colors"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 shrink-0">
+                    <Dumbbell className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-zinc-900 block">
+                      {item.workoutType}
+                    </span>
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                      <span className="font-semibold text-zinc-700">{item.date}</span>
+                      <span>•</span>
+                      <span className="tabular-nums">{item.checkIn} → {item.checkOut}</span>
+                      {item.notes && (
+                        <>
+                          <span>•</span>
+                          <span className="text-emerald-700 font-medium italic">"{item.notes}"</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-              <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                <span className="text-[11px] font-semibold text-zinc-600 bg-zinc-100/80 px-2.5 py-1 rounded-lg border border-zinc-200/60 tabular-nums">
-                  ~{item.calories} kcal
-                </span>
-                <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200/80 tabular-nums">
-                  {item.duration}
-                </span>
+                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                  <span className="text-[11px] font-semibold text-zinc-600 bg-zinc-100/80 px-2.5 py-1 rounded-lg border border-zinc-200/60 tabular-nums">
+                    ~{item.calories} kcal
+                  </span>
+                  <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200/80 tabular-nums">
+                    {item.duration}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
       </Card>
     </div>
   );
