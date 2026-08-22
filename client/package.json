@@ -7,10 +7,9 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc && vite build",
     "lint": "eslint .",
-    "preview": "vite preview --host 0.0.0.0",
-    "start": "vite preview --host 0.0.0.0"
+    "preview": "sirv dist --single --host 0.0.0.0 --port ${PORT:-5173}",
+    "start": "sirv dist --single --host 0.0.0.0 --port ${PORT:-5173}"
   },
-
 
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.2",
@@ -35,6 +34,7 @@
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
+    "sirv-cli": "^3.0.1",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3",
     "vite": "^5.4.11"
