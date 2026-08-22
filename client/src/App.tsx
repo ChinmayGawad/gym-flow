@@ -8,7 +8,9 @@ import { MembersPage } from '@/pages/MembersPage';
 import { AuthPage } from '@/pages/AuthPage';
 import { AdminRoute } from '@/components/auth/AdminRoute';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { PageTransition } from '@/components/layout/PageTransition';
 import { useOccupancy } from '@/hooks/useOccupancy';
+
 import { useSession } from '@/lib/auth-client';
 import { Dumbbell, Loader2 } from 'lucide-react';
 
@@ -93,40 +95,43 @@ export function App() {
         {/* Sticky Navbar with Routing Navigation */}
         <Navbar onOpenAuth={() => setIsAuthOpen(true)} />
 
-        {/* Main Content Area */}
+        {/* Main Content Area with Smooth Page Transition */}
         <main className="w-[90%] max-w-[1100px] mx-auto py-8 md:py-12 pb-24 md:pb-16 flex-1">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <HomePage
-                  displayName={displayName}
-                  userPlan={userPlan}
-                  isAdmin={isAdmin}
-                  isLoggedIn={isLoggedIn}
-                  occupancy={occupancy}
-                  onOpenAuth={() => setIsAuthOpen(true)}
-                />
-              }
-            />
-            <Route
-              path="/schedule"
-              element={<SchedulePage capacity={occupancy.capacity} />}
-            />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route
-              path="/members"
-              element={
-                <AdminRoute onOpenAuth={() => setIsAuthOpen(true)}>
-                  <MembersPage
+          <PageTransition>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <HomePage
+                    displayName={displayName}
+                    userPlan={userPlan}
+                    isAdmin={isAdmin}
+                    isLoggedIn={isLoggedIn}
                     occupancy={occupancy}
+                    onOpenAuth={() => setIsAuthOpen(true)}
                   />
-                </AdminRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+                }
+              />
+              <Route
+                path="/schedule"
+                element={<SchedulePage capacity={occupancy.capacity} />}
+              />
+              <Route path="/history" element={<HistoryPage />} />
+              <Route
+                path="/members"
+                element={
+                  <AdminRoute onOpenAuth={() => setIsAuthOpen(true)}>
+                    <MembersPage
+                      occupancy={occupancy}
+                    />
+                  </AdminRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </PageTransition>
         </main>
+
 
         {/* Authentication Sign-In Modal (Optional inside app) */}
         <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />

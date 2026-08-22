@@ -102,4 +102,45 @@ body {
   animation: shimmer-sweep 1.8s ease-in-out infinite;
 }
 
+/* Silky page entrance transition */
+@keyframes page-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0px);
+  }
+}
+
+.animate-page-enter {
+  animation: page-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+/* Top route progress indicator */
+@keyframes route-progress {
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleX(0.75);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+.animate-route-progress {
+  transform-origin: left center;
+  animation: route-progress 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
 
