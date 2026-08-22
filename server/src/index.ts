@@ -91,6 +91,66 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'gymflow-server' });
 });
 
+// Live SSE Stream clients
+const sseClients = new Set<express.Response>();
+
+export async function broadcastGymStatusUpdate() {
+  if (sseClients.size === 0) return;
+  try {
+    const settings = await getOrCreateGymSettings();
+    const totalRegisteredMembers = await prisma.user.count();
+    const checkedInMembers = await prisma.user.findMany({
+      where: { isCheckedIn: true },
+      select: { id: true, name: true, email: true },
+    });
+    const checkedInCount = checkedInMembers.length;
+    const capacity = settings.capacity;
+    const percentage = Math.round((checkedInCount / capacity) * 100);
+    const turnoutPercentage =
+      totalRegisteredMembers > 0
+        ? Math.round((checkedInCount / totalRegisteredMembers) * 100)
+        : 0;
+
+    let status = 'MODERATE';
+    let waitTime = '10 min';
+
+    if (percentage < 40) {
+      status = 'LOW';
+      waitTime = '0–5 min';
+    } else if (percentage < 75) {
+      status = 'MODERATE';
+      waitTime = '10 min';
+    } else {
+      status = 'HIGH';
+      waitTime = '15–25 min';
+    }
+
+    const payload = JSON.stringify({
+      type: 'occupancy_update',
+      peopleCount: checkedInCount,
+      capacity,
+      totalRegisteredMembers,
+      percentage,
+      turnoutPercentage,
+      status,
+      waitTime,
+      gymName: settings.gymName,
+      checkedInUserIds: checkedInMembers.map((m) => m.id),
+      timestamp: new Date().toISOString(),
+    });
+
+    for (const client of sseClients) {
+      try {
+        client.write(`data: ${payload}\n\n`);
+      } catch {
+        sseClients.delete(client);
+      }
+    }
+  } catch (err) {
+    console.error('Error broadcasting gym status:', err);
+  }
+}
+
 // Helper to get or create Gym Settings (Default Capacity: 30)
 async function getOrCreateGymSettings() {
   let settings = await prisma.gymSettings.findUnique({
@@ -107,6 +167,82 @@ async function getOrCreateGymSettings() {
   }
   return settings;
 }
+
+// 0. GET /api/gym/live-stream - Server-Sent Events (SSE) Real-Time Live Occupancy Stream
+app.get('/api/gym/live-stream', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  if (typeof (res as any).flushHeaders === 'function') {
+    (res as any).flushHeaders();
+  }
+
+  try {
+    const settings = await getOrCreateGymSettings();
+    const totalRegisteredMembers = await prisma.user.count();
+    const checkedInMembers = await prisma.user.findMany({
+      where: { isCheckedIn: true },
+      select: { id: true },
+    });
+    const checkedInCount = checkedInMembers.length;
+    const capacity = settings.capacity;
+    const percentage = Math.round((checkedInCount / capacity) * 100);
+    const turnoutPercentage =
+      totalRegisteredMembers > 0
+        ? Math.round((checkedInCount / totalRegisteredMembers) * 100)
+        : 0;
+
+    let status = 'MODERATE';
+    let waitTime = '10 min';
+
+    if (percentage < 40) {
+      status = 'LOW';
+      waitTime = '0–5 min';
+    } else if (percentage < 75) {
+      status = 'MODERATE';
+      waitTime = '10 min';
+    } else {
+      status = 'HIGH';
+      waitTime = '15–25 min';
+    }
+
+    const payload = JSON.stringify({
+      type: 'occupancy_update',
+      peopleCount: checkedInCount,
+      capacity,
+      totalRegisteredMembers,
+      percentage,
+      turnoutPercentage,
+      status,
+      waitTime,
+      gymName: settings.gymName,
+      checkedInUserIds: checkedInMembers.map((m) => m.id),
+      timestamp: new Date().toISOString(),
+    });
+
+    res.write(`data: ${payload}\n\n`);
+  } catch (err) {
+    console.error('Error sending initial SSE payload:', err);
+  }
+
+  sseClients.add(res);
+
+  // Keep-alive heartbeat every 15 seconds
+  const keepAlive = setInterval(() => {
+    try {
+      res.write(': keepalive\n\n');
+    } catch {
+      clearInterval(keepAlive);
+      sseClients.delete(res);
+    }
+  }, 15000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    sseClients.delete(res);
+  });
+});
 
 // 1. GET /api/gym/status - Real-time Gym Status, Capacity & Occupancy
 app.get('/api/gym/status', async (req, res) => {
@@ -257,6 +393,9 @@ app.post('/api/gym/checkin-toggle', async (req, res) => {
     const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
     const totalRegisteredMembers = await prisma.user.count();
     const percentage = Math.round((checkedInCount / settings.capacity) * 100);
+
+    // Broadcast live change immediately to all connected clients
+    broadcastGymStatusUpdate();
 
     return res.json({
       success: true,
@@ -413,6 +552,9 @@ app.put('/api/admin/gym/capacity', async (req, res) => {
       },
     });
 
+    // Broadcast live change immediately to all connected clients
+    broadcastGymStatusUpdate();
+
     return res.json({
       success: true,
       message: `Gym capacity updated to ${parsedCapacity} occupants.`,
@@ -497,6 +639,9 @@ app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
 
     const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
 
+    // Broadcast live change immediately to all connected clients
+    broadcastGymStatusUpdate();
+
     return res.json({
       success: true,
       userId: id,
@@ -571,6 +716,9 @@ app.put('/api/admin/members/:id', async (req, res) => {
       }
     }
 
+    // Broadcast live change immediately to all connected clients
+    broadcastGymStatusUpdate();
+
     return res.json({
       success: true,
       message: `Member "${updatedUser.name}" updated successfully.`,
@@ -579,6 +727,60 @@ app.put('/api/admin/members/:id', async (req, res) => {
   } catch (error: any) {
     console.error('Error updating member:', error);
     return res.status(500).json({ error: error.message || 'Internal server error while updating member.' });
+  }
+});
+
+// Dynamic Live Simulation Step Endpoint
+app.post('/api/gym/simulation-step', async (req, res) => {
+  try {
+    const { delta, exactCount } = req.body;
+    const settings = await getOrCreateGymSettings();
+    const allUsers = await prisma.user.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (allUsers.length > 0) {
+      if (typeof exactCount === 'number') {
+        const targetCount = Math.max(0, Math.min(exactCount, allUsers.length, settings.capacity));
+        for (let i = 0; i < allUsers.length; i++) {
+          const shouldBeIn = i < targetCount;
+          if (allUsers[i].isCheckedIn !== shouldBeIn) {
+            await prisma.user.update({
+              where: { id: allUsers[i].id },
+              data: { isCheckedIn: shouldBeIn, lastCheckInAt: shouldBeIn ? new Date() : allUsers[i].lastCheckInAt },
+            });
+          }
+        }
+      } else {
+        const change = typeof delta === 'number' ? delta : (Math.random() > 0.5 ? 1 : -1);
+        if (change > 0) {
+          const outUser = allUsers.find(u => !u.isCheckedIn);
+          if (outUser) {
+            await prisma.user.update({
+              where: { id: outUser.id },
+              data: { isCheckedIn: true, lastCheckInAt: new Date() },
+            });
+          }
+        } else {
+          const inUser = allUsers.find(u => u.isCheckedIn);
+          if (inUser) {
+            await prisma.user.update({
+              where: { id: inUser.id },
+              data: { isCheckedIn: false },
+            });
+          }
+        }
+      }
+    }
+
+    // Broadcast update to all live streams immediately
+    await broadcastGymStatusUpdate();
+
+    const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
+    return res.json({ success: true, peopleCount: checkedInCount, capacity: settings.capacity });
+  } catch (simErr: any) {
+    console.error('Simulation step error:', simErr);
+    return res.status(500).json({ error: 'Failed to simulate step' });
   }
 });
 

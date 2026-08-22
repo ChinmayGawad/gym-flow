@@ -71,8 +71,8 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const fetchMembers = async () => {
-    setIsLoading(true);
+  const fetchMembers = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const res = await authClient.admin.listUsers({
         query: {
@@ -84,18 +84,58 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
         setMembers(res.data.users as GymMember[]);
       }
     } catch (err: any) {
-      console.error('Error fetching members:', err);
-      setActionFeedback({
-        type: 'error',
-        message: err?.message || 'Failed to fetch gym members list.',
-      });
+      if (!silent) {
+        console.error('Error fetching members:', err);
+        setActionFeedback({
+          type: 'error',
+          message: err?.message || 'Failed to fetch gym members list.',
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
+  // 1. Initial members fetch
   useEffect(() => {
     fetchMembers();
+  }, []);
+
+  // 2. Real-time reactivity to occupancy.checkedInUserIds
+  useEffect(() => {
+    if (occupancy?.checkedInUserIds) {
+      const checkedSet = new Set(occupancy.checkedInUserIds);
+      setMembers((prev) =>
+        prev.map((m) => ({
+          ...m,
+          isCheckedIn: checkedSet.has(m.id),
+        }))
+      );
+    }
+  }, [occupancy?.checkedInUserIds]);
+
+  // 3. Periodic silent background refresh (every 4s) so new members or status changes appear live
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchMembers(true);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 4. Cross-tab BroadcastChannel listener
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const channel = new BroadcastChannel('gymflow_realtime_sync');
+        channel.onmessage = (event) => {
+          if (event.data && event.data.type === 'GYM_OCCUPANCY_SYNC') {
+            fetchMembers(true);
+          }
+        };
+        return () => channel.close();
+      } catch {}
+    }
   }, []);
 
   // Admin Master Check-In / Check-Out Toggle
@@ -121,10 +161,19 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
           )
         );
 
-        // Sync global occupancy hook
+        // Sync global occupancy hook & broadcast
         if (occupancy?.refreshStatus) {
           occupancy.refreshStatus();
         }
+
+        try {
+          const bc = new BroadcastChannel('gymflow_realtime_sync');
+          bc.postMessage({
+            type: 'GYM_OCCUPANCY_SYNC',
+            payload: { peopleCount: data.checkedInCount },
+          });
+          bc.close();
+        } catch {}
 
         setActionFeedback({
           type: 'success',

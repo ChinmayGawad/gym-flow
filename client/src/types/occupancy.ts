@@ -13,6 +13,9 @@ export interface OccupancyData {
   isCheckedInSelf: boolean;
   isAutoSimulating: boolean;
   gymName?: string;
+  isLiveConnected?: boolean;
+  checkedInUserIds?: string[];
+  lastUpdated?: string;
 }
 
 export interface HourlyPrediction {

@@ -494,110 +494,99 @@ const waitingTime = document.getElementById("waitingTime");
 const capacity = 60;
 
 
-// Update dashboard
-
+// Update dashboard with smooth dynamic transitions
 function updateDashboard(people) {
-
     if (people < 0) {
         people = 0;
     }
-
     if (people > capacity) {
         people = capacity;
     }
 
-
     currentPeople.textContent = people;
-
     peopleStat.textContent = people;
 
-
-    const percent = Math.round(
-        (people / capacity) * 100
-    );
-
-
-    percentage.textContent =
-        percent + "% Occupied";
-
-
-    progressBar.style.width =
-        percent + "%";
-
+    const percent = Math.round((people / capacity) * 100);
+    percentage.textContent = percent + "% Occupied";
+    progressBar.style.width = percent + "%";
 
     // Crowd status
-
     if (percent < 40) {
-
-        crowdStatus.innerHTML =
-            '<span class="status-dot"></span> LOW';
-
-        crowdStatus.className =
-            "status low";
-
-        waitingTime.textContent =
-            "0–5 min";
-
+        crowdStatus.innerHTML = '<span class="status-dot"></span> LOW';
+        crowdStatus.className = "status low";
+        waitingTime.textContent = "0–5 min";
+    } else if (percent < 75) {
+        crowdStatus.innerHTML = '<span class="status-dot"></span> MODERATE';
+        crowdStatus.className = "status moderate";
+        waitingTime.textContent = "10 min";
+    } else {
+        crowdStatus.innerHTML = '<span class="status-dot"></span> HIGH';
+        crowdStatus.className = "status high";
+        waitingTime.textContent = "15–25 min";
     }
-
-    else if (percent < 75) {
-
-        crowdStatus.innerHTML =
-            '<span class="status-dot"></span> MODERATE';
-
-        crowdStatus.className =
-            "status moderate";
-
-        waitingTime.textContent =
-            "10 min";
-
-    }
-
-    else {
-
-        crowdStatus.innerHTML =
-            '<span class="status-dot"></span> HIGH';
-
-        crowdStatus.className =
-            "status high";
-
-        waitingTime.textContent =
-            "15–25 min";
-
-    }
-
 }
 
+// Real-Time Sync: Connect to Backend SSE or Live API if available
+let isConnectedToLiveServer = false;
 
-// Simulate live gym activity
+function initRealtimeSync() {
+    try {
+        const evtSource = new EventSource("http://localhost:3000/api/gym/live-stream");
+        evtSource.onmessage = function (e) {
+            try {
+                if (!e.data || e.data.startsWith(':')) return;
+                const data = JSON.parse(e.data);
+                if (data.type === 'occupancy_update' && typeof data.peopleCount === 'number') {
+                    isConnectedToLiveServer = true;
+                    updateDashboard(data.peopleCount);
+                }
+            } catch (err) {}
+        };
+        evtSource.onerror = function () {
+            isConnectedToLiveServer = false;
+        };
+    } catch (e) {
+        isConnectedToLiveServer = false;
+    }
+}
 
+initRealtimeSync();
+
+// Dynamic live gym activity simulation (runs smoothly without refresh)
 setInterval(() => {
+    if (isConnectedToLiveServer) return; // If connected to live server, let server dictate
 
-    let people =
-        parseInt(currentPeople.textContent);
+    // Try fetching from local API
+    fetch("http://localhost:3000/api/gym/status")
+        .then(r => r.json())
+        .then(d => {
+            if (d.success && typeof d.peopleCount === 'number') {
+                updateDashboard(d.peopleCount);
+            } else {
+                simulateLocalTick();
+            }
+        })
+        .catch(() => {
+            simulateLocalTick();
+        });
+}, 3500);
 
-    const change =
-        Math.random() > 0.5 ? 1 : -1;
-
+function simulateLocalTick() {
+    let people = parseInt(currentPeople.textContent, 10) || 42;
+    const change = Math.random() > 0.5 ? 1 : -1;
     people += change;
-
     updateDashboard(people);
-
-}, 5000);
-
+}
 
 // View crowd button
-
 document
     .getElementById("viewCrowdBtn")
     .addEventListener("click", function () {
-
         document
             .getElementById("prediction")
             .scrollIntoView({
                 behavior: "smooth"
             });
-
     });
 
 

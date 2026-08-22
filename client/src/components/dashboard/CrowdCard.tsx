@@ -114,7 +114,10 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
             <span className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
               LIVE GYM OCCUPANCY
             </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-slow" />
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-semibold tracking-normal">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Real-Time Sync</span>
+            </span>
           </div>
 
           {/* Admin Owner Capacity Settings Button */}
