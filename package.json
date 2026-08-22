@@ -7,7 +7,8 @@
     "core"
   ],
   "scripts": {
-    "dev": "bun --filter client dev",
-    "build": "bun --filter client build"
+    "dev": "bun --filter gymflow-client dev",
+    "dev:server": "bun --filter @gymflow/server dev",
+    "build": "bun --filter gymflow-client build"
   }
 }
