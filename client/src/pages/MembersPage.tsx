@@ -17,16 +17,22 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowLeft,
-  User,
   CreditCard,
   Crown,
   Zap,
   Shield,
+  Building2,
+  Settings,
+  MapPin,
+  LogOut,
+  LogIn,
 } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { CreateMemberModal } from '@/components/admin/CreateMemberModal';
 import { EditMemberModal, EditableMember } from '@/components/admin/EditMemberModal';
+import { CapacitySettingsModal } from '@/components/admin/CapacitySettingsModal';
 import { MEMBERSHIP_PLANS, MembershipPlan } from '@/types/plans';
+import { useOccupancy } from '@/hooks/useOccupancy';
 
 interface GymMember {
   id: string;
@@ -35,20 +41,31 @@ interface GymMember {
   role: string;
   plan?: MembershipPlan;
   planStatus?: string;
+  isCheckedIn?: boolean;
+  lastCheckInAt?: string | Date | null;
   createdAt: string | Date;
   image?: string | null;
 }
 
-export const MembersPage: React.FC = () => {
+interface MembersPageProps {
+  occupancy?: ReturnType<typeof useOccupancy>;
+}
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
+export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
   const [members, setMembers] = useState<GymMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
   const [planFilter, setPlanFilter] = useState<'all' | 'basic' | 'pro' | 'elite'>('all');
+  const [checkInFilter, setCheckInFilter] = useState<'all' | 'inside' | 'outside'>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCapacityModalOpen, setIsCapacityModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<EditableMember | null>(null);
   const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const fetchMembers = async () => {
     setIsLoading(true);
@@ -77,6 +94,68 @@ export const MembersPage: React.FC = () => {
     fetchMembers();
   }, []);
 
+  // Admin Master Check-In / Check-Out Toggle
+  const handleToggleMemberCheckIn = async (member: GymMember) => {
+    setTogglingId(member.id);
+    setActionFeedback(null);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/members/${member.id}/checkin-toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const nextState = data.isCheckedIn;
+
+        // Update local members list
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === member.id ? { ...m, isCheckedIn: nextState } : m
+          )
+        );
+
+        // Sync global occupancy hook
+        if (occupancy?.refreshStatus) {
+          occupancy.refreshStatus();
+        }
+
+        setActionFeedback({
+          type: 'success',
+          message: data.message || `${member.name} is now ${nextState ? 'checked in' : 'checked out'}.`,
+        });
+      } else {
+        // Fallback optimistic update
+        const nextState = !member.isCheckedIn;
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === member.id ? { ...m, isCheckedIn: nextState } : m
+          )
+        );
+        setActionFeedback({
+          type: 'success',
+          message: `${member.name} status updated to ${nextState ? 'Checked In' : 'Checked Out'} (Local).`,
+        });
+      }
+    } catch {
+      // Local fallback
+      const nextState = !member.isCheckedIn;
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.id === member.id ? { ...m, isCheckedIn: nextState } : m
+        )
+      );
+      setActionFeedback({
+        type: 'success',
+        message: `${member.name} status updated (Offline).`,
+      });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const handleDeleteMember = async (userId: string, memberName: string) => {
     if (!window.confirm(`Are you sure you want to remove member "${memberName}"? This action cannot be undone.`)) {
       return;
@@ -100,8 +179,10 @@ export const MembersPage: React.FC = () => {
           type: 'success',
           message: `Member "${memberName}" has been removed.`,
         });
-        // Optimistic update
         setMembers((prev) => prev.filter((m) => m.id !== userId));
+        if (occupancy?.refreshStatus) {
+          occupancy.refreshStatus();
+        }
       }
     } catch (err: any) {
       setActionFeedback({
@@ -146,12 +227,21 @@ export const MembersPage: React.FC = () => {
     const matchesPlan =
       planFilter === 'all' ? true : memberPlan === planFilter;
 
-    return matchesSearch && matchesRole && matchesPlan;
+    const isInside = !!member.isCheckedIn;
+    const matchesCheckIn =
+      checkInFilter === 'all'
+        ? true
+        : checkInFilter === 'inside'
+        ? isInside
+        : !isInside;
+
+    return matchesSearch && matchesRole && matchesPlan && matchesCheckIn;
   });
 
   const totalMembersCount = members.length;
   const adminCount = members.filter((m) => m.role === 'admin').length;
-  const standardMembersCount = totalMembersCount - adminCount;
+  const checkedInMembersCount = members.filter((m) => m.isCheckedIn).length;
+  const currentCapacity = occupancy?.capacity || 30;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -173,22 +263,33 @@ export const MembersPage: React.FC = () => {
             </h1>
             <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-extrabold text-[10px] uppercase gap-1 px-2.5 py-0.5">
               <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
-              Admin Only
+              Gym Owner / Admin
             </Badge>
           </div>
           <p className="text-xs text-gym-subtle mt-0.5 font-medium">
-            Manage member accounts, assign Indian membership subscription plans (₹ INR), and update credentials.
+            Manage member accounts, track live check-ins, configure gym capacity, and assign Indian subscription plans (₹ INR).
           </p>
         </div>
 
-        {/* Add Member CTA */}
-        <Button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 self-start md:self-auto shadow-sm"
-        >
-          <UserPlus className="w-4 h-4" />
-          Add New Member
-        </Button>
+        {/* Top Actions: Add Member + Capacity Settings */}
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <Button
+            onClick={() => setIsCapacityModalOpen(true)}
+            variant="outline"
+            className="h-10 px-4 rounded-[9px] border-[#dedede] bg-white text-gym-dark hover:bg-[#f0f0f0] text-xs font-bold gap-2 shadow-sm"
+          >
+            <Settings className="w-4 h-4 text-gym-dark" />
+            Set Capacity ({currentCapacity})
+          </Button>
+
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 shadow-sm"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add Member
+          </Button>
+        </div>
       </div>
 
       {/* Action Feedback Banner */}
@@ -218,7 +319,8 @@ export const MembersPage: React.FC = () => {
       )}
 
       {/* Analytics Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Accounts */}
         <Card className="p-5 bg-white border-[#dedede]">
           <div className="w-9 h-9 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-2">
             <Users className="w-4.5 h-4.5" />
@@ -231,40 +333,58 @@ export const MembersPage: React.FC = () => {
           </span>
         </Card>
 
+        {/* Live Inside Gym */}
         <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center mb-2">
-            <Shield className="w-4.5 h-4.5" />
+          <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2">
+            <MapPin className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
-            Basic (₹999/mo)
+          <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
+            Inside Gym Now
           </span>
-          <span className="text-2xl font-black text-gym-dark mt-0.5 block">
-            {members.filter((m) => (m.plan || 'basic') === 'basic').length}
-          </span>
+          <div className="flex items-baseline gap-1.5 mt-0.5">
+            <span className="text-2xl font-black text-emerald-900">
+              {checkedInMembersCount}
+            </span>
+            <span className="text-xs font-semibold text-gym-subtle">
+              / {currentCapacity} max
+            </span>
+          </div>
         </Card>
 
+        {/* Pro & Elite Subscribers */}
         <Card className="p-5 bg-white border-[#dedede]">
           <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center mb-2">
             <Zap className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
-            Pro (₹1,999/mo)
+          <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider block">
+            Pro & Elite Plans
           </span>
           <span className="text-2xl font-black text-blue-900 mt-0.5 block">
-            {members.filter((m) => m.plan === 'pro').length}
+            {members.filter((m) => m.plan === 'pro' || m.plan === 'elite').length}
           </span>
         </Card>
 
+        {/* Facility Capacity */}
         <Card className="p-5 bg-white border-[#dedede]">
           <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center mb-2">
-            <Crown className="w-4.5 h-4.5" />
+            <Building2 className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
-            Elite (₹3,499/mo)
+          <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider block">
+            Facility Capacity
           </span>
-          <span className="text-2xl font-black text-amber-900 mt-0.5 block">
-            {members.filter((m) => m.plan === 'elite').length}
-          </span>
+          <div className="flex items-center justify-between mt-0.5">
+            <span className="text-2xl font-black text-amber-900">
+              {currentCapacity}
+            </span>
+            <Button
+              onClick={() => setIsCapacityModalOpen(true)}
+              variant="outline"
+              size="sm"
+              className="h-6 text-[10px] font-bold px-2 text-amber-900 border-amber-300 hover:bg-amber-100"
+            >
+              Scale
+            </Button>
+          </div>
         </Card>
       </div>
 
@@ -285,37 +405,37 @@ export const MembersPage: React.FC = () => {
               />
             </div>
 
-            {/* Role Filter Tabs */}
+            {/* Attendance Filter Tabs */}
             <div className="flex items-center gap-1.5 bg-[#f0f0f0] p-1 rounded-[9px] self-start sm:self-auto">
               <button
-                onClick={() => setRoleFilter('all')}
+                onClick={() => setCheckInFilter('all')}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
-                  roleFilter === 'all'
+                  checkInFilter === 'all'
                     ? 'bg-white text-gym-dark shadow-sm'
                     : 'text-gym-subtle hover:text-gym-dark'
                 }`}
               >
-                All Roles ({totalMembersCount})
+                All Status ({totalMembersCount})
               </button>
               <button
-                onClick={() => setRoleFilter('user')}
+                onClick={() => setCheckInFilter('inside')}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
-                  roleFilter === 'user'
-                    ? 'bg-white text-gym-dark shadow-sm'
-                    : 'text-gym-subtle hover:text-gym-dark'
+                  checkInFilter === 'inside'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-emerald-800 hover:bg-emerald-100'
                 }`}
               >
-                Members ({standardMembersCount})
+                🟢 Inside Gym ({checkedInMembersCount})
               </button>
               <button
-                onClick={() => setRoleFilter('admin')}
+                onClick={() => setCheckInFilter('outside')}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
-                  roleFilter === 'admin'
+                  checkInFilter === 'outside'
                     ? 'bg-white text-gym-dark shadow-sm'
                     : 'text-gym-subtle hover:text-gym-dark'
                 }`}
               >
-                Admins ({adminCount})
+                Outside ({totalMembersCount - checkedInMembersCount})
               </button>
             </div>
           </div>
@@ -393,6 +513,7 @@ export const MembersPage: React.FC = () => {
           <div className="divide-y divide-[#eeeeee]">
             {filteredMembers.map((member) => {
               const isAdmin = member.role === 'admin';
+              const isInside = !!member.isCheckedIn;
               const memberPlan = (member.plan as MembershipPlan) || 'basic';
               const planConfig = MEMBERSHIP_PLANS[memberPlan] || MEMBERSHIP_PLANS.basic;
 
@@ -412,13 +533,18 @@ export const MembersPage: React.FC = () => {
                   {/* Member Info */}
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black shrink-0 relative ${
                         isAdmin
                           ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : isInside
+                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                           : 'bg-[#ededed] text-gym-dark'
                       }`}
                     >
                       {member.name ? member.name.charAt(0).toUpperCase() : 'M'}
+                      {isInside && (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
+                      )}
                     </div>
 
                     <div className="min-w-0">
@@ -426,6 +552,18 @@ export const MembersPage: React.FC = () => {
                         <span className="text-sm font-extrabold text-gym-dark truncate">
                           {member.name}
                         </span>
+
+                        {/* Live Check-In Pill */}
+                        {isInside ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Inside Gym
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                            Checked Out
+                          </span>
+                        )}
 
                         {/* Plan Badge */}
                         <span
@@ -456,8 +594,36 @@ export const MembersPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Actions */}
+                  {/* Actions: Check-In Toggle + Edit + Remove */}
                   <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                    {/* Admin Master Check-In Toggle Button */}
+                    <Button
+                      onClick={() => handleToggleMemberCheckIn(member)}
+                      disabled={togglingId === member.id}
+                      variant="outline"
+                      size="sm"
+                      className={`h-8 px-3 text-xs font-bold rounded-[8px] gap-1.5 transition-colors ${
+                        isInside
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200'
+                          : 'bg-white text-gym-dark border-[#dedede] hover:bg-[#ededed]'
+                      }`}
+                      title={isInside ? 'Check Member Out' : 'Check Member In'}
+                    >
+                      {togglingId === member.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : isInside ? (
+                        <>
+                          <LogOut className="w-3.5 h-3.5 text-emerald-700" />
+                          Check Out
+                        </>
+                      ) : (
+                        <>
+                          <LogIn className="w-3.5 h-3.5 text-gym-dark" />
+                          Check In
+                        </>
+                      )}
+                    </Button>
+
                     {/* Edit Member Button */}
                     <Button
                       onClick={() =>
@@ -502,12 +668,26 @@ export const MembersPage: React.FC = () => {
         )}
       </Card>
 
+      {/* Gym Owner Capacity Modal */}
+      <CapacitySettingsModal
+        isOpen={isCapacityModalOpen}
+        onClose={() => setIsCapacityModalOpen(false)}
+        currentCapacity={currentCapacity}
+        onSaveCapacity={async (newCap) => {
+          if (occupancy?.updateCapacity) {
+            await occupancy.updateCapacity(newCap);
+          }
+        }}
+        gymName={occupancy?.gymName}
+      />
+
       {/* Member Registration Modal */}
       <CreateMemberModal
         isOpen={isCreateModalOpen}
         onClose={() => {
           setIsCreateModalOpen(false);
-          fetchMembers(); // Reload list after modal closes
+          fetchMembers();
+          if (occupancy?.refreshStatus) occupancy.refreshStatus();
         }}
       />
 
@@ -521,3 +701,4 @@ export const MembersPage: React.FC = () => {
     </div>
   );
 };
+

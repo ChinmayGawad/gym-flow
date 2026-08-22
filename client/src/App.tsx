@@ -11,13 +11,15 @@ import { useOccupancy } from '@/hooks/useOccupancy';
 import { useSession } from '@/lib/auth-client';
 
 export function App() {
-  const occupancy = useOccupancy(42, 60);
+  const occupancy = useOccupancy(18, 30);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const { data: session } = useSession();
   const user = session?.user as (NonNullable<typeof session>['user'] & { role?: string; plan?: string }) | undefined;
   const displayName = user?.name || (user?.email ? user.email.split('@')[0] : 'Gym Member');
   const userPlan = user?.plan;
+  const isAdmin = user?.role === 'admin';
+  const isLoggedIn = !!user;
 
   return (
     <BrowserRouter>
@@ -34,17 +36,25 @@ export function App() {
                 <HomePage
                   displayName={displayName}
                   userPlan={userPlan}
+                  isAdmin={isAdmin}
+                  isLoggedIn={isLoggedIn}
                   occupancy={occupancy}
+                  onOpenAuth={() => setIsAuthOpen(true)}
                 />
               }
             />
-            <Route path="/schedule" element={<SchedulePage />} />
+            <Route
+              path="/schedule"
+              element={<SchedulePage capacity={occupancy.capacity} />}
+            />
             <Route path="/history" element={<HistoryPage />} />
             <Route
               path="/members"
               element={
                 <AdminRoute onOpenAuth={() => setIsAuthOpen(true)}>
-                  <MembersPage />
+                  <MembersPage
+                    occupancy={occupancy}
+                  />
                 </AdminRoute>
               }
             />

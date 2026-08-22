@@ -1,50 +1,79 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { WelcomeSection } from '@/components/dashboard/WelcomeSection';
 import { CrowdCard } from '@/components/dashboard/CrowdCard';
 import { QuickStats } from '@/components/dashboard/QuickStats';
 import { BestTimeCard } from '@/components/dashboard/BestTimeCard';
 import { OccupancySimulatorControl } from '@/components/dashboard/OccupancySimulatorControl';
+import { CapacitySettingsModal } from '@/components/admin/CapacitySettingsModal';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useOccupancy } from '@/hooks/useOccupancy';
-import { Calendar, Clock, ArrowRight, Activity, TrendingUp } from 'lucide-react';
+import { Calendar, Clock, ArrowRight } from 'lucide-react';
 
 interface HomePageProps {
   displayName: string;
   userPlan?: string;
+  isAdmin?: boolean;
+  isLoggedIn?: boolean;
   occupancy: ReturnType<typeof useOccupancy>;
+  onOpenAuth?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   displayName,
   userPlan,
+  isAdmin = false,
+  isLoggedIn = false,
   occupancy,
+  onOpenAuth,
 }) => {
+  const [isCapacityModalOpen, setIsCapacityModalOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       {/* Welcome Banner with Indian Membership Plan Badge */}
       <WelcomeSection userName={displayName} plan={userPlan} />
 
-      {/* Current Occupancy Hero Card */}
-      <CrowdCard data={occupancy} />
+      {/* Current Occupancy Hero Card with Self Check-In and Capacity Options */}
+      <CrowdCard
+        data={occupancy}
+        isAdmin={isAdmin}
+        isLoggedIn={isLoggedIn}
+        onToggleSelfCheckIn={occupancy.toggleSelfCheckIn}
+        onOpenCapacityModal={() => setIsCapacityModalOpen(true)}
+        onOpenAuth={onOpenAuth}
+        isLoadingCheckIn={occupancy.isLoading}
+      />
 
-      {/* Quick Stats Grid */}
+      {/* Quick Stats Grid with 4 Key Metrics */}
       <QuickStats
         peopleCount={occupancy.peopleCount}
+        capacity={occupancy.capacity}
+        totalRegisteredMembers={occupancy.totalRegisteredMembers}
         waitTime={occupancy.waitTime}
       />
 
       {/* Best Time Recommendation Card */}
-      <BestTimeCard />
+      <BestTimeCard capacity={occupancy.capacity} />
 
       {/* Live Simulation Controls */}
       <OccupancySimulatorControl
         isAutoSimulating={occupancy.isAutoSimulating}
+        capacity={occupancy.capacity}
         onToggleAutoSimulating={occupancy.toggleAutoSimulating}
         onIncrement={occupancy.increment}
         onDecrement={occupancy.decrement}
         onSetOccupants={occupancy.setOccupants}
+      />
+
+      {/* Gym Owner Capacity Modal */}
+      <CapacitySettingsModal
+        isOpen={isCapacityModalOpen}
+        onClose={() => setIsCapacityModalOpen(false)}
+        currentCapacity={occupancy.capacity}
+        onSaveCapacity={occupancy.updateCapacity}
+        gymName={occupancy.gymName}
       />
 
       {/* Navigation Quick Cards */}

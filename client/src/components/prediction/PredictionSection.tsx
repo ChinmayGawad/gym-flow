@@ -4,18 +4,37 @@ import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
 import { HourlyPrediction } from '@/types/occupancy';
 
-const PREDICTION_DATA: HourlyPrediction[] = [
-  { id: '1', time: '6 AM', peopleCount: 18, percentage: 31 },
-  { id: '2', time: '8 AM', peopleCount: 30, percentage: 52 },
-  { id: '3', time: '10 AM', peopleCount: 25, percentage: 43 },
-  { id: '4', time: '12 PM', peopleCount: 28, percentage: 47 },
-  { id: '5', time: '2 PM', peopleCount: 20, percentage: 34 },
-  { id: '6', time: '5 PM', peopleCount: 50, percentage: 83, isHigh: true },
-  { id: '7', time: '7 PM', peopleCount: 58, percentage: 96, isHighest: true },
-  { id: '8', time: '9 PM', peopleCount: 32, percentage: 53 },
+interface PredictionSectionProps {
+  capacity?: number;
+}
+
+const PREDICTION_CURVE = [
+  { id: '1', time: '6 AM', factor: 0.30 },
+  { id: '2', time: '8 AM', factor: 0.52 },
+  { id: '3', time: '10 AM', factor: 0.42 },
+  { id: '4', time: '12 PM', factor: 0.47 },
+  { id: '5', time: '2 PM', factor: 0.33 },
+  { id: '6', time: '5 PM', factor: 0.83, isHigh: true },
+  { id: '7', time: '7 PM', factor: 0.96, isHighest: true },
+  { id: '8', time: '9 PM', factor: 0.53 },
 ];
 
-export const PredictionSection: React.FC = () => {
+export const PredictionSection: React.FC<PredictionSectionProps> = ({ capacity = 30 }) => {
+  const predictionData: HourlyPrediction[] = PREDICTION_CURVE.map((row) => {
+    const peopleCount = Math.max(1, Math.round(capacity * row.factor));
+    const percentage = Math.round((peopleCount / capacity) * 100);
+    return {
+      id: row.id,
+      time: row.time,
+      peopleCount,
+      percentage,
+      isHigh: row.isHigh,
+      isHighest: row.isHighest,
+    };
+  });
+
+  const expectedBestTime = Math.max(1, Math.round(capacity * 0.35));
+
   return (
     <section id="prediction" className="pt-8 scroll-mt-24">
       {/* Section Header */}
@@ -29,14 +48,14 @@ export const PredictionSection: React.FC = () => {
           </h2>
         </div>
         <span className="text-xs text-[#888] font-medium">
-          21 August 2026
+          Capacity Benchmark: {capacity} Max
         </span>
       </div>
 
       {/* Hourly Prediction List Container */}
       <Card className="p-6 sm:p-7 bg-white border-[#dedede]">
         <div className="space-y-4.5">
-          {PREDICTION_DATA.map((row) => {
+          {predictionData.map((row) => {
             const isRush = row.isHigh || row.isHighest;
             const barFillColor = isRush ? 'bg-[#444444]' : 'bg-[#8b8b8b]';
 
@@ -78,7 +97,7 @@ export const PredictionSection: React.FC = () => {
             10:00 AM – 11:00 AM
           </h3>
           <p className="text-xs text-gym-subtle font-medium mt-0.5">
-            Expected crowd: 25 people
+            Expected crowd: ~{expectedBestTime} people
           </p>
         </div>
 

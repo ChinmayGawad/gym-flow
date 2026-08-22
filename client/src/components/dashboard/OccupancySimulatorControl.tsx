@@ -5,6 +5,7 @@ import { Play, Pause, Plus, Minus, RotateCcw } from 'lucide-react';
 
 interface OccupancySimulatorControlProps {
   isAutoSimulating: boolean;
+  capacity?: number;
   onToggleAutoSimulating: () => void;
   onIncrement: () => void;
   onDecrement: () => void;
@@ -13,11 +14,16 @@ interface OccupancySimulatorControlProps {
 
 export const OccupancySimulatorControl: React.FC<OccupancySimulatorControlProps> = ({
   isAutoSimulating,
+  capacity = 30,
   onToggleAutoSimulating,
   onIncrement,
   onDecrement,
   onSetOccupants,
 }) => {
+  const lowPreset = Math.max(1, Math.round(capacity * 0.25));
+  const modPreset = Math.max(1, Math.round(capacity * 0.55));
+  const highPreset = Math.max(1, Math.round(capacity * 0.85));
+
   return (
     <div className="mt-5 p-4 rounded-xl bg-white border border-[#dedede] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
       <div className="flex items-center gap-2">
@@ -46,28 +52,28 @@ export const OccupancySimulatorControl: React.FC<OccupancySimulatorControlProps>
       <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
         <span className="font-bold text-gym-dark mr-1">Test Presets:</span>
         <Button
-          onClick={() => onSetOccupants(18)}
+          onClick={() => onSetOccupants(lowPreset)}
           variant="outline"
           size="sm"
           className="h-7 px-2 text-[10px] text-[#277a3e] border-[#c2e4c8] hover:bg-[#e5f4e8]"
         >
-          Low (18)
+          Low ({lowPreset})
         </Button>
         <Button
-          onClick={() => onSetOccupants(35)}
+          onClick={() => onSetOccupants(modPreset)}
           variant="outline"
           size="sm"
           className="h-7 px-2 text-[10px] text-[#555] border-[#dedede] hover:bg-[#eeeeee]"
         >
-          Mod (35)
+          Mod ({modPreset})
         </Button>
         <Button
-          onClick={() => onSetOccupants(52)}
+          onClick={() => onSetOccupants(highPreset)}
           variant="outline"
           size="sm"
           className="h-7 px-2 text-[10px] text-[#9b3131] border-[#f0c4c4] hover:bg-[#f7e4e4]"
         >
-          High (52)
+          High ({highPreset})
         </Button>
 
         <div className="h-4 w-[1px] bg-[#dedede] mx-1 hidden sm:block" />

@@ -72,3 +72,54 @@ export const createMemberSchema = z.object({
 });
 
 export type CreateMemberInput = z.infer<typeof createMemberSchema>;
+
+// ================= GYM CAPACITY & OCCUPANCY =================
+
+export const DEFAULT_GYM_CAPACITY = 30;
+
+export const updateCapacitySchema = z.object({
+  capacity: z.number().int().min(10, 'Capacity must be at least 10').max(2000, 'Capacity cannot exceed 2000'),
+  gymName: z.string().min(2).optional(),
+});
+
+export type UpdateCapacityInput = z.infer<typeof updateCapacitySchema>;
+
+export type OccupancyLevel = 'LOW' | 'MODERATE' | 'HIGH';
+
+export interface OccupancyStats {
+  peopleCount: number;
+  capacity: number;
+  totalRegisteredMembers: number;
+  occupancyPercentage: number;
+  turnoutPercentage: number;
+  status: OccupancyLevel;
+  waitTime: string;
+  isCheckedInSelf?: boolean;
+}
+
+export function calculateOccupancyStatus(peopleCount: number, capacity: number): {
+  percentage: number;
+  status: OccupancyLevel;
+  waitTime: string;
+} {
+  const cap = Math.max(1, capacity || DEFAULT_GYM_CAPACITY);
+  const count = Math.max(0, Math.min(peopleCount, cap));
+  const percentage = Math.round((count / cap) * 100);
+
+  let status: OccupancyLevel = 'MODERATE';
+  let waitTime = '10 min';
+
+  if (percentage < 40) {
+    status = 'LOW';
+    waitTime = '0–5 min';
+  } else if (percentage < 75) {
+    status = 'MODERATE';
+    waitTime = '10 min';
+  } else {
+    status = 'HIGH';
+    waitTime = '15–25 min';
+  }
+
+  return { percentage, status, waitTime };
+}
+

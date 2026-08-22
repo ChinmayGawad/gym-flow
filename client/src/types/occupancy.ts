@@ -1,12 +1,18 @@
 export type OccupancyStatus = 'LOW' | 'MODERATE' | 'HIGH';
 
+export const DEFAULT_CAPACITY = 30;
+
 export interface OccupancyData {
   peopleCount: number;
   capacity: number;
+  totalRegisteredMembers: number;
+  turnoutPercentage: number;
   percentage: number;
   status: OccupancyStatus;
   waitTime: string;
+  isCheckedInSelf: boolean;
   isAutoSimulating: boolean;
+  gymName?: string;
 }
 
 export interface HourlyPrediction {

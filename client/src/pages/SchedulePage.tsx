@@ -15,30 +15,47 @@ import {
 } from 'lucide-react';
 import { HourlyPrediction } from '@/types/occupancy';
 
-const HOURLY_SCHEDULE: HourlyPrediction[] = [
-  { id: '1', time: '6 AM', peopleCount: 18, percentage: 30 },
-  { id: '2', time: '7 AM', peopleCount: 22, percentage: 37 },
-  { id: '3', time: '8 AM', peopleCount: 32, percentage: 53 },
-  { id: '4', time: '9 AM', peopleCount: 26, percentage: 43 },
-  { id: '5', time: '10 AM', peopleCount: 20, percentage: 33 },
-  { id: '6', time: '11 AM', peopleCount: 22, percentage: 37 },
-  { id: '7', time: '12 PM', peopleCount: 28, percentage: 47 },
-  { id: '8', time: '1 PM', peopleCount: 24, percentage: 40 },
-  { id: '9', time: '2 PM', peopleCount: 19, percentage: 32 },
-  { id: '10', time: '3 PM', peopleCount: 23, percentage: 38 },
-  { id: '11', time: '4 PM', peopleCount: 38, percentage: 63 },
-  { id: '12', time: '5 PM', peopleCount: 49, percentage: 82, isHigh: true },
-  { id: '13', time: '6 PM', peopleCount: 54, percentage: 90, isHigh: true },
-  { id: '14', time: '7 PM', peopleCount: 58, percentage: 97, isHighest: true },
-  { id: '15', time: '8 PM', peopleCount: 44, percentage: 73 },
-  { id: '16', time: '9 PM', peopleCount: 30, percentage: 50 },
-  { id: '17', time: '10 PM', peopleCount: 15, percentage: 25 },
+interface SchedulePageProps {
+  capacity?: number;
+}
+
+const SCHEDULE_CURVE = [
+  { id: '1', time: '6 AM', factor: 0.30 },
+  { id: '2', time: '7 AM', factor: 0.37 },
+  { id: '3', time: '8 AM', factor: 0.53 },
+  { id: '4', time: '9 AM', factor: 0.43 },
+  { id: '5', time: '10 AM', factor: 0.33 },
+  { id: '6', time: '11 AM', factor: 0.37 },
+  { id: '7', time: '12 PM', factor: 0.47 },
+  { id: '8', time: '1 PM', factor: 0.40 },
+  { id: '9', time: '2 PM', factor: 0.32 },
+  { id: '10', time: '3 PM', factor: 0.38 },
+  { id: '11', time: '4 PM', factor: 0.63 },
+  { id: '12', time: '5 PM', factor: 0.82, isHigh: true },
+  { id: '13', time: '6 PM', factor: 0.90, isHigh: true },
+  { id: '14', time: '7 PM', factor: 0.97, isHighest: true },
+  { id: '15', time: '8 PM', factor: 0.73 },
+  { id: '16', time: '9 PM', factor: 0.50 },
+  { id: '17', time: '10 PM', factor: 0.25 },
 ];
 
-export const SchedulePage: React.FC = () => {
+export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening'>('all');
 
-  const filteredSchedule = HOURLY_SCHEDULE.filter((item) => {
+  const hourlySchedule: HourlyPrediction[] = SCHEDULE_CURVE.map((item) => {
+    const peopleCount = Math.max(1, Math.round(capacity * item.factor));
+    const percentage = Math.round((peopleCount / capacity) * 100);
+    return {
+      id: item.id,
+      time: item.time,
+      peopleCount,
+      percentage,
+      isHigh: item.isHigh,
+      isHighest: item.isHighest,
+    };
+  });
+
+  const filteredSchedule = hourlySchedule.filter((item) => {
     const hourNumber = parseInt(item.time.split(' ')[0], 10);
     const isPM = item.time.includes('PM');
 
@@ -53,6 +70,9 @@ export const SchedulePage: React.FC = () => {
     }
     return true;
   });
+
+  const morningLowAvg = Math.round(capacity * 0.33);
+  const afternoonLowAvg = Math.round(capacity * 0.35);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -72,14 +92,14 @@ export const SchedulePage: React.FC = () => {
             Crowd Schedule & Forecast
           </h1>
           <p className="text-xs text-gym-subtle mt-0.5 font-medium">
-            AI-modeled hourly traffic predictions based on historical gym attendance patterns.
+            AI-modeled hourly traffic predictions dynamically scaled for {capacity} capacity benchmark.
           </p>
         </div>
 
         {/* Date Badge */}
         <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-[10px] border border-[#dedede] self-start md:self-auto shadow-sm">
           <Calendar className="w-4 h-4 text-gym-dark" />
-          <span className="text-xs font-bold text-gym-dark">Today, 22 August 2026</span>
+          <span className="text-xs font-bold text-gym-dark">Live Forecast ({capacity} Max)</span>
         </div>
       </div>
 
@@ -97,7 +117,7 @@ export const SchedulePage: React.FC = () => {
             6:00 AM – 7:30 AM
           </h4>
           <p className="text-xs text-gym-subtle mt-1">
-            Avg. ~18–22 people. Ideal for cardio & squat racks without waiting.
+            Avg. ~{morningLowAvg} people. Ideal for cardio & squat racks without waiting.
           </p>
         </Card>
 
@@ -113,7 +133,7 @@ export const SchedulePage: React.FC = () => {
             1:30 PM – 3:30 PM
           </h4>
           <p className="text-xs text-gym-subtle mt-1">
-            Avg. ~19–23 people. Minimum wait times across all equipment zones.
+            Avg. ~{afternoonLowAvg} people. Minimum wait times across all equipment zones.
           </p>
         </Card>
 
@@ -129,7 +149,7 @@ export const SchedulePage: React.FC = () => {
             5:30 PM – 8:00 PM
           </h4>
           <p className="text-xs text-gym-subtle mt-1">
-            Capacity reaches 90%–97%. Expected equipment wait times 15–25 mins.
+            Capacity reaches 85%–97% (~{Math.round(capacity * 0.9)} people). Expected wait times 15–25 mins.
           </p>
         </Card>
       </div>
@@ -143,7 +163,7 @@ export const SchedulePage: React.FC = () => {
               Hourly Attendance Curve
             </h3>
             <p className="text-xs text-gym-subtle mt-0.5">
-              Live capacity benchmark: 60 maximum occupants.
+              Live facility benchmark: {capacity} maximum concurrent occupants.
             </p>
           </div>
 
@@ -228,7 +248,7 @@ export const SchedulePage: React.FC = () => {
 
                 {/* Headcount */}
                 <span className="text-gym-subtle font-medium text-right">
-                  <strong className="text-gym-dark">{row.peopleCount}</strong> / 60 people
+                  <strong className="text-gym-dark">{row.peopleCount}</strong> / {capacity} people
                 </span>
 
                 {/* Status Tag */}

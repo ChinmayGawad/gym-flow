@@ -3,7 +3,13 @@ import { CalendarDays } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-export const BestTimeCard: React.FC = () => {
+interface BestTimeCardProps {
+  capacity?: number;
+}
+
+export const BestTimeCard: React.FC<BestTimeCardProps> = ({ capacity = 30 }) => {
+  const expectedPeople = Math.max(1, Math.round(capacity * 0.3));
+
   return (
     <Card className="mt-4 p-6 sm:p-7 flex items-center justify-between bg-white border-[#dedede]">
       <div>
@@ -14,7 +20,7 @@ export const BestTimeCard: React.FC = () => {
           10:00 AM – 11:00 AM
         </h2>
         <p className="text-gym-subtle text-xs sm:text-sm mt-1 flex items-center gap-2">
-          Expected crowd: <strong className="text-[#333]">25 people</strong>
+          Expected crowd: <strong className="text-[#333]">~{expectedPeople} people</strong>
           <Badge variant="low" className="px-2.5 py-0.5 text-[10px]">
             LOW
           </Badge>

@@ -39,6 +39,328 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'gymflow-server' });
 });
 
+// Helper to get or create Gym Settings (Default Capacity: 30)
+async function getOrCreateGymSettings() {
+  let settings = await prisma.gymSettings.findUnique({
+    where: { id: 'default' },
+  });
+  if (!settings) {
+    settings = await prisma.gymSettings.create({
+      data: {
+        id: 'default',
+        capacity: 30,
+        gymName: 'GymFlow Fitness',
+      },
+    });
+  }
+  return settings;
+}
+
+// 1. GET /api/gym/status - Real-time Gym Status, Capacity & Occupancy
+app.get('/api/gym/status', async (req, res) => {
+  try {
+    const settings = await getOrCreateGymSettings();
+    const capacity = settings.capacity;
+
+    // Registered members in system
+    const totalRegisteredMembers = await prisma.user.count();
+
+    // Checked-in members
+    const checkedInCount = await prisma.user.count({
+      where: { isCheckedIn: true },
+    });
+
+    // Check if current user is signed in & their check-in state
+    let isCheckedInSelf = false;
+    try {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        const currentUser = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { isCheckedIn: true },
+        });
+        isCheckedInSelf = !!currentUser?.isCheckedIn;
+      }
+    } catch {
+      // Unauthenticated visitor
+      isCheckedInSelf = false;
+    }
+
+    const percentage = Math.round((checkedInCount / capacity) * 100);
+    const turnoutPercentage =
+      totalRegisteredMembers > 0
+        ? Math.round((checkedInCount / totalRegisteredMembers) * 100)
+        : 0;
+
+    let status = 'MODERATE';
+    let waitTime = '10 min';
+
+    if (percentage < 40) {
+      status = 'LOW';
+      waitTime = '0–5 min';
+    } else if (percentage < 75) {
+      status = 'MODERATE';
+      waitTime = '10 min';
+    } else {
+      status = 'HIGH';
+      waitTime = '15–25 min';
+    }
+
+    return res.json({
+      success: true,
+      peopleCount: checkedInCount,
+      capacity,
+      totalRegisteredMembers,
+      percentage,
+      turnoutPercentage,
+      status,
+      waitTime,
+      isCheckedInSelf,
+      gymName: settings.gymName,
+    });
+  } catch (error: any) {
+    console.error('Error fetching gym status:', error);
+    return res.status(500).json({ error: 'Failed to fetch gym status.' });
+  }
+});
+
+// 2. POST /api/gym/checkin-toggle - Member Self Check-In / Check-Out
+app.post('/api/gym/checkin-toggle', async (req, res) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    if (!session?.user?.id) {
+      return res.status(401).json({ error: 'Authentication required to check in.' });
+    }
+
+    const userId = session.user.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const newCheckedInState = !user.isCheckedIn;
+
+    if (newCheckedInState) {
+      // Member is checking IN
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          isCheckedIn: true,
+          lastCheckInAt: new Date(),
+        },
+      });
+
+      // Create new VisitLog record
+      await prisma.visitLog.create({
+        data: {
+          userId,
+          checkInTime: new Date(),
+        },
+      });
+    } else {
+      // Member is checking OUT
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          isCheckedIn: false,
+        },
+      });
+
+      // Close open visit log
+      const openLog = await prisma.visitLog.findFirst({
+        where: {
+          userId,
+          checkOutTime: null,
+        },
+        orderBy: { checkInTime: 'desc' },
+      });
+
+      if (openLog) {
+        const checkOutTime = new Date();
+        const durationMinutes = Math.max(
+          1,
+          Math.round((checkOutTime.getTime() - openLog.checkInTime.getTime()) / (1000 * 60))
+        );
+
+        await prisma.visitLog.update({
+          where: { id: openLog.id },
+          data: {
+            checkOutTime,
+            durationMinutes,
+          },
+        });
+      }
+    }
+
+    // Return updated gym metrics
+    const settings = await getOrCreateGymSettings();
+    const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
+    const totalRegisteredMembers = await prisma.user.count();
+    const percentage = Math.round((checkedInCount / settings.capacity) * 100);
+
+    return res.json({
+      success: true,
+      isCheckedIn: newCheckedInState,
+      message: newCheckedInState
+        ? 'Welcome to the gym! You are now checked in.'
+        : 'You have been checked out. Great workout!',
+      peopleCount: checkedInCount,
+      capacity: settings.capacity,
+      totalRegisteredMembers,
+      percentage,
+    });
+  } catch (error: any) {
+    console.error('Error toggling member self check-in:', error);
+    return res.status(500).json({ error: 'Failed to update check-in status.' });
+  }
+});
+
+// 3. PUT /api/admin/gym/capacity - Gym Owner Update Facility Capacity
+app.put('/api/admin/gym/capacity', async (req, res) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    const userRole = (session?.user as any)?.role;
+    if (!session || userRole !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Administrator access required.' });
+    }
+
+    const { capacity, gymName } = req.body;
+    const parsedCapacity = parseInt(capacity, 10);
+
+    if (isNaN(parsedCapacity) || parsedCapacity < 10 || parsedCapacity > 2000) {
+      return res.status(400).json({ error: 'Capacity must be a valid number between 10 and 2000.' });
+    }
+
+    const updatedSettings = await prisma.gymSettings.upsert({
+      where: { id: 'default' },
+      update: {
+        capacity: parsedCapacity,
+        ...(gymName ? { gymName: gymName.trim() } : {}),
+      },
+      create: {
+        id: 'default',
+        capacity: parsedCapacity,
+        gymName: gymName?.trim() || 'GymFlow Fitness',
+      },
+    });
+
+    // Record in OccupancyLog
+    const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
+    await prisma.occupancyLog.create({
+      data: {
+        occupantsCount: checkedInCount,
+        capacity: parsedCapacity,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: `Gym capacity updated to ${parsedCapacity} occupants.`,
+      settings: updatedSettings,
+    });
+  } catch (error: any) {
+    console.error('Error updating gym capacity:', error);
+    return res.status(500).json({ error: 'Failed to update gym capacity.' });
+  }
+});
+
+// 4. POST /api/admin/members/:id/checkin-toggle - Admin Master Member Check-In
+app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    const userRole = (session?.user as any)?.role;
+    if (!session || userRole !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Administrator access required.' });
+    }
+
+    const { id } = req.params;
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'Member not found.' });
+    }
+
+    const newCheckedInState = !targetUser.isCheckedIn;
+
+    if (newCheckedInState) {
+      await prisma.user.update({
+        where: { id },
+        data: {
+          isCheckedIn: true,
+          lastCheckInAt: new Date(),
+        },
+      });
+
+      await prisma.visitLog.create({
+        data: {
+          userId: id,
+          checkInTime: new Date(),
+        },
+      });
+    } else {
+      await prisma.user.update({
+        where: { id },
+        data: {
+          isCheckedIn: false,
+        },
+      });
+
+      const openLog = await prisma.visitLog.findFirst({
+        where: {
+          userId: id,
+          checkOutTime: null,
+        },
+        orderBy: { checkInTime: 'desc' },
+      });
+
+      if (openLog) {
+        const checkOutTime = new Date();
+        const durationMinutes = Math.max(
+          1,
+          Math.round((checkOutTime.getTime() - openLog.checkInTime.getTime()) / (1000 * 60))
+        );
+
+        await prisma.visitLog.update({
+          where: { id: openLog.id },
+          data: {
+            checkOutTime,
+            durationMinutes,
+          },
+        });
+      }
+    }
+
+    const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
+
+    return res.json({
+      success: true,
+      userId: id,
+      isCheckedIn: newCheckedInState,
+      message: `${targetUser.name} is now ${newCheckedInState ? 'checked in' : 'checked out'}.`,
+      checkedInCount,
+    });
+  } catch (error: any) {
+    console.error('Error toggling member check-in by admin:', error);
+    return res.status(500).json({ error: 'Failed to update member check-in status.' });
+  }
+});
+
 // Admin: Update Member Profile, Role & Subscription Plan
 app.put('/api/admin/members/:id', async (req, res) => {
   try {
