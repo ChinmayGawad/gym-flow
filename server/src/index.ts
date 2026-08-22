@@ -744,10 +744,59 @@ if (fs.existsSync(clientDistPath)) {
   });
 }
 
+// Initial database provisioning helper (creates default admin & demo member if not present)
+async function ensureInitialSeed() {
+  try {
+    await getOrCreateGymSettings();
+
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@gymflow.com';
+    const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
+    if (!existingAdmin) {
+      console.log(`[Seed] Initializing default Admin account: ${adminEmail}`);
+      const adminRes = await auth.api.signUpEmail({
+        body: {
+          email: adminEmail,
+          password: process.env.ADMIN_PASSWORD || 'Admin123456!',
+          name: 'Gym Head Admin',
+        },
+      });
+      if (adminRes?.user) {
+        await prisma.user.update({
+          where: { id: adminRes.user.id },
+          data: { role: 'admin', plan: 'elite', planStatus: 'active' },
+        });
+      }
+    }
+
+    const memberEmail = 'member@gymflow.com';
+    const existingMember = await prisma.user.findUnique({ where: { email: memberEmail } });
+    if (!existingMember) {
+      console.log(`[Seed] Initializing default Member account: ${memberEmail}`);
+      const memberRes = await auth.api.signUpEmail({
+        body: {
+          email: memberEmail,
+          password: 'Member123456!',
+          name: 'Chinmay Gawad',
+        },
+      });
+      if (memberRes?.user) {
+        await prisma.user.update({
+          where: { id: memberRes.user.id },
+          data: { role: 'user', plan: 'pro', planStatus: 'active' },
+        });
+      }
+    }
+  } catch (seedErr) {
+    console.warn('[Seed] Note during startup seed:', seedErr);
+  }
+}
+
 const portNumber = Number(process.env.PORT) || 3000;
 
-app.listen(portNumber, '0.0.0.0', () => {
+app.listen(portNumber, '0.0.0.0', async () => {
   console.log(`🚀 GymFlow Server running on port ${portNumber}`);
+  await ensureInitialSeed();
 });
+
 
 
