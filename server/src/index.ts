@@ -45,12 +45,45 @@ app.use(
   })
 );
 
-// Body Parsers (express.json must parse incoming body for Bun/Node compatibility)
+// Body Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Better Auth Route Handler
-app.all('/api/auth/*', toNodeHandler(auth));
+// Better Auth Route Handler (Web Standard Adapter compatible with Bun/Node/Docker)
+app.all('/api/auth/*', async (req, res) => {
+  try {
+    const rawProto = req.headers['x-forwarded-proto'];
+    const protocol = Array.isArray(rawProto) ? rawProto[0] : (rawProto ? rawProto.split(',')[0].trim() : (req.secure ? 'https' : 'http'));
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000';
+    const url = `${protocol}://${host}${req.originalUrl}`;
+
+    let body: string | undefined = undefined;
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body !== undefined) {
+      body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    }
+
+    const webHeaders = fromNodeHeaders(req.headers);
+    const request = new Request(url, {
+      method: req.method,
+      headers: webHeaders,
+      body,
+    });
+
+    const response = await auth.handler(request);
+
+    res.status(response.status);
+    response.headers.forEach((value, key) => {
+      res.setHeader(key, value);
+    });
+
+    const data = await response.text();
+    return res.send(data);
+  } catch (authErr: any) {
+    console.error('Better Auth execution error:', authErr);
+    return res.status(500).json({ error: authErr.message || 'Authentication error' });
+  }
+});
+
 
 
 // Health Check Endpoint
