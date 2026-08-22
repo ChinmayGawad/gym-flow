@@ -32,13 +32,12 @@ async function main() {
       process.exit(0);
     }
 
-    // Register user via Better Auth API with role: "admin"
+    // Register user via Better Auth API
     const res = await auth.api.signUpEmail({
       body: {
         email,
         password,
         name,
-        role: 'admin',
       },
     });
 
