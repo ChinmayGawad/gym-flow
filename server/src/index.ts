@@ -11,13 +11,23 @@ import { prisma } from './lib/db';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const clientUrl = process.env.CLIENT_URL || '';
+const clientOrigins = clientUrl
+  ? [
+      clientUrl,
+      clientUrl.startsWith('http') ? clientUrl : `https://${clientUrl}`,
+      clientUrl.startsWith('http') ? clientUrl.replace(/^https?:\/\//, '') : clientUrl,
+    ]
+  : [];
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
   'http://127.0.0.1:3000',
-  ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+  ...clientOrigins,
 ];
+
 
 // CORS setup for frontend client
 app.use(
