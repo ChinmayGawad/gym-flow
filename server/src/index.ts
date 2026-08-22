@@ -9,7 +9,9 @@ import { prisma } from './lib/db';
 
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
+
 
 const clientUrl = process.env.CLIENT_URL || '';
 const clientOrigins = clientUrl
