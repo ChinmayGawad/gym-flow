@@ -7,14 +7,12 @@ import { HistoryPage } from '@/pages/HistoryPage';
 import { MembersPage } from '@/pages/MembersPage';
 import { AdminRoute } from '@/components/auth/AdminRoute';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { CreateMemberModal } from '@/components/admin/CreateMemberModal';
 import { useOccupancy } from '@/hooks/useOccupancy';
 import { useSession } from '@/lib/auth-client';
 
 export function App() {
   const occupancy = useOccupancy(42, 60);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isCreateMemberOpen, setIsCreateMemberOpen] = useState(false);
 
   const { data: session } = useSession();
   const user = session?.user as (NonNullable<typeof session>['user'] & { role?: string; plan?: string }) | undefined;
@@ -25,10 +23,7 @@ export function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-gym-canvas text-gym-dark flex flex-col font-sans">
         {/* Sticky Navbar with Routing Navigation */}
-        <Navbar
-          onOpenAuth={() => setIsAuthOpen(true)}
-          onOpenCreateMember={() => setIsCreateMemberOpen(true)}
-        />
+        <Navbar onOpenAuth={() => setIsAuthOpen(true)} />
 
         {/* Main Content Area */}
         <main className="w-[90%] max-w-[1100px] mx-auto py-8 md:py-12 pb-24 md:pb-16 flex-1">
@@ -59,12 +54,6 @@ export function App() {
 
         {/* Authentication Sign-In Modal */}
         <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-
-        {/* Admin Member Registration Modal */}
-        <CreateMemberModal
-          isOpen={isCreateMemberOpen}
-          onClose={() => setIsCreateMemberOpen(false)}
-        />
       </div>
     </BrowserRouter>
   );
