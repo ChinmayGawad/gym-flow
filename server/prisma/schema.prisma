@@ -14,6 +14,8 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?
   role          String    @default("user") // "admin" | "user"
+  plan          String    @default("basic") // "basic" | "pro" | "elite"
+  planStatus    String    @default("active") // "active" | "expired" | "pending"
   banned        Boolean?  @default(false)
   banReason     String?
   banExpires    Int?

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import {
-  UserPlus,
+  Edit3,
   Mail,
   Lock,
   User,
@@ -21,16 +21,32 @@ import {
   Crown,
   Zap,
   Shield,
+  ShieldCheck,
 } from 'lucide-react';
-import { authClient } from '@/lib/auth-client';
 import { MEMBERSHIP_PLANS, MembershipPlan } from '@/types/plans';
 
-interface CreateMemberModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+export interface EditableMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  plan?: string;
+  planStatus?: string;
 }
 
-export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, onClose }) => {
+interface EditMemberModalProps {
+  member: EditableMember | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: (updatedMember: EditableMember) => void;
+}
+
+export const EditMemberModal: React.FC<EditMemberModalProps> = ({
+  member,
+  isOpen,
+  onClose,
+  onSuccess,
+}) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,73 +57,89 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const resetForm = () => {
-    setName('');
-    setEmail('');
-    setPassword('');
-    setRole('user');
-    setPlan('basic');
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    setIsSubmitting(false);
-  };
+  useEffect(() => {
+    if (member) {
+      setName(member.name || '');
+      setEmail(member.email || '');
+      setRole((member.role as 'user' | 'admin') || 'user');
+      setPlan((member.plan as MembershipPlan) || 'basic');
+      setPassword('');
+      setErrorMessage(null);
+      setSuccessMessage(null);
+    }
+  }, [member, isOpen]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      resetForm();
+      setErrorMessage(null);
+      setSuccessMessage(null);
       onClose();
     }
   };
 
-  const handleCreateMember = async (e: React.FormEvent) => {
+  const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!member) return;
+
     setIsSubmitting(true);
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      // Admin API call via Better Auth adminClient plugin
-      const res = await authClient.admin.createUser({
-        email: email.toLowerCase().trim(),
-        password,
-        name: name.trim(),
-        role,
-        data: {
-          plan,
-          planStatus: 'active',
+      const response = await fetch(`http://localhost:3000/api/admin/members/${member.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.toLowerCase().trim(),
+          role,
+          plan,
+          ...(password ? { password } : {}),
+        }),
       });
 
-      if (res?.error) {
-        setErrorMessage(res.error.message || 'Failed to create member account.');
-      } else {
-        const planName = MEMBERSHIP_PLANS[plan].name;
-        const planPrice = MEMBERSHIP_PLANS[plan].price;
-        setSuccessMessage(`Account for "${name}" created with ${planName} (${planPrice}/mo)!`);
-        setTimeout(() => {
-          resetForm();
-          onClose();
-        }, 1500);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update member profile.');
       }
+
+      setSuccessMessage(`Member "${name}" updated successfully!`);
+      onSuccess({
+        ...member,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        role,
+        plan,
+      });
+
+      setTimeout(() => {
+        onClose();
+      }, 1200);
     } catch (err: any) {
-      setErrorMessage(err?.message || 'An error occurred while creating member account.');
+      setErrorMessage(err?.message || 'An error occurred while updating member profile.');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (!member) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[480px] p-6 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-col items-center text-center">
           <div className="w-12 h-12 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-2">
-            <UserPlus className="w-6 h-6 text-gym-dark" />
+            <Edit3 className="w-6 h-6 text-gym-dark" />
           </div>
           <DialogTitle className="text-xl font-extrabold tracking-tight text-gym-dark flex items-center gap-2">
-            Register Gym Member
+            Edit Member Account
           </DialogTitle>
           <DialogDescription className="text-xs text-gym-subtle mt-1">
-            Create an official GymFlow account with subscription plan assignment.
+            Update member credentials, subscription tier, and administration role.
           </DialogDescription>
         </DialogHeader>
 
@@ -125,16 +157,15 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
           </div>
         )}
 
-        <form onSubmit={handleCreateMember} className="space-y-4 mt-3">
+        <form onSubmit={handleSaveMember} className="space-y-4 mt-3">
           {/* Member Name */}
           <div className="space-y-1.5">
-            <Label htmlFor="member-name">Member Full Name</Label>
+            <Label htmlFor="edit-member-name">Member Full Name</Label>
             <div className="relative">
               <User className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
               <Input
-                id="member-name"
+                id="edit-member-name"
                 type="text"
-                placeholder="Rohan Sharma"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="pl-9"
@@ -146,13 +177,12 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
 
           {/* Email Address */}
           <div className="space-y-1.5">
-            <Label htmlFor="member-email">Email Address</Label>
+            <Label htmlFor="edit-member-email">Email Address</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
               <Input
-                id="member-email"
+                id="edit-member-email"
                 type="email"
-                placeholder="rohan@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-9"
@@ -162,19 +192,21 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
             </div>
           </div>
 
-          {/* Initial Password */}
+          {/* Reset Password (Optional) */}
           <div className="space-y-1.5">
-            <Label htmlFor="member-password">Initial Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-member-password">Reset Password (Optional)</Label>
+              <span className="text-[10px] text-gym-subtle font-medium">Leave blank to keep unchanged</span>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
               <Input
-                id="member-password"
+                id="edit-member-password"
                 type="password"
-                placeholder="Minimum 8 characters"
+                placeholder="New password (min 8 chars)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-9"
-                required
                 minLength={8}
                 disabled={isSubmitting}
               />
@@ -254,7 +286,7 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
               <label className="flex items-center gap-2 text-xs font-semibold text-gym-dark cursor-pointer">
                 <input
                   type="radio"
-                  name="role"
+                  name="edit-role"
                   value="user"
                   checked={role === 'user'}
                   onChange={() => setRole('user')}
@@ -265,7 +297,7 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
               <label className="flex items-center gap-2 text-xs font-semibold text-gym-dark cursor-pointer">
                 <input
                   type="radio"
-                  name="role"
+                  name="edit-role"
                   value="admin"
                   checked={role === 'admin'}
                   onChange={() => setRole('admin')}
@@ -284,10 +316,10 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Registering Member...
+                Saving Changes...
               </>
             ) : (
-              `Create Member Account (${MEMBERSHIP_PLANS[plan].price}/mo)`
+              `Save Changes (${MEMBERSHIP_PLANS[plan].price}/mo)`
             )}
           </Button>
         </form>

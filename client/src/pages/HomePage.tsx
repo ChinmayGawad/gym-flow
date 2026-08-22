@@ -12,14 +12,19 @@ import { Calendar, Clock, ArrowRight, Activity, TrendingUp } from 'lucide-react'
 
 interface HomePageProps {
   displayName: string;
+  userPlan?: string;
   occupancy: ReturnType<typeof useOccupancy>;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ displayName, occupancy }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  displayName,
+  userPlan,
+  occupancy,
+}) => {
   return (
     <div className="space-y-6">
-      {/* Welcome Banner */}
-      <WelcomeSection userName={displayName} />
+      {/* Welcome Banner with Indian Membership Plan Badge */}
+      <WelcomeSection userName={displayName} plan={userPlan} />
 
       {/* Current Occupancy Hero Card */}
       <CrowdCard data={occupancy} />

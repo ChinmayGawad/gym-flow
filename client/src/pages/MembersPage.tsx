@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Search,
   Trash2,
+  Edit3,
   Mail,
   Calendar,
   Loader2,
@@ -17,15 +18,23 @@ import {
   CheckCircle2,
   ArrowLeft,
   User,
+  CreditCard,
+  Crown,
+  Zap,
+  Shield,
 } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
 import { CreateMemberModal } from '@/components/admin/CreateMemberModal';
+import { EditMemberModal, EditableMember } from '@/components/admin/EditMemberModal';
+import { MEMBERSHIP_PLANS, MembershipPlan } from '@/types/plans';
 
 interface GymMember {
   id: string;
   name: string;
   email: string;
   role: string;
+  plan?: MembershipPlan;
+  planStatus?: string;
   createdAt: string | Date;
   image?: string | null;
 }
@@ -35,7 +44,9 @@ export const MembersPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
+  const [planFilter, setPlanFilter] = useState<'all' | 'basic' | 'pro' | 'elite'>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<EditableMember | null>(null);
   const [actionFeedback, setActionFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -89,7 +100,7 @@ export const MembersPage: React.FC = () => {
           type: 'success',
           message: `Member "${memberName}" has been removed.`,
         });
-        // Optimistic update + fetch
+        // Optimistic update
         setMembers((prev) => prev.filter((m) => m.id !== userId));
       }
     } catch (err: any) {
@@ -102,6 +113,26 @@ export const MembersPage: React.FC = () => {
     }
   };
 
+  const handleMemberUpdated = (updated: EditableMember) => {
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === updated.id
+          ? {
+              ...m,
+              name: updated.name,
+              email: updated.email,
+              role: updated.role,
+              plan: (updated.plan as MembershipPlan) || 'basic',
+            }
+          : m
+      )
+    );
+    setActionFeedback({
+      type: 'success',
+      message: `Member "${updated.name}" updated successfully.`,
+    });
+  };
+
   // Filtered members list
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
@@ -111,7 +142,11 @@ export const MembersPage: React.FC = () => {
     const matchesRole =
       roleFilter === 'all' ? true : (member.role || 'user') === roleFilter;
 
-    return matchesSearch && matchesRole;
+    const memberPlan = member.plan || 'basic';
+    const matchesPlan =
+      planFilter === 'all' ? true : memberPlan === planFilter;
+
+    return matchesSearch && matchesRole && matchesPlan;
   });
 
   const totalMembersCount = members.length;
@@ -142,7 +177,7 @@ export const MembersPage: React.FC = () => {
             </Badge>
           </div>
           <p className="text-xs text-gym-subtle mt-0.5 font-medium">
-            Manage member accounts, assign roles, and issue new credentials.
+            Manage member accounts, assign Indian membership subscription plans (₹ INR), and update credentials.
           </p>
         </div>
 
@@ -183,40 +218,52 @@ export const MembersPage: React.FC = () => {
       )}
 
       {/* Analytics Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card className="p-5 bg-white border-[#dedede]">
           <div className="w-9 h-9 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-2">
             <Users className="w-4.5 h-4.5" />
           </div>
           <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
-            Total Registered
+            Total Accounts
           </span>
           <span className="text-2xl font-black text-gym-dark mt-0.5 block">
-            {totalMembersCount} Accounts
+            {totalMembersCount}
+          </span>
+        </Card>
+
+        <Card className="p-5 bg-white border-[#dedede]">
+          <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center mb-2">
+            <Shield className="w-4.5 h-4.5" />
+          </div>
+          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
+            Basic (₹999/mo)
+          </span>
+          <span className="text-2xl font-black text-gym-dark mt-0.5 block">
+            {members.filter((m) => (m.plan || 'basic') === 'basic').length}
           </span>
         </Card>
 
         <Card className="p-5 bg-white border-[#dedede]">
           <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center mb-2">
-            <User className="w-4.5 h-4.5" />
+            <Zap className="w-4.5 h-4.5" />
           </div>
           <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
-            Active Members
+            Pro (₹1,999/mo)
           </span>
-          <span className="text-2xl font-black text-gym-dark mt-0.5 block">
-            {standardMembersCount} Members
+          <span className="text-2xl font-black text-blue-900 mt-0.5 block">
+            {members.filter((m) => m.plan === 'pro').length}
           </span>
         </Card>
 
         <Card className="p-5 bg-white border-[#dedede]">
           <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center mb-2">
-            <ShieldCheck className="w-4.5 h-4.5" />
+            <Crown className="w-4.5 h-4.5" />
           </div>
           <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
-            Gym Administrators
+            Elite (₹3,499/mo)
           </span>
-          <span className="text-2xl font-black text-gym-dark mt-0.5 block">
-            {adminCount} Admins
+          <span className="text-2xl font-black text-amber-900 mt-0.5 block">
+            {members.filter((m) => m.plan === 'elite').length}
           </span>
         </Card>
       </div>
@@ -224,50 +271,100 @@ export const MembersPage: React.FC = () => {
       {/* Members Directory Card */}
       <Card className="p-6 md:p-8 bg-white border-[#dedede]">
         {/* Search & Filter Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#eee]">
-          {/* Search Box */}
-          <div className="relative w-full sm:max-w-[320px]">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
-            <Input
-              type="text"
-              placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 h-10 text-xs border-[#dedede] rounded-[9px]"
-            />
+        <div className="flex flex-col gap-4 mb-6 pb-4 border-b border-[#eee]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Search Box */}
+            <div className="relative w-full sm:max-w-[320px]">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
+              <Input
+                type="text"
+                placeholder="Search by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-10 text-xs border-[#dedede] rounded-[9px]"
+              />
+            </div>
+
+            {/* Role Filter Tabs */}
+            <div className="flex items-center gap-1.5 bg-[#f0f0f0] p-1 rounded-[9px] self-start sm:self-auto">
+              <button
+                onClick={() => setRoleFilter('all')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+                  roleFilter === 'all'
+                    ? 'bg-white text-gym-dark shadow-sm'
+                    : 'text-gym-subtle hover:text-gym-dark'
+                }`}
+              >
+                All Roles ({totalMembersCount})
+              </button>
+              <button
+                onClick={() => setRoleFilter('user')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+                  roleFilter === 'user'
+                    ? 'bg-white text-gym-dark shadow-sm'
+                    : 'text-gym-subtle hover:text-gym-dark'
+                }`}
+              >
+                Members ({standardMembersCount})
+              </button>
+              <button
+                onClick={() => setRoleFilter('admin')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+                  roleFilter === 'admin'
+                    ? 'bg-white text-gym-dark shadow-sm'
+                    : 'text-gym-subtle hover:text-gym-dark'
+                }`}
+              >
+                Admins ({adminCount})
+              </button>
+            </div>
           </div>
 
-          {/* Role Filter Tabs */}
-          <div className="flex items-center gap-1.5 bg-[#f0f0f0] p-1 rounded-[9px] self-start sm:self-auto">
+          {/* Subscription Plan Filter Toolbar */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-xs font-bold text-gym-dark flex items-center gap-1">
+              <CreditCard className="w-3.5 h-3.5 text-gym-subtle" />
+              Plan Filter:
+            </span>
             <button
-              onClick={() => setRoleFilter('all')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
-                roleFilter === 'all'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+              onClick={() => setPlanFilter('all')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
+                planFilter === 'all'
+                  ? 'bg-gym-dark text-white border-gym-dark'
+                  : 'bg-white text-gym-subtle border-[#dedede] hover:text-gym-dark'
               }`}
             >
-              All ({totalMembersCount})
+              All Plans
             </button>
             <button
-              onClick={() => setRoleFilter('user')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
-                roleFilter === 'user'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+              onClick={() => setPlanFilter('basic')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
+                planFilter === 'basic'
+                  ? 'bg-slate-800 text-white border-slate-800'
+                  : 'bg-white text-slate-700 border-[#dedede] hover:border-slate-400'
               }`}
             >
-              Members ({standardMembersCount})
+              Basic (₹999/mo)
             </button>
             <button
-              onClick={() => setRoleFilter('admin')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
-                roleFilter === 'admin'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+              onClick={() => setPlanFilter('pro')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
+                planFilter === 'pro'
+                  ? 'bg-blue-700 text-white border-blue-700'
+                  : 'bg-white text-blue-700 border-[#dedede] hover:border-blue-300'
               }`}
             >
-              Admins ({adminCount})
+              Pro Athlete (₹1,999/mo)
+            </button>
+            <button
+              onClick={() => setPlanFilter('elite')}
+              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
+                planFilter === 'elite'
+                  ? 'bg-amber-700 text-white border-amber-700'
+                  : 'bg-white text-amber-800 border-[#dedede] hover:border-amber-400'
+              }`}
+            >
+              VIP Elite (₹3,499/mo)
             </button>
           </div>
         </div>
@@ -296,6 +393,9 @@ export const MembersPage: React.FC = () => {
           <div className="divide-y divide-[#eeeeee]">
             {filteredMembers.map((member) => {
               const isAdmin = member.role === 'admin';
+              const memberPlan = (member.plan as MembershipPlan) || 'basic';
+              const planConfig = MEMBERSHIP_PLANS[memberPlan] || MEMBERSHIP_PLANS.basic;
+
               const formattedDate = member.createdAt
                 ? new Date(member.createdAt).toLocaleDateString('en-GB', {
                     day: 'numeric',
@@ -322,22 +422,27 @@ export const MembersPage: React.FC = () => {
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-extrabold text-gym-dark truncate">
                           {member.name}
                         </span>
-                        {isAdmin ? (
+
+                        {/* Plan Badge */}
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${planConfig.badgeColor}`}
+                        >
+                          {planConfig.badgeText}
+                        </span>
+
+                        {/* Admin Badge */}
+                        {isAdmin && (
                           <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-extrabold text-[9px] uppercase px-2 py-0.2">
                             Admin
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-[#f0f0f0] text-[#555] border-[#dedede] font-bold text-[9px] uppercase px-2 py-0.2">
-                            Member
                           </Badge>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs text-gym-subtle mt-0.5">
+                      <div className="flex items-center gap-3 text-xs text-gym-subtle mt-1">
                         <span className="flex items-center gap-1">
                           <Mail className="w-3 h-3 text-[#999]" />
                           {member.email}
@@ -353,6 +458,27 @@ export const MembersPage: React.FC = () => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                    {/* Edit Member Button */}
+                    <Button
+                      onClick={() =>
+                        setEditingMember({
+                          id: member.id,
+                          name: member.name,
+                          email: member.email,
+                          role: member.role || 'user',
+                          plan: member.plan || 'basic',
+                        })
+                      }
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-2.5 text-xs text-gym-dark hover:bg-[#ededed] border-[#dedede] rounded-[8px] gap-1.5 font-semibold"
+                      title="Edit Member Profile & Plan"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      Edit
+                    </Button>
+
+                    {/* Delete Member Button */}
                     <Button
                       onClick={() => handleDeleteMember(member.id, member.name)}
                       variant="outline"
@@ -383,6 +509,14 @@ export const MembersPage: React.FC = () => {
           setIsCreateModalOpen(false);
           fetchMembers(); // Reload list after modal closes
         }}
+      />
+
+      {/* Member Edit Modal */}
+      <EditMemberModal
+        member={editingMember}
+        isOpen={!!editingMember}
+        onClose={() => setEditingMember(null)}
+        onSuccess={handleMemberUpdated}
       />
     </div>
   );

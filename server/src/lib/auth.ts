@@ -16,6 +16,20 @@ export const auth = betterAuth({
     'http://127.0.0.1:3000',
     ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
   ],
+  user: {
+    additionalFields: {
+      plan: {
+        type: 'string',
+        defaultValue: 'basic',
+        input: true,
+      },
+      planStatus: {
+        type: 'string',
+        defaultValue: 'active',
+        input: true,
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },

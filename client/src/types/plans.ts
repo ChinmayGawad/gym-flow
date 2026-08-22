@@ -1,12 +1,3 @@
-import { z } from 'zod';
-
-export enum UserRole {
-  ADMIN = 'admin',
-  MEMBER = 'user',
-}
-
-export type Role = 'admin' | 'user';
-
 export type MembershipPlan = 'basic' | 'pro' | 'elite';
 
 export interface PlanConfig {
@@ -56,19 +47,3 @@ export const MEMBERSHIP_PLANS: Record<MembershipPlan, PlanConfig> = {
     perks: ['All Pro Athlete perks', '1-on-1 Dedicated Trainer', 'Custom Nutrition & Diet Chart', 'Monthly Guest Passes'],
   },
 };
-
-export const signInSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-export type SignInInput = z.infer<typeof signInSchema>;
-
-export const createMemberSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  plan: z.enum(['basic', 'pro', 'elite']).default('basic'),
-});
-
-export type CreateMemberInput = z.infer<typeof createMemberSchema>;

@@ -17,7 +17,9 @@ export function App() {
   const [isCreateMemberOpen, setIsCreateMemberOpen] = useState(false);
 
   const { data: session } = useSession();
-  const displayName = session?.user?.name || (session?.user?.email ? session.user.email.split('@')[0] : 'Gym Member');
+  const user = session?.user as (NonNullable<typeof session>['user'] & { role?: string; plan?: string }) | undefined;
+  const displayName = user?.name || (user?.email ? user.email.split('@')[0] : 'Gym Member');
+  const userPlan = user?.plan;
 
   return (
     <BrowserRouter>
@@ -33,7 +35,13 @@ export function App() {
           <Routes>
             <Route
               path="/"
-              element={<HomePage displayName={displayName} occupancy={occupancy} />}
+              element={
+                <HomePage
+                  displayName={displayName}
+                  userPlan={userPlan}
+                  occupancy={occupancy}
+                />
+              }
             />
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/history" element={<HistoryPage />} />
