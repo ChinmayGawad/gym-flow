@@ -6,14 +6,16 @@ import { Button } from '@/components/ui/button';
 import {
   Calendar,
   Clock,
-  Star,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
   ArrowLeft,
   Sparkles,
+  Zap,
+  Activity,
 } from 'lucide-react';
 import { HourlyPrediction } from '@/types/occupancy';
+import { AttendanceWaveChart } from '@/components/schedule/AttendanceWaveChart';
 
 interface SchedulePageProps {
   capacity?: number;
@@ -42,7 +44,7 @@ const SCHEDULE_CURVE = [
 export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening'>('all');
 
-  const hourlySchedule: HourlyPrediction[] = SCHEDULE_CURVE.map((item) => {
+  const fullHourlySchedule: HourlyPrediction[] = SCHEDULE_CURVE.map((item) => {
     const peopleCount = Math.max(1, Math.round(capacity * item.factor));
     const percentage = Math.round((peopleCount / capacity) * 100);
     return {
@@ -55,24 +57,26 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
     };
   });
 
-  const filteredSchedule = hourlySchedule.filter((item) => {
-    const hourNumber = parseInt(item.time.split(' ')[0], 10);
-    const isPM = item.time.includes('PM');
+  const filteredSchedule = fullHourlySchedule.filter((item) => {
+    const [numStr, period] = item.time.split(' ');
+    const num = parseInt(numStr, 10);
+    const hour24 = period === 'AM' ? (num === 12 ? 0 : num) : (num === 12 ? 12 : num + 12);
 
     if (activeFilter === 'morning') {
-      return !isPM && hourNumber >= 6 && hourNumber <= 11;
+      return hour24 >= 6 && hour24 <= 11;
     }
     if (activeFilter === 'afternoon') {
-      return (isPM && hourNumber === 12) || (isPM && hourNumber >= 1 && hourNumber <= 4);
+      return hour24 >= 12 && hour24 <= 16;
     }
     if (activeFilter === 'evening') {
-      return isPM && hourNumber >= 5;
+      return hour24 >= 17 && hour24 <= 22;
     }
     return true;
   });
 
-  const morningLowAvg = Math.round(capacity * 0.33);
-  const afternoonLowAvg = Math.round(capacity * 0.35);
+  const morningLowAvg = Math.max(1, Math.round(capacity * 0.33));
+  const afternoonLowAvg = Math.max(1, Math.round(capacity * 0.35));
+  const eveningPeakAvg = Math.max(1, Math.round(capacity * 0.92));
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -92,7 +96,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
             Crowd Schedule & Forecast
           </h1>
           <p className="text-xs text-gym-subtle mt-0.5 font-medium">
-            AI-modeled hourly traffic predictions dynamically scaled for {capacity} capacity benchmark.
+            AI-modeled hourly attendance wave curve scaled to {capacity} facility capacity benchmark.
           </p>
         </div>
 
@@ -117,7 +121,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
             6:00 AM – 7:30 AM
           </h4>
           <p className="text-xs text-gym-subtle mt-1">
-            Avg. ~{morningLowAvg} people. Ideal for cardio & squat racks without waiting.
+            Avg. ~{morningLowAvg} people. Ideal for cardio & squat racks with zero wait times.
           </p>
         </Card>
 
@@ -149,28 +153,38 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
             5:30 PM – 8:00 PM
           </h4>
           <p className="text-xs text-gym-subtle mt-1">
-            Capacity reaches 85%–97% (~{Math.round(capacity * 0.9)} people). Expected wait times 15–25 mins.
+            Capacity reaches 85%–97% (~{eveningPeakAvg} people). Expected equipment wait 15–25 mins.
           </p>
         </Card>
       </div>
 
-      {/* Hourly Schedule Timeline Card */}
-      <Card className="p-6 md:p-8 bg-white border-[#dedede]">
-        {/* Time of Day Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-[#eee]">
-          <div>
-            <h3 className="text-lg font-extrabold text-gym-dark">
-              Hourly Attendance Curve
-            </h3>
-            <p className="text-xs text-gym-subtle mt-0.5">
-              Live facility benchmark: {capacity} maximum concurrent occupants.
+      {/* Hero Reference-Styled Card Container */}
+      <Card className="p-6 md:p-8 bg-white border-[#dedede] shadow-sm rounded-2xl">
+        {/* Header matching reference screenshot */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 pb-3 border-b border-[#f0f0f0]">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-gym-dark stroke-[2.5]" />
+              <h3 className="text-xl font-extrabold text-gym-dark tracking-tight">
+                Crowd volume
+              </h3>
+            </div>
+            <p className="text-[10px] font-bold text-[#888888] tracking-widest uppercase">
+              TODAY'S FORECAST
             </p>
+            <div className="pt-0.5">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#e0f2f1] text-[#00796b] border border-[#b2dfdb]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#009688]" />
+                AI ASSISTED
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-[#f0f0f0] p-1 rounded-[9px]">
+          {/* Time of Day Filter Tabs */}
+          <div className="flex items-center gap-1 bg-[#f4f4f4] p-1 rounded-xl self-start sm:self-center border border-[#e8e8e8]">
             <button
               onClick={() => setActiveFilter('all')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                 activeFilter === 'all'
                   ? 'bg-white text-gym-dark shadow-sm'
                   : 'text-gym-subtle hover:text-gym-dark'
@@ -180,7 +194,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
             </button>
             <button
               onClick={() => setActiveFilter('morning')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                 activeFilter === 'morning'
                   ? 'bg-white text-gym-dark shadow-sm'
                   : 'text-gym-subtle hover:text-gym-dark'
@@ -190,7 +204,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
             </button>
             <button
               onClick={() => setActiveFilter('afternoon')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                 activeFilter === 'afternoon'
                   ? 'bg-white text-gym-dark shadow-sm'
                   : 'text-gym-subtle hover:text-gym-dark'
@@ -200,7 +214,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
             </button>
             <button
               onClick={() => setActiveFilter('evening')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                 activeFilter === 'evening'
                   ? 'bg-white text-gym-dark shadow-sm'
                   : 'text-gym-subtle hover:text-gym-dark'
@@ -211,57 +225,64 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
           </div>
         </div>
 
-        {/* Schedule List */}
-        <div className="space-y-4">
-          {filteredSchedule.map((row) => {
-            let statusText = 'Low Crowd';
-            let statusBadge = 'bg-emerald-50 text-emerald-800 border-emerald-200';
-            let barColor = 'bg-emerald-500';
+        {/* Clean Reference Bar Chart */}
+        <div className="py-2">
+          <AttendanceWaveChart
+            data={filteredSchedule}
+            capacity={capacity}
+            activeFilter={activeFilter}
+          />
+        </div>
 
-            if (row.percentage >= 75) {
-              statusText = row.isHighest ? 'Maximum Surge' : 'High Crowd';
-              statusBadge = 'bg-red-50 text-red-800 border-red-200';
-              barColor = 'bg-red-500';
-            } else if (row.percentage >= 40) {
-              statusText = 'Moderate';
-              statusBadge = 'bg-amber-50 text-amber-800 border-amber-200';
-              barColor = 'bg-amber-500';
-            }
+        {/* Compact Daily Attendance Breakdown Summary */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-[#f0f0f0]">
+          <div className="p-3 bg-[#fafafa] rounded-xl border border-[#ededed]">
+            <span className="text-[10px] font-bold text-gym-subtle uppercase block">
+              Early Morning (6–8 AM)
+            </span>
+            <span className="text-sm font-extrabold text-gym-dark mt-0.5 block">
+              ~{Math.round(capacity * 0.35)} People
+            </span>
+            <Badge variant="low" className="text-[9px] px-1.5 py-0 mt-1">
+              Low Crowd
+            </Badge>
+          </div>
 
-            return (
-              <div
-                key={row.id}
-                className="grid grid-cols-[65px_1fr_110px_90px] items-center gap-4 text-xs py-1 hover:bg-[#fafafa] rounded-md px-2 transition-colors"
-              >
-                {/* Time Label */}
-                <span className="font-bold text-gym-dark">{row.time}</span>
+          <div className="p-3 bg-[#fafafa] rounded-xl border border-[#ededed]">
+            <span className="text-[10px] font-bold text-gym-subtle uppercase block">
+              Lunch Wave (12–2 PM)
+            </span>
+            <span className="text-sm font-extrabold text-gym-dark mt-0.5 block">
+              ~{Math.round(capacity * 0.45)} People
+            </span>
+            <Badge variant="moderate" className="text-[9px] px-1.5 py-0 mt-1">
+              Moderate
+            </Badge>
+          </div>
 
-                {/* Animated Capacity Bar */}
-                <div className="space-y-1">
-                  <div className="h-[10px] w-full bg-[#eeeeee] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${barColor}`}
-                      style={{ width: `${row.percentage}%` }}
-                    />
-                  </div>
-                </div>
+          <div className="p-3 bg-red-50/50 rounded-xl border border-red-100">
+            <span className="text-[10px] font-bold text-red-700 uppercase block">
+              Peak Surge (5–8 PM)
+            </span>
+            <span className="text-sm font-extrabold text-red-950 mt-0.5 block">
+              ~{Math.round(capacity * 0.90)} People
+            </span>
+            <Badge variant="high" className="text-[9px] px-1.5 py-0 mt-1">
+              High Surge
+            </Badge>
+          </div>
 
-                {/* Headcount */}
-                <span className="text-gym-subtle font-medium text-right">
-                  <strong className="text-gym-dark">{row.peopleCount}</strong> / {capacity} people
-                </span>
-
-                {/* Status Tag */}
-                <div className="text-right">
-                  <span
-                    className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusBadge}`}
-                  >
-                    {statusText}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+          <div className="p-3 bg-[#fafafa] rounded-xl border border-[#ededed]">
+            <span className="text-[10px] font-bold text-gym-subtle uppercase block">
+              Late Night (9–10 PM)
+            </span>
+            <span className="text-sm font-extrabold text-gym-dark mt-0.5 block">
+              ~{Math.round(capacity * 0.30)} People
+            </span>
+            <Badge variant="low" className="text-[9px] px-1.5 py-0 mt-1">
+              Low Crowd
+            </Badge>
+          </div>
         </div>
       </Card>
 
@@ -279,14 +300,14 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
               10:00 AM – 11:30 AM or 1:30 PM – 3:30 PM
             </h3>
             <p className="text-xs text-gym-subtle font-medium mt-0.5">
-              Less than 25 members present. Zero wait times for power racks, benches, and free weights.
+              Less than {Math.round(capacity * 0.4)} members present. Zero wait times for power racks, benches, and free weights.
             </p>
           </div>
         </div>
 
         <Button
           asChild
-          className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 shrink-0"
+          className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 shrink-0 shadow-sm"
         >
           <Link to="/">
             Check Live Crowd
@@ -297,3 +318,4 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
     </div>
   );
 };
+
