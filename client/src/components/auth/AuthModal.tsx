@@ -90,14 +90,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <div className="space-y-1.5">
             <Label htmlFor="signin-email" className="text-xs font-bold text-zinc-700">Email Address</Label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
               <Input
                 id="signin-email"
                 type="email"
                 placeholder="member@gymflow.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-9.5 rounded-xl border-zinc-200"
+                className="pl-10 rounded-xl border-zinc-200"
                 required
                 disabled={isSubmitting}
               />
@@ -107,14 +107,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <div className="space-y-1.5">
             <Label htmlFor="signin-password" className="text-xs font-bold text-zinc-700">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
               <Input
                 id="signin-password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-9.5 rounded-xl border-zinc-200"
+                className="pl-10 rounded-xl border-zinc-200"
                 required
                 disabled={isSubmitting}
               />

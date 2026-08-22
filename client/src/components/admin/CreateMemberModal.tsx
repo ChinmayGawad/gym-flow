@@ -130,14 +130,14 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
           <div className="space-y-1.5">
             <Label htmlFor="member-name" className="text-xs font-bold text-zinc-700">Member Full Name</Label>
             <div className="relative">
-              <User className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
               <Input
                 id="member-name"
                 type="text"
                 placeholder="Rohan Sharma"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="pl-9.5 rounded-xl border-zinc-200"
+                className="pl-10 rounded-xl border-zinc-200"
                 required
                 disabled={isSubmitting}
               />
@@ -148,14 +148,14 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
           <div className="space-y-1.5">
             <Label htmlFor="member-email" className="text-xs font-bold text-zinc-700">Email Address</Label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
               <Input
                 id="member-email"
                 type="email"
                 placeholder="rohan@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-9.5 rounded-xl border-zinc-200"
+                className="pl-10 rounded-xl border-zinc-200"
                 required
                 disabled={isSubmitting}
               />
@@ -166,14 +166,14 @@ export const CreateMemberModal: React.FC<CreateMemberModalProps> = ({ isOpen, on
           <div className="space-y-1.5">
             <Label htmlFor="member-password" className="text-xs font-bold text-zinc-700">Initial Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
               <Input
                 id="member-password"
                 type="password"
                 placeholder="Minimum 8 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-9.5 rounded-xl border-zinc-200"
+                className="pl-10 rounded-xl border-zinc-200"
                 required
                 minLength={8}
                 disabled={isSubmitting}

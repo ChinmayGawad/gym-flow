@@ -401,13 +401,13 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Search Box */}
             <div className="relative w-full sm:max-w-[320px]">
-              <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
               <Input
                 type="text"
                 placeholder="Search members by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9.5 h-10 text-xs border-zinc-200 rounded-xl"
+                className="pl-10 h-10 text-xs border-zinc-200 rounded-xl"
               />
             </div>
 
