@@ -550,7 +550,10 @@ if (fs.existsSync(clientDistPath)) {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`🚀 GymFlow Server running on http://localhost:${PORT}`);
+const portNumber = Number(process.env.PORT) || 3000;
+
+app.listen(portNumber, '0.0.0.0', () => {
+  console.log(`🚀 GymFlow Server running on port ${portNumber}`);
 });
+
 
