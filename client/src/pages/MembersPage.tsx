@@ -244,29 +244,31 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
   const currentCapacity = occupancy?.capacity || 30;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 mb-1">
             <Link
               to="/"
-              className="text-xs font-semibold text-gym-subtle hover:text-gym-dark flex items-center gap-1 transition-colors"
+              className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back to Dashboard
+              <span>Dashboard</span>
             </Link>
+            <span className="text-zinc-300">/</span>
+            <span className="text-xs font-semibold text-zinc-900">Members Directory</span>
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <h1 className="text-3xl font-extrabold text-gym-dark tracking-tight">
+          <div className="flex items-center gap-2 mt-0.5">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight">
               Gym Members Directory
             </h1>
-            <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-extrabold text-[10px] uppercase gap-1 px-2.5 py-0.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
-              Gym Owner / Admin
+            <Badge className="bg-amber-50 text-amber-900 border-amber-200/80 font-bold text-[10px] uppercase gap-1 px-2 py-0.5">
+              <ShieldCheck className="w-3 h-3 text-amber-700" />
+              Admin
             </Badge>
           </div>
-          <p className="text-xs text-gym-subtle mt-0.5 font-medium">
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium">
             Manage member accounts, track live check-ins, configure gym capacity, and assign Indian subscription plans (₹ INR).
           </p>
         </div>
@@ -276,18 +278,18 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
           <Button
             onClick={() => setIsCapacityModalOpen(true)}
             variant="outline"
-            className="h-10 px-4 rounded-[9px] border-[#dedede] bg-white text-gym-dark hover:bg-[#f0f0f0] text-xs font-bold gap-2 shadow-sm"
+            className="h-9 px-3.5 rounded-xl border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100 text-xs font-semibold gap-1.5 shadow-xs"
           >
-            <Settings className="w-4 h-4 text-gym-dark" />
-            Set Capacity ({currentCapacity})
+            <Settings className="w-3.5 h-3.5 text-zinc-700" />
+            <span>Capacity ({currentCapacity})</span>
           </Button>
 
           <Button
             onClick={() => setIsCreateModalOpen(true)}
-            className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 shadow-sm"
+            className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-1.5 shadow-xs"
           >
-            <UserPlus className="w-4 h-4" />
-            Add Member
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Add Member</span>
           </Button>
         </div>
       </div>
@@ -295,17 +297,17 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
       {/* Action Feedback Banner */}
       {actionFeedback && (
         <div
-          className={`p-3.5 rounded-[10px] flex items-center justify-between text-xs font-semibold border ${
+          className={`p-3.5 rounded-xl flex items-center justify-between text-xs font-semibold border ${
             actionFeedback.type === 'success'
-              ? 'bg-green-50 text-green-800 border-green-200'
-              : 'bg-red-50 text-red-800 border-red-200'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+              : 'bg-rose-50 text-rose-800 border-rose-200/80'
           }`}
         >
           <div className="flex items-center gap-2">
             {actionFeedback.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             )}
             <span>{actionFeedback.message}</span>
           </div>
@@ -321,66 +323,66 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
       {/* Analytics Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Accounts */}
-        <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-2">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-2">
             <Users className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
             Total Accounts
           </span>
-          <span className="text-2xl font-black text-gym-dark mt-0.5 block">
+          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
             {totalMembersCount}
           </span>
         </Card>
 
         {/* Live Inside Gym */}
-        <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50/80 border border-emerald-200/60 text-emerald-700 flex items-center justify-center mb-2">
             <MapPin className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">
+          <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest block">
             Inside Gym Now
           </span>
           <div className="flex items-baseline gap-1.5 mt-0.5">
-            <span className="text-2xl font-black text-emerald-900">
+            <span className="text-2xl font-black text-emerald-900 tabular-nums">
               {checkedInMembersCount}
             </span>
-            <span className="text-xs font-semibold text-gym-subtle">
+            <span className="text-xs font-semibold text-zinc-400 tabular-nums">
               / {currentCapacity} max
             </span>
           </div>
         </Card>
 
         {/* Pro & Elite Subscribers */}
-        <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center mb-2">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-blue-50/80 border border-blue-200/60 text-blue-700 flex items-center justify-center mb-2">
             <Zap className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-blue-900 uppercase tracking-wider block">
+          <span className="text-[10px] font-bold text-blue-900 uppercase tracking-widest block">
             Pro & Elite Plans
           </span>
-          <span className="text-2xl font-black text-blue-900 mt-0.5 block">
+          <span className="text-2xl font-black text-blue-900 mt-0.5 block tabular-nums">
             {members.filter((m) => m.plan === 'pro' || m.plan === 'elite').length}
           </span>
         </Card>
 
         {/* Facility Capacity */}
-        <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center mb-2">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-amber-50/80 border border-amber-200/60 text-amber-700 flex items-center justify-center mb-2">
             <Building2 className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider block">
+          <span className="text-[10px] font-bold text-amber-900 uppercase tracking-widest block">
             Facility Capacity
           </span>
           <div className="flex items-center justify-between mt-0.5">
-            <span className="text-2xl font-black text-amber-900">
+            <span className="text-2xl font-black text-amber-900 tabular-nums">
               {currentCapacity}
             </span>
             <Button
               onClick={() => setIsCapacityModalOpen(true)}
               variant="outline"
               size="sm"
-              className="h-6 text-[10px] font-bold px-2 text-amber-900 border-amber-300 hover:bg-amber-100"
+              className="h-6 text-[10px] font-bold px-2 rounded-lg text-amber-900 border-amber-300 hover:bg-amber-100"
             >
               Scale
             </Button>
@@ -389,50 +391,50 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
       </div>
 
       {/* Members Directory Card */}
-      <Card className="p-6 md:p-8 bg-white border-[#dedede]">
+      <Card className="p-6 md:p-8 bg-white border border-black/[0.06] shadow-card rounded-2xl">
         {/* Search & Filter Toolbar */}
-        <div className="flex flex-col gap-4 mb-6 pb-4 border-b border-[#eee]">
+        <div className="flex flex-col gap-4 mb-6 pb-4 border-b border-zinc-100">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Search Box */}
             <div className="relative w-full sm:max-w-[320px]">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
+              <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
               <Input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search members by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-10 text-xs border-[#dedede] rounded-[9px]"
+                className="pl-9.5 h-10 text-xs border-zinc-200 rounded-xl"
               />
             </div>
 
             {/* Attendance Filter Tabs */}
-            <div className="flex items-center gap-1.5 bg-[#f0f0f0] p-1 rounded-[9px] self-start sm:self-auto">
+            <div className="flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl self-start sm:self-auto border border-black/[0.04]">
               <button
                 onClick={() => setCheckInFilter('all')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   checkInFilter === 'all'
-                    ? 'bg-white text-gym-dark shadow-sm'
-                    : 'text-gym-subtle hover:text-gym-dark'
+                    ? 'bg-white text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-900'
                 }`}
               >
-                All Status ({totalMembersCount})
+                All ({totalMembersCount})
               </button>
               <button
                 onClick={() => setCheckInFilter('inside')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   checkInFilter === 'inside'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-emerald-800 hover:bg-emerald-100'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-emerald-800 hover:bg-emerald-100/70'
                 }`}
               >
-                🟢 Inside Gym ({checkedInMembersCount})
+                Inside Gym ({checkedInMembersCount})
               </button>
               <button
                 onClick={() => setCheckInFilter('outside')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   checkInFilter === 'outside'
-                    ? 'bg-white text-gym-dark shadow-sm'
-                    : 'text-gym-subtle hover:text-gym-dark'
+                    ? 'bg-white text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-900'
                 }`}
               >
                 Outside ({totalMembersCount - checkedInMembersCount})
@@ -442,46 +444,46 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
 
           {/* Subscription Plan Filter Toolbar */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-xs font-bold text-gym-dark flex items-center gap-1">
-              <CreditCard className="w-3.5 h-3.5 text-gym-subtle" />
-              Plan Filter:
+            <span className="text-xs font-bold text-zinc-700 flex items-center gap-1">
+              <CreditCard className="w-3.5 h-3.5 text-zinc-400" />
+              Plans:
             </span>
             <button
               onClick={() => setPlanFilter('all')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 planFilter === 'all'
-                  ? 'bg-gym-dark text-white border-gym-dark'
-                  : 'bg-white text-gym-subtle border-[#dedede] hover:text-gym-dark'
+                  ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
               }`}
             >
               All Plans
             </button>
             <button
               onClick={() => setPlanFilter('basic')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 planFilter === 'basic'
-                  ? 'bg-slate-800 text-white border-slate-800'
-                  : 'bg-white text-slate-700 border-[#dedede] hover:border-slate-400'
+                  ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
+                  : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300'
               }`}
             >
               Basic (₹999/mo)
             </button>
             <button
               onClick={() => setPlanFilter('pro')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 planFilter === 'pro'
-                  ? 'bg-blue-700 text-white border-blue-700'
-                  : 'bg-white text-blue-700 border-[#dedede] hover:border-blue-300'
+                  ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
+                  : 'bg-white text-blue-700 border-blue-200/80 hover:border-blue-300'
               }`}
             >
               Pro Athlete (₹1,999/mo)
             </button>
             <button
               onClick={() => setPlanFilter('elite')}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 planFilter === 'elite'
-                  ? 'bg-amber-700 text-white border-amber-700'
-                  : 'bg-white text-amber-800 border-[#dedede] hover:border-amber-400'
+                  ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
+                  : 'bg-white text-amber-800 border-amber-200/80 hover:border-amber-300'
               }`}
             >
               VIP Elite (₹3,499/mo)
@@ -492,25 +494,25 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
         {/* Member Directory Content */}
         {isLoading ? (
           <div className="py-16 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-7 h-7 text-gym-dark animate-spin" />
-            <span className="text-xs text-gym-subtle font-semibold">
+            <Loader2 className="w-6 h-6 text-zinc-900 animate-spin" />
+            <span className="text-xs text-zinc-500 font-semibold">
               Loading gym members directory...
             </span>
           </div>
         ) : filteredMembers.length === 0 ? (
           <div className="py-16 text-center">
-            <Users className="w-10 h-10 text-[#bbb] mx-auto mb-3" />
-            <h3 className="text-sm font-extrabold text-gym-dark">
+            <Users className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+            <h3 className="text-sm font-extrabold text-zinc-900">
               No members found
             </h3>
-            <p className="text-xs text-gym-subtle mt-1">
+            <p className="text-xs text-zinc-500 mt-1">
               {searchTerm
                 ? 'Try refining your search keyword.'
                 : 'Get started by adding your first gym member.'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-[#eeeeee]">
+          <div className="divide-y divide-zinc-100">
             {filteredMembers.map((member) => {
               const isAdmin = member.role === 'admin';
               const isInside = !!member.isCheckedIn;
@@ -528,39 +530,39 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
               return (
                 <div
                   key={member.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 px-2 hover:bg-[#fafafa] rounded-lg transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 px-3 hover:bg-zinc-50/70 rounded-xl transition-colors"
                 >
                   {/* Member Info */}
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black shrink-0 relative ${
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 relative ${
                         isAdmin
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-200'
                           : isInside
-                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                          : 'bg-[#ededed] text-gym-dark'
+                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
+                          : 'bg-zinc-100 text-zinc-800 border border-zinc-200/70'
                       }`}
                     >
                       {member.name ? member.name.charAt(0).toUpperCase() : 'M'}
                       {isInside && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
                       )}
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-extrabold text-gym-dark truncate">
+                        <span className="text-sm font-bold text-zinc-900 truncate">
                           {member.name}
                         </span>
 
                         {/* Live Check-In Pill */}
                         {isInside ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             Inside Gym
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-600 border border-zinc-200/70">
                             Checked Out
                           </span>
                         )}
@@ -574,20 +576,20 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
 
                         {/* Admin Badge */}
                         {isAdmin && (
-                          <Badge className="bg-amber-100 text-amber-900 border-amber-300 font-extrabold text-[9px] uppercase px-2 py-0.2">
+                          <Badge className="bg-amber-50 text-amber-900 border-amber-200/80 font-bold text-[9px] uppercase px-1.5 py-0">
                             Admin
                           </Badge>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs text-gym-subtle mt-1">
+                      <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1">
                         <span className="flex items-center gap-1">
-                          <Mail className="w-3 h-3 text-[#999]" />
+                          <Mail className="w-3 h-3 text-zinc-400" />
                           {member.email}
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-[#999]" />
+                          <Calendar className="w-3 h-3 text-zinc-400" />
                           Joined {formattedDate}
                         </span>
                       </div>
@@ -602,10 +604,10 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                       disabled={togglingId === member.id}
                       variant="outline"
                       size="sm"
-                      className={`h-8 px-3 text-xs font-bold rounded-[8px] gap-1.5 transition-colors ${
+                      className={`h-8 px-3 text-xs font-bold rounded-xl gap-1.5 transition-colors ${
                         isInside
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200'
-                          : 'bg-white text-gym-dark border-[#dedede] hover:bg-[#ededed]'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
+                          : 'bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-100'
                       }`}
                       title={isInside ? 'Check Member Out' : 'Check Member In'}
                     >
@@ -618,7 +620,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                         </>
                       ) : (
                         <>
-                          <LogIn className="w-3.5 h-3.5 text-gym-dark" />
+                          <LogIn className="w-3.5 h-3.5 text-zinc-700" />
                           Check In
                         </>
                       )}
@@ -637,7 +639,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                       }
                       variant="outline"
                       size="sm"
-                      className="h-8 px-2.5 text-xs text-gym-dark hover:bg-[#ededed] border-[#dedede] rounded-[8px] gap-1.5 font-semibold"
+                      className="h-8 px-2.5 text-xs text-zinc-700 hover:bg-zinc-100 border-zinc-200 rounded-xl gap-1.5 font-semibold"
                       title="Edit Member Profile & Plan"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -650,7 +652,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                       variant="outline"
                       size="sm"
                       disabled={deletingId === member.id}
-                      className="h-8 px-2.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 rounded-[8px] gap-1.5"
+                      className="h-8 px-2.5 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200/80 rounded-xl gap-1.5"
                       title="Remove Member"
                     >
                       {deletingId === member.id ? (
@@ -701,4 +703,5 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
     </div>
   );
 };
+
 

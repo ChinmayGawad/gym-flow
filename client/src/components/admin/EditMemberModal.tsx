@@ -21,7 +21,6 @@ import {
   Crown,
   Zap,
   Shield,
-  ShieldCheck,
 } from 'lucide-react';
 import { MEMBERSHIP_PLANS, MembershipPlan } from '@/types/plans';
 
@@ -130,29 +129,29 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[480px] p-6 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[480px] p-6 max-h-[90vh] overflow-y-auto bg-white border border-black/[0.08] rounded-2xl shadow-2xl">
         <DialogHeader className="flex flex-col items-center text-center">
-          <div className="w-12 h-12 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-2">
-            <Edit3 className="w-6 h-6 text-gym-dark" />
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs mb-2">
+            <Edit3 className="w-5 h-5 text-white" />
           </div>
-          <DialogTitle className="text-xl font-extrabold tracking-tight text-gym-dark flex items-center gap-2">
+          <DialogTitle className="text-lg sm:text-xl font-black tracking-tight text-zinc-900">
             Edit Member Account
           </DialogTitle>
-          <DialogDescription className="text-xs text-gym-subtle mt-1">
+          <DialogDescription className="text-xs text-zinc-500 mt-0.5">
             Update member credentials, subscription tier, and administration role.
           </DialogDescription>
         </DialogHeader>
 
         {errorMessage && (
-          <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-[9px] flex items-start gap-2 text-xs text-red-700">
+          <div className="mt-2 p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-start gap-2 text-xs text-rose-700">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-[9px] flex items-start gap-2 text-xs text-green-700">
-            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="mt-2 p-3 bg-emerald-50 border border-emerald-200/80 rounded-xl flex items-start gap-2 text-xs text-emerald-800">
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -160,15 +159,15 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
         <form onSubmit={handleSaveMember} className="space-y-4 mt-3">
           {/* Member Name */}
           <div className="space-y-1.5">
-            <Label htmlFor="edit-member-name">Member Full Name</Label>
+            <Label htmlFor="edit-member-name" className="text-xs font-bold text-zinc-700">Member Full Name</Label>
             <div className="relative">
-              <User className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
+              <User className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
               <Input
                 id="edit-member-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="pl-9"
+                className="pl-9.5 rounded-xl border-zinc-200"
                 required
                 disabled={isSubmitting}
               />
@@ -177,15 +176,15 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
 
           {/* Email Address */}
           <div className="space-y-1.5">
-            <Label htmlFor="edit-member-email">Email Address</Label>
+            <Label htmlFor="edit-member-email" className="text-xs font-bold text-zinc-700">Email Address</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
+              <Mail className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
               <Input
                 id="edit-member-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-9"
+                className="pl-9.5 rounded-xl border-zinc-200"
                 required
                 disabled={isSubmitting}
               />
@@ -195,18 +194,18 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
           {/* Reset Password (Optional) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="edit-member-password">Reset Password (Optional)</Label>
-              <span className="text-[10px] text-gym-subtle font-medium">Leave blank to keep unchanged</span>
+              <Label htmlFor="edit-member-password" className="text-xs font-bold text-zinc-700">Reset Password</Label>
+              <span className="text-[10px] text-zinc-400 font-medium">Leave blank to keep unchanged</span>
             </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-[#888]" />
+              <Lock className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400" />
               <Input
                 id="edit-member-password"
                 type="password"
                 placeholder="New password (min 8 chars)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-9"
+                className="pl-9.5 rounded-xl border-zinc-200"
                 minLength={8}
                 disabled={isSubmitting}
               />
@@ -215,93 +214,93 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
 
           {/* Indian Subscription Plan Selection */}
           <div className="space-y-2 pt-1">
-            <Label className="flex items-center gap-1.5">
-              <CreditCard className="w-3.5 h-3.5 text-gym-dark" />
+            <Label className="flex items-center gap-1.5 text-xs font-bold text-zinc-700">
+              <CreditCard className="w-3.5 h-3.5 text-zinc-700" />
               Gym Membership Plan (₹ INR)
             </Label>
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-3 gap-2">
               {/* Basic Plan */}
               <button
                 type="button"
                 onClick={() => setPlan('basic')}
-                className={`p-3 rounded-[10px] text-left border transition-all cursor-pointer ${
+                className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                   plan === 'basic'
-                    ? 'border-gym-dark bg-slate-50 ring-1 ring-gym-dark shadow-sm'
-                    : 'border-[#dedede] bg-white hover:border-[#aaa]'
+                    ? 'border-zinc-900 bg-zinc-50 ring-1 ring-zinc-900 shadow-xs'
+                    : 'border-zinc-200 bg-white hover:border-zinc-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <Shield className="w-4 h-4 text-slate-700" />
-                  <span className="text-[11px] font-black text-slate-900">₹999</span>
+                  <Shield className="w-3.5 h-3.5 text-zinc-700" />
+                  <span className="text-[11px] font-black text-zinc-900 tabular-nums">₹999</span>
                 </div>
-                <strong className="text-xs font-bold text-gym-dark block">Basic</strong>
-                <span className="text-[10px] text-gym-subtle block mt-0.5">₹999 / mo</span>
+                <strong className="text-xs font-bold text-zinc-900 block">Basic</strong>
+                <span className="text-[10px] text-zinc-400 block mt-0.5 tabular-nums">₹999 / mo</span>
               </button>
 
               {/* Pro Plan */}
               <button
                 type="button"
                 onClick={() => setPlan('pro')}
-                className={`p-3 rounded-[10px] text-left border transition-all cursor-pointer ${
+                className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                   plan === 'pro'
-                    ? 'border-blue-600 bg-blue-50/60 ring-1 ring-blue-600 shadow-sm'
-                    : 'border-[#dedede] bg-white hover:border-[#aaa]'
+                    ? 'border-blue-600 bg-blue-50/60 ring-1 ring-blue-600 shadow-xs'
+                    : 'border-zinc-200 bg-white hover:border-zinc-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <Zap className="w-4 h-4 text-blue-600" />
-                  <span className="text-[11px] font-black text-blue-900">₹1,999</span>
+                  <Zap className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="text-[11px] font-black text-blue-900 tabular-nums">₹1,999</span>
                 </div>
-                <strong className="text-xs font-bold text-gym-dark block">Pro Athlete</strong>
-                <span className="text-[10px] text-gym-subtle block mt-0.5">₹1,999 / mo</span>
+                <strong className="text-xs font-bold text-zinc-900 block">Pro Athlete</strong>
+                <span className="text-[10px] text-zinc-400 block mt-0.5 tabular-nums">₹1,999 / mo</span>
               </button>
 
               {/* Elite Plan */}
               <button
                 type="button"
                 onClick={() => setPlan('elite')}
-                className={`p-3 rounded-[10px] text-left border transition-all cursor-pointer ${
+                className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                   plan === 'elite'
-                    ? 'border-amber-500 bg-amber-50/70 ring-1 ring-amber-500 shadow-sm'
-                    : 'border-[#dedede] bg-white hover:border-[#aaa]'
+                    ? 'border-amber-600 bg-amber-50/70 ring-1 ring-amber-600 shadow-xs'
+                    : 'border-zinc-200 bg-white hover:border-zinc-300'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <Crown className="w-4 h-4 text-amber-600" />
-                  <span className="text-[11px] font-black text-amber-900">₹3,499</span>
+                  <Crown className="w-3.5 h-3.5 text-amber-600" />
+                  <span className="text-[11px] font-black text-amber-900 tabular-nums">₹3,499</span>
                 </div>
-                <strong className="text-xs font-bold text-gym-dark block">VIP Elite</strong>
-                <span className="text-[10px] text-gym-subtle block mt-0.5">₹3,499 / mo</span>
+                <strong className="text-xs font-bold text-zinc-900 block">VIP Elite</strong>
+                <span className="text-[10px] text-zinc-400 block mt-0.5 tabular-nums">₹3,499 / mo</span>
               </button>
             </div>
-            <p className="text-[11px] text-gym-subtle font-medium mt-1">
+            <p className="text-[11px] text-zinc-400 font-medium mt-1">
               {MEMBERSHIP_PLANS[plan].description}
             </p>
           </div>
 
           {/* Account Role */}
           <div className="space-y-1.5 pt-1">
-            <Label>Account Role</Label>
+            <Label className="text-xs font-bold text-zinc-700">Account Role</Label>
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-xs font-semibold text-gym-dark cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-semibold text-zinc-800 cursor-pointer">
                 <input
                   type="radio"
                   name="edit-role"
                   value="user"
                   checked={role === 'user'}
                   onChange={() => setRole('user')}
-                  className="accent-gym-dark"
+                  className="accent-zinc-900"
                 />
                 Gym Member
               </label>
-              <label className="flex items-center gap-2 text-xs font-semibold text-gym-dark cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-semibold text-zinc-800 cursor-pointer">
                 <input
                   type="radio"
                   name="edit-role"
                   value="admin"
                   checked={role === 'admin'}
                   onChange={() => setRole('admin')}
-                  className="accent-gym-dark"
+                  className="accent-zinc-900"
                 />
                 Gym Administrator
               </label>
@@ -311,7 +310,7 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full mt-2 font-bold text-xs h-10 bg-gym-dark text-white hover:bg-[#3a3a3a] flex items-center justify-center gap-2"
+            className="w-full mt-2 font-bold text-xs h-10 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 flex items-center justify-center gap-2 shadow-xs"
           >
             {isSubmitting ? (
               <>
@@ -327,3 +326,4 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
     </Dialog>
   );
 };
+

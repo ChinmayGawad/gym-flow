@@ -13,6 +13,7 @@ import {
   Sparkles,
   Zap,
   Activity,
+  ChevronRight,
 } from 'lucide-react';
 import { HourlyPrediction } from '@/types/occupancy';
 import { AttendanceWaveChart } from '@/components/schedule/AttendanceWaveChart';
@@ -79,145 +80,147 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
   const eveningPeakAvg = Math.max(1, Math.round(capacity * 0.92));
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 mb-1">
             <Link
               to="/"
-              className="text-xs font-semibold text-gym-subtle hover:text-gym-dark flex items-center gap-1 transition-colors"
+              className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back to Dashboard
+              <span>Dashboard</span>
             </Link>
+            <span className="text-zinc-300">/</span>
+            <span className="text-xs font-semibold text-zinc-900">Schedule</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-gym-dark tracking-tight mt-1">
-            Crowd Schedule & Forecast
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight">
+            Attendance Predictions & Schedule
           </h1>
-          <p className="text-xs text-gym-subtle mt-0.5 font-medium">
-            AI-modeled hourly attendance wave curve scaled to {capacity} facility capacity benchmark.
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium">
+            AI-assisted hourly crowd predictions calibrated to {capacity} facility capacity benchmark.
           </p>
         </div>
 
-        {/* Date Badge */}
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-[10px] border border-[#dedede] self-start md:self-auto shadow-sm">
-          <Calendar className="w-4 h-4 text-gym-dark" />
-          <span className="text-xs font-bold text-gym-dark">Live Forecast ({capacity} Max)</span>
+        {/* Date / Capacity Badge */}
+        <div className="flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-xl border border-black/[0.06] shadow-card self-start md:self-auto">
+          <Calendar className="w-4 h-4 text-zinc-700" />
+          <span className="text-xs font-bold text-zinc-900 tabular-nums">Live Benchmark: {capacity} Max</span>
         </div>
       </div>
 
-      {/* Recommended Time Highlights */}
+      {/* Recommended Time Highlights (3 Bento Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Morning Quiet Window */}
-        <Card className="p-5 bg-white border-[#dedede] relative overflow-hidden">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-wider text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-200 uppercase">
-              Best Morning
+            <span className="text-[10px] font-bold tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 uppercase">
+              Morning Window
             </span>
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
-          <h4 className="text-base font-extrabold text-gym-dark mt-3">
+          <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
             6:00 AM – 7:30 AM
           </h4>
-          <p className="text-xs text-gym-subtle mt-1">
-            Avg. ~{morningLowAvg} people. Ideal for cardio & squat racks with zero wait times.
+          <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+            Avg. ~{morningLowAvg} people. Ideal for power racks and cardio with 0–5 min wait times.
           </p>
         </Card>
 
         {/* Afternoon Quiet Window */}
-        <Card className="p-5 bg-white border-[#dedede] relative overflow-hidden">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-wider text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-200 uppercase">
-              Best Afternoon
+            <span className="text-[10px] font-bold tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 uppercase">
+              Afternoon Window
             </span>
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
-          <h4 className="text-base font-extrabold text-gym-dark mt-3">
+          <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
             1:30 PM – 3:30 PM
           </h4>
-          <p className="text-xs text-gym-subtle mt-1">
-            Avg. ~{afternoonLowAvg} people. Minimum wait times across all equipment zones.
+          <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+            Avg. ~{afternoonLowAvg} people. Lowest floor traffic and quiet equipment availability.
           </p>
         </Card>
 
         {/* Peak Rush Warning */}
-        <Card className="p-5 bg-white border-[#dedede] relative overflow-hidden">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-wider text-red-700 bg-red-50 px-2.5 py-1 rounded-full border border-red-200 uppercase">
+            <span className="text-[10px] font-bold tracking-widest text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80 uppercase">
               Peak Rush Hours
             </span>
-            <AlertTriangle className="w-4 h-4 text-red-600" />
+            <AlertTriangle className="w-4 h-4 text-rose-600" />
           </div>
-          <h4 className="text-base font-extrabold text-gym-dark mt-3">
+          <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
             5:30 PM – 8:00 PM
           </h4>
-          <p className="text-xs text-gym-subtle mt-1">
+          <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
             Capacity reaches 85%–97% (~{eveningPeakAvg} people). Expected equipment wait 15–25 mins.
           </p>
         </Card>
       </div>
 
-      {/* Hero Reference-Styled Card Container */}
-      <Card className="p-6 md:p-8 bg-white border-[#dedede] shadow-sm rounded-2xl">
-        {/* Header matching reference screenshot */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 pb-3 border-b border-[#f0f0f0]">
-          <div className="space-y-1.5">
+      {/* Main Chart Container Card */}
+      <Card className="p-6 md:p-8 bg-white border border-black/[0.06] shadow-card rounded-2xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 pb-4 border-b border-zinc-100">
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-gym-dark stroke-[2.5]" />
-              <h3 className="text-xl font-extrabold text-gym-dark tracking-tight">
-                Crowd volume
+              <TrendingUp className="w-4.5 h-4.5 text-zinc-900" />
+              <h3 className="text-lg font-black text-zinc-900 tracking-tight">
+                Crowd Volume Forecast
               </h3>
             </div>
-            <p className="text-[10px] font-bold text-[#888888] tracking-widest uppercase">
-              TODAY'S FORECAST
-            </p>
-            <div className="pt-0.5">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#e0f2f1] text-[#00796b] border border-[#b2dfdb]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#009688]" />
-                AI ASSISTED
+            <div className="flex items-center gap-2 pt-0.5">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                AI PREDICTED
+              </span>
+              <span className="text-[11px] font-medium text-zinc-400">
+                Hourly headcount progression
               </span>
             </div>
           </div>
 
-          {/* Time of Day Filter Tabs */}
-          <div className="flex items-center gap-1 bg-[#f4f4f4] p-1 rounded-xl self-start sm:self-center border border-[#e8e8e8]">
+          {/* Time of Day Segmented Filter Tabs */}
+          <div className="flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl self-start sm:self-center border border-black/[0.04]">
             <button
               onClick={() => setActiveFilter('all')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeFilter === 'all'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               All Day
             </button>
             <button
               onClick={() => setActiveFilter('morning')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeFilter === 'morning'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               Morning (6-11)
             </button>
             <button
               onClick={() => setActiveFilter('afternoon')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeFilter === 'afternoon'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               Afternoon (12-4)
             </button>
             <button
               onClick={() => setActiveFilter('evening')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeFilter === 'evening'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               Evening (5-10)
@@ -225,7 +228,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
           </div>
         </div>
 
-        {/* Clean Reference Bar Chart */}
+        {/* Clean Bar Chart */}
         <div className="py-2">
           <AttendanceWaveChart
             data={filteredSchedule}
@@ -234,52 +237,52 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
           />
         </div>
 
-        {/* Compact Daily Attendance Breakdown Summary */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-[#f0f0f0]">
-          <div className="p-3 bg-[#fafafa] rounded-xl border border-[#ededed]">
-            <span className="text-[10px] font-bold text-gym-subtle uppercase block">
+        {/* Daily Attendance Summary Breakdown */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-zinc-100">
+          <div className="p-3 bg-zinc-50/70 rounded-xl border border-zinc-200/50">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
               Early Morning (6–8 AM)
             </span>
-            <span className="text-sm font-extrabold text-gym-dark mt-0.5 block">
+            <span className="text-sm font-black text-zinc-900 mt-1 block tabular-nums">
               ~{Math.round(capacity * 0.35)} People
             </span>
-            <Badge variant="low" className="text-[9px] px-1.5 py-0 mt-1">
+            <Badge variant="low" dot className="text-[9px] px-2 py-0 mt-1.5">
               Low Crowd
             </Badge>
           </div>
 
-          <div className="p-3 bg-[#fafafa] rounded-xl border border-[#ededed]">
-            <span className="text-[10px] font-bold text-gym-subtle uppercase block">
+          <div className="p-3 bg-zinc-50/70 rounded-xl border border-zinc-200/50">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
               Lunch Wave (12–2 PM)
             </span>
-            <span className="text-sm font-extrabold text-gym-dark mt-0.5 block">
+            <span className="text-sm font-black text-zinc-900 mt-1 block tabular-nums">
               ~{Math.round(capacity * 0.45)} People
             </span>
-            <Badge variant="moderate" className="text-[9px] px-1.5 py-0 mt-1">
+            <Badge variant="moderate" dot className="text-[9px] px-2 py-0 mt-1.5">
               Moderate
             </Badge>
           </div>
 
-          <div className="p-3 bg-red-50/50 rounded-xl border border-red-100">
-            <span className="text-[10px] font-bold text-red-700 uppercase block">
+          <div className="p-3 bg-rose-50/50 rounded-xl border border-rose-100">
+            <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider block">
               Peak Surge (5–8 PM)
             </span>
-            <span className="text-sm font-extrabold text-red-950 mt-0.5 block">
+            <span className="text-sm font-black text-rose-950 mt-1 block tabular-nums">
               ~{Math.round(capacity * 0.90)} People
             </span>
-            <Badge variant="high" className="text-[9px] px-1.5 py-0 mt-1">
+            <Badge variant="high" dot className="text-[9px] px-2 py-0 mt-1.5">
               High Surge
             </Badge>
           </div>
 
-          <div className="p-3 bg-[#fafafa] rounded-xl border border-[#ededed]">
-            <span className="text-[10px] font-bold text-gym-subtle uppercase block">
+          <div className="p-3 bg-zinc-50/70 rounded-xl border border-zinc-200/50">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
               Late Night (9–10 PM)
             </span>
-            <span className="text-sm font-extrabold text-gym-dark mt-0.5 block">
+            <span className="text-sm font-black text-zinc-900 mt-1 block tabular-nums">
               ~{Math.round(capacity * 0.30)} People
             </span>
-            <Badge variant="low" className="text-[9px] px-1.5 py-0 mt-1">
+            <Badge variant="low" dot className="text-[9px] px-2 py-0 mt-1.5">
               Low Crowd
             </Badge>
           </div>
@@ -287,35 +290,36 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30 }) => 
       </Card>
 
       {/* Recommended Strategy Callout */}
-      <div className="p-6 rounded-[14px] bg-[#f0f0f0] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-gym-dark shadow-sm shrink-0">
-            <Sparkles className="w-6 h-6 text-gym-dark" />
+      <div className="p-5 sm:p-6 rounded-2xl bg-white border border-black/[0.06] shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs shrink-0">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="text-[10px] font-bold tracking-wider text-gym-subtle uppercase block">
-              OPTIMAL WORKOUT WINDOW
+            <span className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase block">
+              BEST WORKOUT WINDOW
             </span>
-            <h3 className="text-lg font-extrabold text-gym-dark">
+            <h3 className="text-base font-black text-zinc-900 mt-0.5">
               10:00 AM – 11:30 AM or 1:30 PM – 3:30 PM
             </h3>
-            <p className="text-xs text-gym-subtle font-medium mt-0.5">
-              Less than {Math.round(capacity * 0.4)} members present. Zero wait times for power racks, benches, and free weights.
+            <p className="text-xs text-zinc-500 font-medium mt-0.5">
+              Estimated &lt;{Math.round(capacity * 0.4)} members present. Minimum equipment wait time.
             </p>
           </div>
         </div>
 
         <Button
           asChild
-          className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 shrink-0 shadow-sm"
+          className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-2 shrink-0 shadow-xs"
         >
           <Link to="/">
-            Check Live Crowd
-            <TrendingUp className="w-4 h-4" />
+            Live Dashboard
+            <TrendingUp className="w-3.5 h-3.5" />
           </Link>
         </Button>
       </div>
     </div>
   );
 };
+
 

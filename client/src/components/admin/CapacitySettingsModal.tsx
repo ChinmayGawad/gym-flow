@@ -83,41 +83,41 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white border-[#dedede] rounded-2xl">
+      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden bg-white border border-black/[0.08] rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="p-6 pb-4 border-b border-[#eee] bg-[#fafafa]">
+        <div className="p-5 sm:p-6 pb-4 border-b border-zinc-100 bg-zinc-50/60">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gym-dark text-white flex items-center justify-center">
-                <Building2 className="w-4 h-4" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs">
+                <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-extrabold text-gym-dark">
-                  Facility Capacity Manager
+                <DialogTitle className="text-base sm:text-lg font-black text-zinc-900 tracking-tight">
+                  Facility Capacity Scale
                 </DialogTitle>
-                <DialogDescription className="text-xs text-gym-subtle mt-0.5">
+                <DialogDescription className="text-xs text-zinc-500 mt-0.5 font-medium">
                   Set max concurrent members for {gymName}
                 </DialogDescription>
               </div>
             </div>
-            <Badge className="bg-amber-100 text-amber-900 border-amber-300 text-[10px] font-bold gap-1 px-2 py-0.5">
+            <Badge className="bg-amber-50 text-amber-900 border-amber-200/80 text-[10px] font-bold gap-1 px-2 py-0.5">
               <ShieldCheck className="w-3 h-3 text-amber-700" />
-              Gym Owner
+              Owner
             </Badge>
           </div>
         </div>
 
-        <form onSubmit={handleSave} className="p-6 space-y-6">
+        <form onSubmit={handleSave} className="p-5 sm:p-6 space-y-5">
           {/* Main Capacity Stepper */}
-          <div className="space-y-3">
-            <Label className="text-xs font-bold text-gym-dark flex items-center justify-between">
-              <span>Concurrent Gym Capacity</span>
-              <span className="text-[11px] font-normal text-gym-subtle">
-                Baseline default: 30 people
+          <div className="space-y-2.5">
+            <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center justify-between">
+              <span>Concurrent Facility Capacity</span>
+              <span className="text-[11px] font-medium text-zinc-400 normal-case">
+                Default: 30 people
               </span>
             </Label>
 
-            <div className="flex items-center justify-between gap-3 p-3 bg-[#f8f8f8] rounded-xl border border-[#e5e5e5]">
+            <div className="flex items-center justify-between gap-3 p-3 bg-zinc-50/80 rounded-2xl border border-zinc-200/60">
               {/* Stepper Down */}
               <div className="flex items-center gap-1">
                 <Button
@@ -126,7 +126,7 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
                   size="sm"
                   onClick={() => handleAdjust(-10)}
                   disabled={capacity <= 10}
-                  className="h-8 px-2 text-xs font-bold border-[#dedede] bg-white text-gym-dark hover:bg-[#eee]"
+                  className="h-8 px-2 text-xs font-bold border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100 rounded-xl"
                   title="Decrease by 10"
                 >
                   -10
@@ -137,7 +137,7 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
                   size="icon"
                   onClick={() => handleAdjust(-1)}
                   disabled={capacity <= 10}
-                  className="h-8 w-8 border-[#dedede] bg-white text-gym-dark hover:bg-[#eee]"
+                  className="h-8 w-8 border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100 rounded-xl"
                   title="Decrease by 1"
                 >
                   <Minus className="w-3.5 h-3.5" />
@@ -155,9 +155,9 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
                     const val = parseInt(e.target.value, 10);
                     if (!isNaN(val)) setCapacity(Math.max(10, Math.min(2000, val)));
                   }}
-                  className="w-24 text-center text-2xl font-black h-10 border-none bg-transparent shadow-none focus-visible:ring-0 text-gym-dark p-0"
+                  className="w-24 text-center text-3xl font-black h-10 border-none bg-transparent shadow-none focus-visible:ring-0 text-zinc-900 p-0 tabular-nums"
                 />
-                <span className="text-[10px] font-semibold text-gym-subtle uppercase tracking-wider -mt-1">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest -mt-1">
                   People Max
                 </span>
               </div>
@@ -170,7 +170,7 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
                   size="icon"
                   onClick={() => handleAdjust(1)}
                   disabled={capacity >= 2000}
-                  className="h-8 w-8 border-[#dedede] bg-white text-gym-dark hover:bg-[#eee]"
+                  className="h-8 w-8 border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100 rounded-xl"
                   title="Increase by 1"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -181,7 +181,7 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
                   size="sm"
                   onClick={() => handleAdjust(10)}
                   disabled={capacity >= 2000}
-                  className="h-8 px-2 text-xs font-bold border-[#dedede] bg-white text-gym-dark hover:bg-[#eee]"
+                  className="h-8 px-2 text-xs font-bold border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100 rounded-xl"
                   title="Increase by 10"
                 >
                   +10
@@ -192,9 +192,9 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
 
           {/* Quick Facility Presets */}
           <div className="space-y-2">
-            <Label className="text-xs font-bold text-gym-dark flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-gym-subtle" />
-              Quick Facility Presets:
+            <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-zinc-400" />
+              Quick Presets:
             </Label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {PRESET_CAPACITIES.map((preset) => {
@@ -204,19 +204,19 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
                     key={preset.value}
                     type="button"
                     onClick={() => setCapacity(preset.value)}
-                    className={`p-2.5 rounded-lg border text-left transition-all ${
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-gym-dark bg-gym-dark text-white shadow-sm'
-                        : 'border-[#dedede] bg-white hover:border-[#bbb] text-gym-dark'
+                        ? 'border-zinc-900 bg-zinc-900 text-white shadow-xs'
+                        : 'border-zinc-200 bg-white hover:border-zinc-300 text-zinc-900'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold">{preset.value} People</span>
+                      <span className="text-xs font-bold tabular-nums">{preset.value} People</span>
                       {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                     </div>
                     <span
                       className={`text-[10px] block mt-0.5 font-medium truncate ${
-                        isSelected ? 'text-[#ddd]' : 'text-gym-subtle'
+                        isSelected ? 'text-zinc-300' : 'text-zinc-500'
                       }`}
                     >
                       {preset.label}
@@ -228,64 +228,64 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
           </div>
 
           {/* Dynamic Threshold Brackets Preview */}
-          <div className="p-3.5 bg-[#f9f9f9] rounded-xl border border-[#eaeaea] space-y-2">
-            <span className="text-[11px] font-bold text-gym-dark flex items-center gap-1">
-              <Info className="w-3 h-3 text-gym-subtle" />
-              Dynamic Occupancy Thresholds for {capacity} Capacity:
+          <div className="p-3.5 bg-zinc-50/70 rounded-xl border border-zinc-200/60 space-y-2">
+            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
+              <Info className="w-3 h-3 text-zinc-400" />
+              Thresholds for {capacity} capacity:
             </span>
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2 rounded-lg bg-green-50 border border-green-200">
-                <span className="text-[10px] font-bold text-green-800 block uppercase">
+              <div className="p-2 rounded-xl bg-emerald-50 border border-emerald-200/70">
+                <span className="text-[10px] font-bold text-emerald-800 block uppercase">
                   Low (&lt;40%)
                 </span>
-                <span className="text-xs font-black text-green-900 mt-0.5 block">
+                <span className="text-xs font-black text-emerald-950 mt-0.5 block tabular-nums">
                   0 – {lowMax}
                 </span>
-                <span className="text-[9px] text-green-700 block">0–5 min wait</span>
+                <span className="text-[9px] text-emerald-700 block">0–5 min wait</span>
               </div>
 
-              <div className="p-2 rounded-lg bg-slate-100 border border-slate-200">
-                <span className="text-[10px] font-bold text-slate-800 block uppercase">
+              <div className="p-2 rounded-xl bg-zinc-100 border border-zinc-200">
+                <span className="text-[10px] font-bold text-zinc-800 block uppercase">
                   Mod (40-74%)
                 </span>
-                <span className="text-xs font-black text-slate-900 mt-0.5 block">
+                <span className="text-xs font-black text-zinc-950 mt-0.5 block tabular-nums">
                   {modMin} – {modMax}
                 </span>
-                <span className="text-[9px] text-slate-700 block">10 min wait</span>
+                <span className="text-[9px] text-zinc-600 block">10 min wait</span>
               </div>
 
-              <div className="p-2 rounded-lg bg-red-50 border border-red-200">
-                <span className="text-[10px] font-bold text-red-800 block uppercase">
+              <div className="p-2 rounded-xl bg-rose-50 border border-rose-200/70">
+                <span className="text-[10px] font-bold text-rose-800 block uppercase">
                   High (≥75%)
                 </span>
-                <span className="text-xs font-black text-red-900 mt-0.5 block">
+                <span className="text-xs font-black text-rose-950 mt-0.5 block tabular-nums">
                   {highMin}+
                 </span>
-                <span className="text-[9px] text-red-700 block">15–25 min wait</span>
+                <span className="text-[9px] text-rose-700 block">15–25 min wait</span>
               </div>
             </div>
           </div>
 
           {feedback && (
-            <div className="p-2.5 rounded-lg bg-green-50 text-green-800 text-xs font-semibold border border-green-200 text-center">
+            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 text-center">
               {feedback}
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-end gap-2.5 pt-2">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="text-xs rounded-[9px] h-9 border-[#dedede]"
+              className="text-xs rounded-xl h-9 px-4 border-zinc-200"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSaving}
-              className="text-xs font-bold rounded-[9px] h-9 px-5 bg-gym-dark hover:bg-[#333] text-white gap-1.5"
+              className="text-xs font-bold rounded-xl h-9 px-5 bg-zinc-900 hover:bg-zinc-800 text-white gap-1.5 shadow-xs"
             >
               {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
               Save Capacity
@@ -296,3 +296,4 @@ export const CapacitySettingsModal: React.FC<CapacitySettingsModalProps> = ({
     </Dialog>
   );
 };
+

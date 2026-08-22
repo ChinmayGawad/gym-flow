@@ -243,41 +243,43 @@ export const HistoryPage: React.FC = () => {
   const avgDurationFormatted = `${Math.floor(avgDurationMinutes / 60)}h ${avgDurationMinutes % 60}m`;
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 mb-1">
             <Link
               to="/"
-              className="text-xs font-semibold text-gym-subtle hover:text-gym-dark flex items-center gap-1 transition-colors"
+              className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back to Dashboard
+              <span>Dashboard</span>
             </Link>
+            <span className="text-zinc-300">/</span>
+            <span className="text-xs font-semibold text-zinc-900">History</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-gym-dark tracking-tight mt-1">
-            Visit History & Workout Logs
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight">
+            Workout Check-In History
           </h1>
-          <p className="text-xs text-gym-subtle mt-0.5 font-medium">
-            Track your past gym visits, duration metrics, and training consistency synced to database.
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium">
+            Review training frequency, workout durations, and consistency metrics synced with the gym.
           </p>
         </div>
 
         {/* Log Workout Button triggers Modal */}
         <Button
           onClick={() => setIsLogModalOpen(true)}
-          className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 self-start md:self-auto shadow-sm cursor-pointer"
+          className="h-10 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-2 self-start md:self-auto shadow-xs cursor-pointer"
         >
           <PlusCircle className="w-4 h-4" />
-          Log Workout Check-In
+          Log Workout Session
         </Button>
       </div>
 
       {justLogged && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-[9px] flex items-center gap-2 text-xs text-emerald-800 font-semibold animate-in fade-in">
+        <div className="p-3.5 bg-emerald-50 border border-emerald-200/80 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800 font-semibold animate-in fade-in">
           <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-          Workout session logged and saved to database successfully!
+          <span>Workout session logged and synchronized to database successfully!</span>
         </div>
       )}
 
@@ -290,14 +292,14 @@ export const HistoryPage: React.FC = () => {
 
       {/* Analytics Highlights */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-3">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-3">
             <Calendar className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
             This Month
           </span>
-          <span className="text-2xl font-black text-gym-dark mt-1 block">
+          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
             {thisMonthVisits.length} Visits
           </span>
           <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
@@ -306,92 +308,92 @@ export const HistoryPage: React.FC = () => {
           </span>
         </Card>
 
-        <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-3">
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-3">
             <Clock className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
             Avg Duration
           </span>
-          <span className="text-2xl font-black text-gym-dark mt-1 block">
+          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
             {avgDurationFormatted}
           </span>
-          <span className="text-[11px] text-gym-subtle font-medium mt-1 block">
+          <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
             Consistent sessions
           </span>
         </Card>
 
-        <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-3">
-            <Flame className="w-4.5 h-4.5 text-orange-500" />
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-orange-50/70 border border-orange-200/60 flex items-center justify-center text-orange-600 mb-3">
+            <Flame className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
             Est. Calories
           </span>
-          <span className="text-2xl font-black text-gym-dark mt-1 block">
+          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
             {totalCaloriesBurned.toLocaleString()} kcal
           </span>
-          <span className="text-[11px] text-gym-subtle font-medium mt-1 block">
+          <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
             Burned this month
           </span>
         </Card>
 
-        <Card className="p-5 bg-white border-[#dedede]">
-          <div className="w-9 h-9 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark mb-3">
-            <Award className="w-4.5 h-4.5 text-amber-500" />
+        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-amber-50/70 border border-amber-200/60 flex items-center justify-center text-amber-600 mb-3">
+            <Award className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
             Current Streak
           </span>
-          <span className="text-2xl font-black text-gym-dark mt-1 block">
+          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
             {Math.min(visits.length, 5)} Days
           </span>
           <span className="text-[11px] text-amber-700 font-semibold mt-1 block">
-            🔥 Keep it up!
+            Active weekly routine
           </span>
         </Card>
       </div>
 
       {/* History Table / List Card */}
-      <Card className="p-6 md:p-8 bg-white border-[#dedede]">
-        {/* Filter Navigation */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-[#eee]">
+      <Card className="p-6 md:p-8 bg-white border border-black/[0.06] shadow-card rounded-2xl">
+        {/* Filter Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-100">
           <div>
-            <h3 className="text-lg font-extrabold text-gym-dark">
+            <h3 className="text-lg font-black text-zinc-900 tracking-tight">
               Activity History
             </h3>
-            <p className="text-xs text-gym-subtle mt-0.5">
+            <p className="text-xs text-zinc-500 mt-0.5">
               Showing {filteredVisits.length} recorded workout sessions.
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-[#f0f0f0] p-1 rounded-[9px]">
+          <div className="flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl border border-black/[0.04]">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 filter === 'all'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               All Records
             </button>
             <button
               onClick={() => setFilter('this_month')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 filter === 'this_month'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               August 2026
             </button>
             <button
               onClick={() => setFilter('last_month')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-[7px] transition-colors ${
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 filter === 'last_month'
-                  ? 'bg-white text-gym-dark shadow-sm'
-                  : 'text-gym-subtle hover:text-gym-dark'
+                  ? 'bg-white text-zinc-900 shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-900'
               }`}
             >
               July 2026
@@ -400,39 +402,39 @@ export const HistoryPage: React.FC = () => {
         </div>
 
         {/* Visit Items List */}
-        <div className="divide-y divide-[#eeeeee]">
+        <div className="divide-y divide-zinc-100">
           {filteredVisits.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-[#fafafa] px-2 rounded-lg transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-zinc-50/70 px-3 rounded-xl transition-colors"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-11 h-11 rounded-full bg-[#f0f0f0] flex items-center justify-center text-gym-dark shrink-0">
-                  <Dumbbell className="w-5 h-5" />
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 shrink-0">
+                  <Dumbbell className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <span className="text-xs font-extrabold text-gym-dark block">
+                  <span className="text-xs font-bold text-zinc-900 block">
                     {item.workoutType}
                   </span>
-                  <div className="flex items-center gap-2 text-xs text-gym-subtle mt-0.5">
-                    <span className="font-semibold text-[#444]">{item.date}</span>
+                  <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
+                    <span className="font-semibold text-zinc-700">{item.date}</span>
                     <span>•</span>
-                    <span>{item.checkIn} → {item.checkOut}</span>
+                    <span className="tabular-nums">{item.checkIn} → {item.checkOut}</span>
                     {item.notes && (
                       <>
                         <span>•</span>
-                        <span className="text-[#00796b] font-medium italic">"{item.notes}"</span>
+                        <span className="text-emerald-700 font-medium italic">"{item.notes}"</span>
                       </>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 self-end sm:self-auto">
-                <span className="text-[11px] font-semibold text-gym-subtle bg-[#f5f5f5] px-2.5 py-1 rounded-md border border-[#e5e5e5]">
+              <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                <span className="text-[11px] font-semibold text-zinc-600 bg-zinc-100/80 px-2.5 py-1 rounded-lg border border-zinc-200/60 tabular-nums">
                   ~{item.calories} kcal
                 </span>
-                <span className="text-xs font-bold text-gym-dark bg-[#eeeeee] px-3 py-1 rounded-full border border-[#dedede]">
+                <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200/80 tabular-nums">
                   {item.duration}
                 </span>
               </div>
@@ -443,3 +445,4 @@ export const HistoryPage: React.FC = () => {
     </div>
   );
 };
+

@@ -121,7 +121,7 @@ const WORKOUT_PRESETS: { category: string; items: WorkoutCategory[] }[] = [
       {
         id: 'custom',
         name: 'Custom Workout Routine',
-        icon: <Activity className="w-4 h-4 text-gray-700" />,
+        icon: <Activity className="w-4 h-4 text-zinc-700" />,
         calorieRatePerMin: 6.0,
         description: 'Specify your own custom routine title below',
       },
@@ -176,43 +176,43 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-[#dedede] overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-black/[0.08] overflow-hidden max-h-[90vh] flex flex-col">
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-[#eeeeee] flex items-center justify-between bg-[#fafafa]">
+        <div className="p-5 sm:p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gym-dark text-white flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs">
               <Dumbbell className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-extrabold text-gym-dark">
+              <h3 className="text-base sm:text-lg font-black text-zinc-900 tracking-tight">
                 Log Workout Check-In
               </h3>
-              <p className="text-xs text-gym-subtle font-medium">
-                Select your workout routine, duration, and estimated calories burned.
+              <p className="text-xs text-zinc-500 font-medium">
+                Record your training routine, session duration, and calorie burn.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gym-subtle hover:text-gym-dark hover:bg-[#eaeaea] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body / Form */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-6 overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5 overflow-y-auto flex-1">
           {/* 1. Workout Routine Split Selection */}
           <div className="space-y-3">
-            <label className="text-xs font-extrabold text-gym-dark uppercase tracking-wider block">
-              1. Select Workout Routine Split
+            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              1. Select Training Split
             </label>
 
             <div className="space-y-4">
               {WORKOUT_PRESETS.map((group) => (
                 <div key={group.category} className="space-y-2">
-                  <span className="text-[11px] font-bold text-gym-subtle uppercase tracking-wider block">
+                  <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider block">
                     {group.category}
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -224,24 +224,24 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
                           onClick={() => setSelectedId(item.id)}
                           className={`p-3 rounded-xl border text-left cursor-pointer transition-all duration-150 relative ${
                             isSelected
-                              ? 'border-gym-dark bg-[#f5f5f5] shadow-xs ring-1 ring-gym-dark'
-                              : 'border-[#e5e5e5] bg-white hover:border-[#ccc] hover:bg-[#fafafa]'
+                              ? 'border-zinc-900 bg-zinc-50/80 shadow-xs ring-1 ring-zinc-900'
+                              : 'border-zinc-200/80 bg-white hover:border-zinc-300 hover:bg-zinc-50/50'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
                               {item.icon}
-                              <span className="text-xs font-bold text-gym-dark leading-tight">
+                              <span className="text-xs font-bold text-zinc-900 leading-tight">
                                 {item.name.split(' (')[0]}
                               </span>
                             </div>
                             {isSelected && (
-                              <span className="w-4 h-4 rounded-full bg-gym-dark text-white flex items-center justify-center shrink-0">
+                              <span className="w-4 h-4 rounded-full bg-zinc-900 text-white flex items-center justify-center shrink-0">
                                 <Check className="w-2.5 h-2.5 stroke-[3]" />
                               </span>
                             )}
                           </div>
-                          <p className="text-[10.5px] text-gym-subtle mt-1 leading-snug">
+                          <p className="text-[10.5px] text-zinc-500 mt-1 leading-snug">
                             {item.description}
                           </p>
                         </div>
@@ -260,7 +260,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
                   placeholder="Enter custom routine name (e.g., Kettlebell Complex)"
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
-                  className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-[#dedede] focus:outline-hidden focus:border-gym-dark font-medium"
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 focus:outline-none focus:border-zinc-900 font-medium"
                   required
                 />
               </div>
@@ -268,9 +268,9 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
           </div>
 
           {/* 2. Duration Selector */}
-          <div className="space-y-2.5 pt-2 border-t border-[#f0f0f0]">
-            <label className="text-xs font-extrabold text-gym-dark uppercase tracking-wider block">
-              2. Workout Session Duration
+          <div className="space-y-2.5 pt-2 border-t border-zinc-100">
+            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              2. Session Duration
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
               {DURATION_OPTIONS.map((mins) => (
@@ -278,10 +278,10 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
                   key={mins}
                   type="button"
                   onClick={() => setDuration(mins)}
-                  className={`py-2 px-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer tabular-nums ${
                     duration === mins
-                      ? 'bg-gym-dark text-white shadow-sm'
-                      : 'bg-[#f0f0f0] text-gym-dark hover:bg-[#e4e4e4]'
+                      ? 'bg-zinc-900 text-white shadow-xs'
+                      : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200'
                   }`}
                 >
                   {mins} mins
@@ -291,25 +291,25 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
           </div>
 
           {/* 3. Estimated Calorie Calculation Banner */}
-          <div className="p-4 rounded-xl bg-[#fafafa] border border-[#e8e8e8] flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-zinc-50/70 border border-zinc-200/60 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
-                <Flame className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                <Flame className="w-4.5 h-4.5" />
               </div>
               <div>
-                <span className="text-[10px] font-bold text-gym-subtle uppercase tracking-wider block">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
                   ESTIMATED BURN
                 </span>
-                <span className="text-lg font-black text-gym-dark leading-tight">
+                <span className="text-lg font-black text-zinc-900 leading-tight tabular-nums">
                   ~{estimatedCalories} kcal
                 </span>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-[10px] font-bold text-gym-subtle uppercase tracking-wider block">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
                 DURATION
               </span>
-              <span className="text-xs font-bold text-gym-dark flex items-center gap-1">
+              <span className="text-xs font-bold text-zinc-900 flex items-center gap-1 tabular-nums">
                 <Clock className="w-3.5 h-3.5" />
                 {Math.floor(duration / 60) > 0 ? `${Math.floor(duration / 60)}h ` : ''}
                 {duration % 60 > 0 ? `${duration % 60}m` : ''}
@@ -318,32 +318,32 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
           </div>
 
           {/* 4. Optional Workout Notes */}
-          <div className="space-y-1.5 pt-2 border-t border-[#f0f0f0]">
-            <label className="text-xs font-extrabold text-gym-dark uppercase tracking-wider block">
-              3. Session Notes & PRs <span className="text-gym-subtle font-normal">(Optional)</span>
+          <div className="space-y-1.5 pt-2 border-t border-zinc-100">
+            <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              3. Notes & PRs <span className="text-zinc-400 font-normal lowercase">(optional)</span>
             </label>
             <input
               type="text"
               placeholder="e.g., Hit 100kg Bench PR, 4x10 Barbell Squats"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-[#dedede] focus:outline-hidden focus:border-gym-dark font-medium"
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-zinc-200 focus:outline-none focus:border-zinc-900 font-medium"
             />
           </div>
 
           {/* Modal Footer Actions */}
-          <div className="pt-4 border-t border-[#eeeeee] flex items-center justify-end gap-2.5">
+          <div className="pt-3 border-t border-zinc-100 flex items-center justify-end gap-2.5">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="h-10 px-4 rounded-lg text-xs font-bold border-[#dedede] text-gym-dark hover:bg-[#f0f0f0]"
+              className="h-9 px-4 rounded-xl text-xs font-semibold border-zinc-200"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="h-10 px-6 rounded-lg bg-gym-dark hover:bg-[#333333] text-white text-xs font-bold shadow-sm"
+              className="h-9 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold shadow-xs"
             >
               Save Workout Log
             </Button>
@@ -353,3 +353,4 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
     </div>
   );
 };
+
