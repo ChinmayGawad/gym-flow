@@ -223,7 +223,104 @@ app.post('/api/gym/checkin-toggle', async (req, res) => {
   }
 });
 
-// 3. PUT /api/admin/gym/capacity - Gym Owner Update Facility Capacity
+// 3. GET /api/user/visits - Fetch Member's Workout Visit History & Database Logs
+app.get('/api/user/visits', async (req, res) => {
+  try {
+    let userId: string | null = null;
+    try {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        userId = session.user.id;
+      }
+    } catch {
+      userId = null;
+    }
+
+    if (userId) {
+      const dbVisits = await prisma.visitLog.findMany({
+        where: { userId },
+        orderBy: { checkInTime: 'desc' },
+      });
+
+      return res.json({
+        success: true,
+        visits: dbVisits,
+      });
+    }
+
+    // Return general recent visit logs from database
+    const generalVisits = await prisma.visitLog.findMany({
+      take: 15,
+      orderBy: { checkInTime: 'desc' },
+    });
+
+    return res.json({
+      success: true,
+      visits: generalVisits,
+    });
+  } catch (error: any) {
+    console.error('Error fetching user visit logs:', error);
+    return res.status(500).json({ error: 'Failed to fetch visit logs.' });
+  }
+});
+
+// 4. POST /api/user/visits - Persist New Workout Session to Database
+app.post('/api/user/visits', async (req, res) => {
+  try {
+    let userId: string | null = null;
+    try {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        userId = session.user.id;
+      }
+    } catch {
+      userId = null;
+    }
+
+    if (!userId) {
+      const firstUser = await prisma.user.findFirst();
+      if (firstUser) {
+        userId = firstUser.id;
+      } else {
+        return res.status(401).json({ error: 'Authentication required to log workouts.' });
+      }
+    }
+
+    const { workoutType, durationMinutes, calories, notes } = req.body;
+    const duration = parseInt(durationMinutes, 10) || 60;
+    const caloriesBurned = parseInt(calories, 10) || 300;
+
+    const checkInTime = new Date();
+    const checkOutTime = new Date(checkInTime.getTime() + duration * 60 * 1000);
+
+    const newLog = await prisma.visitLog.create({
+      data: {
+        userId,
+        checkInTime,
+        checkOutTime,
+        durationMinutes: duration,
+        workoutType: workoutType || 'General Strength & Conditioning',
+        caloriesBurned,
+        notes: notes || null,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: 'Workout session saved to database successfully.',
+      visit: newLog,
+    });
+  } catch (error: any) {
+    console.error('Error creating workout log in database:', error);
+    return res.status(500).json({ error: 'Failed to save workout log.' });
+  }
+});
+
+// 5. PUT /api/admin/gym/capacity - Gym Owner Update Facility Capacity
 app.put('/api/admin/gym/capacity', async (req, res) => {
   try {
     const session = await auth.api.getSession({

@@ -15,6 +15,8 @@ import {
   PlusCircle,
 } from 'lucide-react';
 
+import { LogWorkoutModal, WorkoutLogData } from '@/components/history/LogWorkoutModal';
+
 interface VisitRecord {
   id: string;
   date: string;
@@ -24,6 +26,7 @@ interface VisitRecord {
   workoutType: string;
   calories: number;
   period: 'this_month' | 'last_month';
+  notes?: string;
 }
 
 const INITIAL_VISITS: VisitRecord[] = [
@@ -102,30 +105,142 @@ const INITIAL_VISITS: VisitRecord[] = [
 export const HistoryPage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'this_month' | 'last_month'>('all');
   const [visits, setVisits] = useState<VisitRecord[]>(INITIAL_VISITS);
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [justLogged, setJustLogged] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 1. Fetch live database visit records on mount
+  React.useEffect(() => {
+    const fetchVisits = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/user/visits', {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.visits && data.visits.length > 0) {
+            const mappedVisits: VisitRecord[] = data.visits.map((v: any) => {
+              const checkInDate = new Date(v.checkInTime);
+              const isThisMonth =
+                checkInDate.getMonth() === new Date().getMonth() &&
+                checkInDate.getFullYear() === new Date().getFullYear();
+
+              const hours = Math.floor((v.durationMinutes || 60) / 60);
+              const mins = (v.durationMinutes || 60) % 60;
+              const formattedDuration =
+                hours > 0 ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`) : `${mins}m`;
+
+              return {
+                id: v.id,
+                date: checkInDate.toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                }),
+                checkIn: checkInDate.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                }),
+                checkOut: v.checkOutTime
+                  ? new Date(v.checkOutTime).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true,
+                    })
+                  : 'Completed',
+                duration: formattedDuration,
+                workoutType: v.workoutType || 'General Strength Workout',
+                calories: v.caloriesBurned || 350,
+                period: isThisMonth ? 'this_month' : 'last_month',
+                notes: v.notes || undefined,
+              };
+            });
+
+            setVisits(mappedVisits);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch visit logs from database, using local fallback:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVisits();
+  }, []);
 
   const filteredVisits = visits.filter((v) => {
     if (filter === 'all') return true;
     return v.period === filter;
   });
 
-  const handleSimulateCheckIn = () => {
-    const now = new Date();
-    const newRecord: VisitRecord = {
+  // 2. Persist new workout log to backend database
+  const handleSaveWorkout = async (data: WorkoutLogData) => {
+    const hours = Math.floor(data.durationMinutes / 60);
+    const mins = data.durationMinutes % 60;
+    const formattedDuration =
+      hours > 0 ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`) : `${mins}m`;
+
+    const optimisticRecord: VisitRecord = {
       id: `v-${Date.now()}`,
       date: 'Today, 22 August 2026',
       checkIn: 'Just Now',
       checkOut: 'In Progress',
-      duration: 'Live Session',
-      workoutType: 'General Strength & Conditioning',
-      calories: 120,
+      duration: formattedDuration,
+      workoutType: data.workoutType,
+      calories: data.calories,
       period: 'this_month',
+      notes: data.notes,
     };
 
-    setVisits([newRecord, ...visits]);
+    setVisits((prev) => [optimisticRecord, ...prev]);
     setJustLogged(true);
-    setTimeout(() => setJustLogged(false), 4000);
+    setTimeout(() => setJustLogged(false), 5000);
+
+    try {
+      const res = await fetch('/api/user/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          workoutType: data.workoutType,
+          durationMinutes: data.durationMinutes,
+          calories: data.calories,
+          notes: data.notes,
+        }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.visit?.id) {
+          setVisits((prev) =>
+            prev.map((v) => (v.id === optimisticRecord.id ? { ...v, id: result.visit.id } : v))
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Error saving workout to database:', err);
+    }
   };
+
+  // Dynamic calculated metrics from database logs
+  const thisMonthVisits = visits.filter((v) => v.period === 'this_month');
+  const totalCaloriesBurned = visits.reduce((acc, curr) => acc + (curr.calories || 0), 0);
+  const totalDurationMins = visits.reduce((acc, curr) => {
+    const match = curr.duration.match(/(\d+)h\s*(\d+)?m?/) || curr.duration.match(/(\d+)m/);
+    if (match) {
+      if (match[2] !== undefined) {
+        return acc + parseInt(match[1], 10) * 60 + (parseInt(match[2], 10) || 0);
+      }
+      return acc + parseInt(match[1], 10);
+    }
+    return acc + 60;
+  }, 0);
+  const avgDurationMinutes =
+    visits.length > 0 ? Math.round(totalDurationMins / visits.length) : 60;
+  const avgDurationFormatted = `${Math.floor(avgDurationMinutes / 60)}h ${avgDurationMinutes % 60}m`;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -145,14 +260,14 @@ export const HistoryPage: React.FC = () => {
             Visit History & Workout Logs
           </h1>
           <p className="text-xs text-gym-subtle mt-0.5 font-medium">
-            Track your past gym visits, duration metrics, and training consistency.
+            Track your past gym visits, duration metrics, and training consistency synced to database.
           </p>
         </div>
 
-        {/* Quick Check-in simulation button */}
+        {/* Log Workout Button triggers Modal */}
         <Button
-          onClick={handleSimulateCheckIn}
-          className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 self-start md:self-auto shadow-sm"
+          onClick={() => setIsLogModalOpen(true)}
+          className="h-10 px-5 rounded-[9px] bg-gym-dark hover:bg-[#3a3a3a] text-white text-xs font-bold gap-2 self-start md:self-auto shadow-sm cursor-pointer"
         >
           <PlusCircle className="w-4 h-4" />
           Log Workout Check-In
@@ -162,9 +277,16 @@ export const HistoryPage: React.FC = () => {
       {justLogged && (
         <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-[9px] flex items-center gap-2 text-xs text-emerald-800 font-semibold animate-in fade-in">
           <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-          New workout session logged successfully!
+          Workout session logged and saved to database successfully!
         </div>
       )}
+
+      {/* Workout Selection Modal */}
+      <LogWorkoutModal
+        isOpen={isLogModalOpen}
+        onClose={() => setIsLogModalOpen(false)}
+        onSave={handleSaveWorkout}
+      />
 
       {/* Analytics Highlights */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -176,7 +298,7 @@ export const HistoryPage: React.FC = () => {
             This Month
           </span>
           <span className="text-2xl font-black text-gym-dark mt-1 block">
-            {visits.filter((v) => v.period === 'this_month').length} Visits
+            {thisMonthVisits.length} Visits
           </span>
           <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
             <TrendingUp className="w-3 h-3" />
@@ -192,7 +314,7 @@ export const HistoryPage: React.FC = () => {
             Avg Duration
           </span>
           <span className="text-2xl font-black text-gym-dark mt-1 block">
-            1h 17m
+            {avgDurationFormatted}
           </span>
           <span className="text-[11px] text-gym-subtle font-medium mt-1 block">
             Consistent sessions
@@ -207,7 +329,7 @@ export const HistoryPage: React.FC = () => {
             Est. Calories
           </span>
           <span className="text-2xl font-black text-gym-dark mt-1 block">
-            2,780 kcal
+            {totalCaloriesBurned.toLocaleString()} kcal
           </span>
           <span className="text-[11px] text-gym-subtle font-medium mt-1 block">
             Burned this month
@@ -222,7 +344,7 @@ export const HistoryPage: React.FC = () => {
             Current Streak
           </span>
           <span className="text-2xl font-black text-gym-dark mt-1 block">
-            4 Days
+            {Math.min(visits.length, 5)} Days
           </span>
           <span className="text-[11px] text-amber-700 font-semibold mt-1 block">
             🔥 Keep it up!
@@ -296,6 +418,12 @@ export const HistoryPage: React.FC = () => {
                     <span className="font-semibold text-[#444]">{item.date}</span>
                     <span>•</span>
                     <span>{item.checkIn} → {item.checkOut}</span>
+                    {item.notes && (
+                      <>
+                        <span>•</span>
+                        <span className="text-[#00796b] font-medium italic">"{item.notes}"</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

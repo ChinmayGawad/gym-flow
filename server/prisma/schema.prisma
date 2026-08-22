@@ -106,8 +106,13 @@ model VisitLog {
   checkInTime     DateTime  @default(now())
   checkOutTime    DateTime?
   durationMinutes Int?
+  workoutType     String?   @default("General Strength & Conditioning")
+  caloriesBurned  Int?      @default(300)
+  notes           String?
+  createdAt       DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("visit_log")
+  @@index([userId])
 }
