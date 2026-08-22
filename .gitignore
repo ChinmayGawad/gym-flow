@@ -37,22 +37,42 @@ ehthumbs.db
 !.vscode/settings.json
 .idea/
 
-# AI, LLM & Coding Agent Files, Rules, Memory Banks & Planning Artifacts
+# AI, LLM, Coding Agent Files, Rules, Memory Banks & Planning Artifacts
 GEMINI.md
 MEMORY.md
 AGENTS.md
 AGENT.md
 CLAUDE.md
 CURSOR.md
+COPILOT.md
 implementation-plan.md
 project-scope.md
 techstack.md
+walkthrough.md
+*.plan.md
+*_plan.md
+*-plan.md
+*.agent.md
+
+# Agent & Skills Configuration Directories
+.agents/
+.agent/
+_agents/
+_agent/
+.skills/
+skills/
 .gemini/
 .claude/
 .cursor/
 .cursorrules
+.windsurf/
 .windsurfrules
-*.plan.md
-*_plan.md
-walkthrough.md
-*.agent.md
+.aider*
+.continue/
+.roo/
+.cline/
+
+# Skill Manager Lockfiles
+skills-lock.json
+.skill-lock.json
+.skill-lock*

@@ -1,23 +1,37 @@
 # GymFlow — Real-Time Gym Occupancy & Crowd Prediction
 
-GymFlow is a modern, real-time gym occupancy monitoring and crowd prediction application. It helps gym members avoid peak rush hours, check live crowd density, view estimated wait times, review hourly attendance forecasts, and track personal visit history.
+GymFlow is a modern full-stack gym occupancy monitoring, capacity management, and crowd prediction web application. It helps gym members check live crowd density, avoid peak rush hours, inspect hourly attendance forecasts, track personal workout visits, and enables gym administrators to manage members and facility capacity.
 
 ---
 
 ## ⚡ Features
 
-- **Live Occupancy Tracker**: Real-time crowd gauge displaying current headcount and occupancy percentage (Capacity: 60).
-- **Dynamic Crowd Statuses & Wait Times**:
-  - 🟢 **LOW Crowd** (`< 40%`): Wait time `0–5 min`
-  - ⚪ **MODERATE Crowd** (`40% – 74%`): Wait time `10 min`
-  - 🔴 **HIGH Crowd** (`≥ 75%`): Wait time `15–25 min`
-- **Live Simulator Controls**: Interactive manual controls and a 5-second automatic fluctuation toggle for live demos and simulation.
-- **Best Time Recommendation**: Suggests optimal low-traffic workout windows (e.g. 6:00 AM – 8:00 AM).
-- **Hourly Prediction Timeline**: Interactive hourly schedule predicting traffic throughout the day.
-- **Visit History Activity**: Logs recent gym check-ins, check-outs, and workout durations.
-- **Role-Based Authentication (Better Auth)**:
-  - **Member Authentication**: Secure email & password login.
-  - **Admin Control**: Gym admins can register and issue accounts directly to new members.
+- 🔒 **Mandatory Sign-In Auth Gate**:
+  - The application is protected by a strict authentication barrier; the dashboard and features only open once a user is logged in.
+  - Zero-flicker splash screen during session verification.
+  - One-click **Admin Demo** and **Member Demo** quick login buttons.
+- 🏋️‍♂️ **Live Occupancy Monitoring**:
+  - Real-time headcount derived from checked-in members against dynamically scalable capacity (default: 30).
+  - Occupancy percentage progress gauge and automated crowd status badges.
+- ⏱️ **Occupancy Thresholds & Estimated Wait Times**:
+  - 🟢 **LOW Crowd** (`< 40%`): Estimated wait `0–5 min`
+  - ⚪ **MODERATE Crowd** (`40% – 74%`): Estimated wait `10 min`
+  - 🔴 **HIGH Crowd** (`≥ 75%`): Estimated wait `15–25 min`
+- 👥 **Dual Check-In System**:
+  - **Member Self Check-In**: Authenticated gym members can check in/out with 1-click from the dashboard.
+  - **Admin Master Check-In**: Gym staff/owners can toggle check-ins for any member in the directory.
+- 👑 **Admin Members Directory & Indian Plan Assignment**:
+  - Gym administrators can register and issue accounts to members directly with subscription plans:
+    - **Basic (₹999 / mo)**: General gym floor access, standard locker, crowd tracker.
+    - **Pro Athlete (₹1,999 / mo)**: Gym floor + cardio & sauna, peak hours priority, visit logs.
+    - **VIP Elite (₹3,499 / mo)**: Unlimited 24/7 all-access, dedicated personal trainer.
+  - Search, filter by plan, edit credentials, and toggle check-in states.
+- 📊 **Crowd Forecast & Attendance Curve (`/schedule`)**:
+  - AI-assisted hourly volume curve with time-of-day filters (Morning 6–11, Afternoon 12–4, Evening 5–10).
+- 📜 **Visit History & Workout Logs (`/history`)**:
+  - Database-synced visit history, monthly session counts, duration analytics, estimated calories, and consistency streaks.
+- ⚙️ **Dynamic Capacity Scaling**:
+  - Gym owners can adjust facility capacity (e.g. 30, 60, 100, 300) with instant recalculation of percentage thresholds.
 
 ---
 
@@ -27,19 +41,21 @@ GymFlow is a modern, real-time gym occupancy monitoring and crowd prediction app
 GymFlow/
 ├── client/                 # React 18 + Vite Frontend Application
 │   ├── src/
-│   │   ├── components/     # UI Components (Dashboard, Prediction, History, Auth, Admin)
+│   │   ├── components/     # UI Components (Dashboard, Prediction, History, Auth, Admin, UI)
 │   │   ├── hooks/          # Custom hooks (useOccupancy)
-│   │   ├── lib/            # Better Auth client & utilities
-│   │   └── App.tsx         # Main application dashboard
+│   │   ├── lib/            # Better Auth client & utils
+│   │   ├── pages/          # Pages (HomePage, SchedulePage, HistoryPage, MembersPage, AuthPage)
+│   │   ├── types/          # TypeScript definitions (occupancy, plans)
+│   │   └── App.tsx         # Main application root with Auth Gate
 │   ├── package.json
 │   └── vite.config.ts
 │
 ├── server/                 # Express + Bun + Better Auth API Backend
-│   ├── prisma/             # Prisma schema & SQLite / PostgreSQL migrations
+│   ├── prisma/             # Prisma schema & SQLite database
 │   │   ├── schema.prisma
 │   │   └── dev.db          # Zero-config local database
 │   ├── src/
-│   │   ├── lib/            # Better Auth instance & Prisma client
+│   │   ├── lib/            # Better Auth instance, Express middleware & Prisma client
 │   │   ├── scripts/        # Admin provisioning script (create-admin.ts)
 │   │   └── index.ts        # Express server entrypoint (Port 3000)
 │   ├── .env.example
@@ -49,9 +65,9 @@ GymFlow/
 │   ├── src/index.ts
 │   └── package.json
 │
-├── index.html              # Standalone vanilla SPA demo
+├── index.html              # Standalone vanilla SPA demo with Auth Overlay
 ├── style.css               # Vanilla SPA styling system
-├── MEMORY.md               # Architecture decisions & memory bank
+├── MEMORY.md               # Architecture decisions & system memory bank
 └── package.json            # Monorepo workspace root
 ```
 
@@ -63,14 +79,11 @@ GymFlow/
 - **[Bun](https://bun.sh/)** `v1.1+` (recommended) or **Node.js** `v18+` / `npm`
 
 ### 2. Install Dependencies
-From the repository root:
 ```bash
 bun install
 ```
 
 ### 3. Initialize Database & Seed Admin
-The backend includes a zero-config SQLite database (`server/prisma/dev.db`):
-
 ```bash
 # Navigate to server and sync Prisma schema
 cd server
@@ -98,7 +111,8 @@ bun run dev:server
 
 | Role | Email | Password | Permissions |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@gymflow.com` | `Admin123456!` | Full access + Register New Members |
+| **Admin** | `admin@gymflow.com` | `Admin123456!` | Full access + Register Members + Capacity Manager |
+| **Member** | `member@gymflow.com` | `Member123456!` | Dashboard + Self Check-In + Forecasts + Visit Logs |
 
 > *To provision a custom admin user, run:*
 > `bun --filter @gymflow/server create-admin --email=user@example.com --password=YourPassword123! --name="Custom Admin"`
@@ -140,4 +154,4 @@ ADMIN_NAME="Gym Admin"
 - **Canvas Background**: `#f7f7f7`
 - **Primary Text / Accents**: `#171717`
 - **Card Background**: `#ffffff` (`1px solid #dedede`)
-- **Card Radii**: `14px` - `15px` | **Buttons**: `9px`
+- **Card Radii**: `14px` - `16px` | **Buttons**: `9px`

@@ -600,7 +600,88 @@ document
     });
 
 
+// ================= AUTH GATE LOGIC =================
+
+const authOverlay = document.getElementById("authOverlay");
+const authForm = document.getElementById("authForm");
+const authEmailInput = document.getElementById("authEmail");
+const authPasswordInput = document.getElementById("authPassword");
+
+function checkAuthStatus() {
+    const isAuthenticated = sessionStorage.getItem("gymflow_authenticated");
+    if (isAuthenticated === "true") {
+        if (authOverlay) authOverlay.style.display = "none";
+    } else {
+        if (authOverlay) authOverlay.style.display = "flex";
+    }
+}
+
+if (authForm) {
+    authForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        sessionStorage.setItem("gymflow_authenticated", "true");
+        if (authOverlay) authOverlay.style.display = "none";
+    });
+}
+
+function demoLogin(role) {
+    if (role === 'admin') {
+        authEmailInput.value = "admin@gymflow.com";
+        authPasswordInput.value = "Admin123456!";
+    } else {
+        authEmailInput.value = "member@gymflow.com";
+        authPasswordInput.value = "Member123456!";
+    }
+    sessionStorage.setItem("gymflow_authenticated", "true");
+    if (authOverlay) authOverlay.style.display = "none";
+}
+
+checkAuthStatus();
+
 </script>
 
+<!-- ================= AUTHENTICATION OVERLAY ================= -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="auth-logo-icon">
+                <i class="fa-solid fa-dumbbell"></i>
+            </div>
+            <h2>GYMFLOW</h2>
+            <p>Please sign in to access live gym occupancy & predictions</p>
+        </div>
+
+        <form class="auth-form" id="authForm">
+            <div class="auth-form-group">
+                <label for="authEmail">Email Address</label>
+                <input type="email" id="authEmail" placeholder="member@gymflow.com" required value="member@gymflow.com">
+            </div>
+
+            <div class="auth-form-group">
+                <label for="authPassword">Password</label>
+                <input type="password" id="authPassword" placeholder="••••••••" required value="Member123456!">
+            </div>
+
+            <button type="submit" class="auth-submit-btn">
+                Sign In to GymFlow
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="auth-demo-divider">
+            <span>Quick Demo Access</span>
+        </div>
+
+        <div class="auth-demo-btns">
+            <button type="button" class="auth-demo-btn" onclick="demoLogin('admin')">
+                <i class="fa-solid fa-shield-halved"></i> Admin Demo
+            </button>
+            <button type="button" class="auth-demo-btn" onclick="demoLogin('member')">
+                <i class="fa-solid fa-user"></i> Member Demo
+            </button>
+        </div>
+    </div>
+</div>
+
 </body>
-</html>
+</html>
