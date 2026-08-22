@@ -45,10 +45,13 @@ app.use(
   })
 );
 
-// Better Auth Route Handler (must be placed before express.json parsing)
+// Body Parsers (express.json must parse incoming body for Bun/Node compatibility)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Better Auth Route Handler
 app.all('/api/auth/*', toNodeHandler(auth));
 
-app.use(express.json());
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
