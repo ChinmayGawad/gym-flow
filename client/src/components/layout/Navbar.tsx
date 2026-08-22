@@ -6,6 +6,7 @@ import {
   Calendar,
   Clock,
   User,
+  Users,
   LogOut,
   UserPlus,
   ShieldCheck,
@@ -93,6 +94,23 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Clock className="h-4 w-4" />
             History
           </NavLink>
+
+          {/* Admin-Only Members Link */}
+          {isAdmin && (
+            <NavLink
+              to="/members"
+              className={({ isActive }) =>
+                `flex items-center gap-1.5 px-4 py-2.5 rounded-[9px] text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-amber-800 text-white font-semibold shadow-sm'
+                    : 'text-amber-900 bg-amber-50 hover:bg-amber-800 hover:text-white border border-amber-200'
+                }`
+              }
+            >
+              <Users className="h-4 w-4" />
+              Members
+            </NavLink>
+          )}
 
           {user ? (
             <div className="flex items-center gap-2 pl-2 border-l border-[#eee]">
@@ -247,6 +265,31 @@ export const Navbar: React.FC<NavbarProps> = ({
             </>
           )}
         </NavLink>
+
+        {/* Mobile Admin-Only Members Link */}
+        {isAdmin && (
+          <NavLink
+            to="/members"
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] font-bold transition-colors ${
+                isActive ? 'text-amber-900' : 'text-amber-700 hover:text-amber-900'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <div
+                  className={`p-1 rounded-full mb-0.5 ${
+                    isActive ? 'bg-amber-100' : ''
+                  }`}
+                >
+                  <Users className="w-5 h-5" />
+                </div>
+                <span>Members</span>
+              </>
+            )}
+          </NavLink>
+        )}
       </nav>
     </>
   );

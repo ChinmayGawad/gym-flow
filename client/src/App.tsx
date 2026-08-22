@@ -4,6 +4,8 @@ import { Navbar } from '@/components/layout/Navbar';
 import { HomePage } from '@/pages/HomePage';
 import { SchedulePage } from '@/pages/SchedulePage';
 import { HistoryPage } from '@/pages/HistoryPage';
+import { MembersPage } from '@/pages/MembersPage';
+import { AdminRoute } from '@/components/auth/AdminRoute';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { CreateMemberModal } from '@/components/admin/CreateMemberModal';
 import { useOccupancy } from '@/hooks/useOccupancy';
@@ -35,6 +37,14 @@ export function App() {
             />
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route
+              path="/members"
+              element={
+                <AdminRoute onOpenAuth={() => setIsAuthOpen(true)}>
+                  <MembersPage />
+                </AdminRoute>
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
