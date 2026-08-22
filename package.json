@@ -7,13 +7,15 @@
     "core"
   ],
   "scripts": {
-    "dev": "bun --filter gymflow-client dev",
+    "dev:client": "bun --filter gymflow-client dev",
     "dev:server": "bun --filter @gymflow/server dev",
     "build": "bun run --cwd client build",
-    "start": "bun server/src/index.ts",
+    "start": "bun --filter gymflow-client start",
+    "server:start": "bun server/src/index.ts",
     "prisma:generate": "bun run --cwd server prisma generate",
     "prisma:push": "bun run --cwd server prisma db push",
     "create-admin": "bun run --cwd server src/scripts/create-admin.ts"
   }
 }
+
 
