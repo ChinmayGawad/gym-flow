@@ -49,13 +49,15 @@ interface GymMember {
   image?: string | null;
 }
 
+import { API_BASE } from '@/lib/api-config';
+
+
 interface MembersPageProps {
   occupancy?: ReturnType<typeof useOccupancy>;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-
 export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
+
   const [members, setMembers] = useState<GymMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

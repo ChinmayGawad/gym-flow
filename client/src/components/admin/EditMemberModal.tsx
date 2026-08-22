@@ -23,6 +23,8 @@ import {
   Shield,
 } from 'lucide-react';
 import { MEMBERSHIP_PLANS, MembershipPlan } from '@/types/plans';
+import { API_BASE } from '@/lib/api-config';
+
 
 export interface EditableMember {
   id: string;
@@ -85,8 +87,9 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
     setSuccessMessage(null);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/members/${member.id}`, {
+      const response = await fetch(`${API_BASE}/api/admin/members/${member.id}`, {
         method: 'PUT',
+
         headers: {
           'Content-Type': 'application/json',
         },

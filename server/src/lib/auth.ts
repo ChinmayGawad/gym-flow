@@ -18,6 +18,9 @@ const clientOrigins = clientUrl
     ]
   : [];
 
+const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN || '';
+const railwayStaticUrl = process.env.RAILWAY_STATIC_URL || '';
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'sqlite',
@@ -29,8 +32,17 @@ export const auth = betterAuth({
     'http://127.0.0.1:5173',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'https://gymflowserver-production.up.railway.app',
+    'https://gymflow-client-production.up.railway.app',
+    'http://gymflowserver-production.up.railway.app',
+    'http://gymflow-client-production.up.railway.app',
+    authBaseUrl,
+    authBaseUrl.replace(/^https?:\/\//, ''),
+    ...(railwayPublicDomain ? [`https://${railwayPublicDomain}`, `http://${railwayPublicDomain}`, railwayPublicDomain] : []),
+    ...(railwayStaticUrl ? [`https://${railwayStaticUrl}`, `http://${railwayStaticUrl}`, railwayStaticUrl] : []),
     ...clientOrigins,
-  ],
+  ].filter(Boolean),
+
 
   user: {
     additionalFields: {
