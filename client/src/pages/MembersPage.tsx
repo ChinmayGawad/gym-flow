@@ -18,9 +18,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   CreditCard,
-  Crown,
   Zap,
-  Shield,
   Building2,
   Settings,
   MapPin,
@@ -34,7 +32,7 @@ import { CapacitySettingsModal } from '@/components/admin/CapacitySettingsModal'
 import { MEMBERSHIP_PLANS, MembershipPlan } from '@/types/plans';
 import { useOccupancy } from '@/hooks/useOccupancy';
 import { Skeleton } from '@/components/ui/skeleton';
-
+import { API_BASE } from '@/lib/api-config';
 
 interface GymMember {
   id: string;
@@ -49,19 +47,15 @@ interface GymMember {
   image?: string | null;
 }
 
-import { API_BASE } from '@/lib/api-config';
-
-
 interface MembersPageProps {
   occupancy?: ReturnType<typeof useOccupancy>;
 }
 
 export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
-
   const [members, setMembers] = useState<GymMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin'>('all');
+  const [roleFilter] = useState<'all' | 'user' | 'admin'>('all');
   const [planFilter, setPlanFilter] = useState<'all' | 'basic' | 'pro' | 'elite'>('all');
   const [checkInFilter, setCheckInFilter] = useState<'all' | 'inside' | 'outside'>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -74,14 +68,28 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
   const fetchMembers = async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const res = await authClient.admin.listUsers({
+      // 1. Try dedicated express admin members endpoint (guarantees accurate isCheckedIn state)
+      const res = await fetch(`${API_BASE}/api/admin/members`, {
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.members) {
+          setMembers(data.members as GymMember[]);
+          return;
+        }
+      }
+
+      // 2. Fallback to authClient admin listUsers
+      const authRes = await authClient.admin.listUsers({
         query: {
           limit: 100,
         },
       });
 
-      if (res?.data?.users) {
-        setMembers(res.data.users as GymMember[]);
+      if (authRes?.data?.users) {
+        setMembers(authRes.data.users as GymMember[]);
       }
     } catch (err: any) {
       if (!silent) {
@@ -101,47 +109,50 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
     fetchMembers();
   }, []);
 
-  // 2. Real-time reactivity to occupancy.checkedInUserIds
+  // 2. Real-time Multi-Tab Broadcast Sync Listener
   useEffect(() => {
-    if (occupancy?.checkedInUserIds) {
-      const checkedSet = new Set(occupancy.checkedInUserIds);
-      setMembers((prev) =>
-        prev.map((m) => ({
-          ...m,
-          isCheckedIn: checkedSet.has(m.id),
-        }))
-      );
+    try {
+      const channel = new BroadcastChannel('gymflow_realtime_sync');
+      channel.onmessage = (event) => {
+        if (
+          event.data?.type === 'GYM_CHECKIN_UPDATED' ||
+          event.data?.type === 'GYM_CAPACITY_UPDATED' ||
+          event.data?.type === 'GYM_OCCUPANCY_SYNC'
+        ) {
+          fetchMembers(true);
+        }
+      };
+      return () => {
+        channel.close();
+      };
+    } catch {
+      // BroadcastChannel not available
     }
-  }, [occupancy?.checkedInUserIds]);
+  }, []);
 
-  // 3. Periodic silent background refresh (every 4s) so new members or status changes appear live
+  // 3. Tab focus auto-sync
   useEffect(() => {
-    const interval = setInterval(() => {
+    const handleFocus = () => {
       fetchMembers(true);
-    }, 4000);
-
-    return () => clearInterval(interval);
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
-  // 4. Cross-tab BroadcastChannel listener
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
-      try {
-        const channel = new BroadcastChannel('gymflow_realtime_sync');
-        channel.onmessage = (event) => {
-          if (event.data && event.data.type === 'GYM_OCCUPANCY_SYNC') {
-            fetchMembers(true);
-          }
-        };
-        return () => channel.close();
-      } catch {}
-    }
-  }, []);
-
-  // Admin Master Check-In / Check-Out Toggle
+  // Admin Toggle Member Check-In / Out
   const handleToggleMemberCheckIn = async (member: GymMember) => {
     setTogglingId(member.id);
     setActionFeedback(null);
+
+    const prevCheckedIn = !!member.isCheckedIn;
+    const nextState = !prevCheckedIn;
+
+    // Optimistic UI update
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === member.id ? { ...m, isCheckedIn: nextState } : m
+      )
+    );
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/members/${member.id}/checkin-toggle`, {
@@ -150,14 +161,15 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
         credentials: 'include',
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const nextState = data.isCheckedIn;
+      const data = await res.json();
 
-        // Update local members list
+      if (res.ok && data.success) {
+        const confirmedState = Boolean(data.isCheckedIn);
+
+        // Update local members list with confirmed state
         setMembers((prev) =>
           prev.map((m) =>
-            m.id === member.id ? { ...m, isCheckedIn: nextState } : m
+            m.id === member.id ? { ...m, isCheckedIn: confirmedState } : m
           )
         );
 
@@ -177,32 +189,30 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
 
         setActionFeedback({
           type: 'success',
-          message: data.message || `${member.name} is now ${nextState ? 'checked in' : 'checked out'}.`,
+          message: data.message || `${member.name} is now ${confirmedState ? 'checked in' : 'checked out'}.`,
         });
       } else {
-        // Fallback optimistic update
-        const nextState = !member.isCheckedIn;
+        // Revert optimistic update on failure
         setMembers((prev) =>
           prev.map((m) =>
-            m.id === member.id ? { ...m, isCheckedIn: nextState } : m
+            m.id === member.id ? { ...m, isCheckedIn: prevCheckedIn } : m
           )
         );
         setActionFeedback({
-          type: 'success',
-          message: `${member.name} status updated to ${nextState ? 'Checked In' : 'Checked Out'} (Local).`,
+          type: 'error',
+          message: data?.error || `Failed to update ${member.name}'s check-in status.`,
         });
       }
-    } catch {
-      // Local fallback
-      const nextState = !member.isCheckedIn;
+    } catch (err: any) {
+      // Revert optimistic update on network error
       setMembers((prev) =>
         prev.map((m) =>
-          m.id === member.id ? { ...m, isCheckedIn: nextState } : m
+          m.id === member.id ? { ...m, isCheckedIn: prevCheckedIn } : m
         )
       );
       setActionFeedback({
-        type: 'success',
-        message: `${member.name} status updated (Offline).`,
+        type: 'error',
+        message: err?.message || 'Network error updating check-in status.',
       });
     } finally {
       setTogglingId(null);
@@ -292,7 +302,6 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
   });
 
   const totalMembersCount = members.length;
-  const adminCount = members.filter((m) => m.role === 'admin').length;
   const checkedInMembersCount = members.filter((m) => m.isCheckedIn).length;
   const currentCapacity = occupancy?.capacity || 30;
 
@@ -304,24 +313,24 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
           <div className="flex items-center gap-1.5 mb-1">
             <Link
               to="/"
-              className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors"
+              className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Dashboard</span>
             </Link>
-            <span className="text-zinc-300">/</span>
-            <span className="text-xs font-semibold text-zinc-900">Members Directory</span>
+            <span className="text-zinc-300 dark:text-zinc-700">/</span>
+            <span className="text-xs font-semibold text-zinc-900 dark:text-white">Members Directory</span>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
               Gym Members Directory
             </h1>
-            <Badge className="bg-amber-50 text-amber-900 border-amber-200/80 font-bold text-[10px] uppercase gap-1 px-2 py-0.5">
-              <ShieldCheck className="w-3 h-3 text-amber-700" />
+            <Badge className="bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60 font-bold text-[10px] uppercase gap-1 px-2 py-0.5">
+              <ShieldCheck className="w-3 h-3 text-amber-700 dark:text-amber-400" />
               Admin
             </Badge>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
             Manage member accounts, track live check-ins, configure gym capacity, and assign Indian subscription plans (₹ INR).
           </p>
         </div>
@@ -331,15 +340,15 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
           <Button
             onClick={() => setIsCapacityModalOpen(true)}
             variant="outline"
-            className="h-9 px-3.5 rounded-xl border-zinc-200 bg-white text-zinc-800 hover:bg-zinc-100 text-xs font-semibold gap-1.5 shadow-xs"
+            className="h-9 px-3.5 rounded-xl border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-xs font-semibold gap-1.5 shadow-xs"
           >
-            <Settings className="w-3.5 h-3.5 text-zinc-700" />
+            <Settings className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
             <span>Capacity ({currentCapacity})</span>
           </Button>
 
           <Button
             onClick={() => setIsCreateModalOpen(true)}
-            className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-1.5 shadow-xs"
+            className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-1.5 shadow-xs"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>Add Member</span>
@@ -352,15 +361,15 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
         <div
           className={`p-3.5 rounded-xl flex items-center justify-between text-xs font-semibold border ${
             actionFeedback.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
-              : 'bg-rose-50 text-rose-800 border-rose-200/80'
+              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/50'
+              : 'bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border-rose-200/80 dark:border-rose-800/50'
           }`}
         >
           <div className="flex items-center gap-2">
             {actionFeedback.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
             )}
             <span>{actionFeedback.message}</span>
           </div>
@@ -376,66 +385,66 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
       {/* Analytics Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Accounts */}
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-2">
+        <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700 flex items-center justify-center text-zinc-800 dark:text-zinc-200 mb-2">
             <Users className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+          <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
             Total Accounts
           </span>
-          <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+          <span className="text-2xl font-black text-zinc-900 dark:text-white mt-0.5 block tabular-nums">
             {totalMembersCount}
           </span>
         </Card>
 
         {/* Live Inside Gym */}
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50/80 border border-emerald-200/60 text-emerald-700 flex items-center justify-center mb-2">
+        <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-300 flex items-center justify-center mb-2">
             <MapPin className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest block">
+          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-widest block">
             Inside Gym Now
           </span>
           <div className="flex items-baseline gap-1.5 mt-0.5">
-            <span className="text-2xl font-black text-emerald-900 tabular-nums">
+            <span className="text-2xl font-black text-emerald-900 dark:text-emerald-100 tabular-nums">
               {checkedInMembersCount}
             </span>
-            <span className="text-xs font-semibold text-zinc-400 tabular-nums">
+            <span className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 tabular-nums">
               / {currentCapacity} max
             </span>
           </div>
         </Card>
 
         {/* Pro & Elite Subscribers */}
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-blue-50/80 border border-blue-200/60 text-blue-700 flex items-center justify-center mb-2">
+        <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/50 text-blue-700 dark:text-blue-300 flex items-center justify-center mb-2">
             <Zap className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[10px] font-bold text-blue-900 uppercase tracking-widest block">
+          <span className="text-[10px] font-bold text-blue-900 dark:text-blue-300 uppercase tracking-widest block">
             Pro & Elite Plans
           </span>
-          <span className="text-2xl font-black text-blue-900 mt-0.5 block tabular-nums">
+          <span className="text-2xl font-black text-blue-900 dark:text-blue-100 mt-0.5 block tabular-nums">
             {members.filter((m) => m.plan === 'pro' || m.plan === 'elite').length}
           </span>
         </Card>
 
         {/* Facility Capacity */}
-        <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-          <div className="w-9 h-9 rounded-xl bg-amber-50/80 border border-amber-200/60 text-amber-700 flex items-center justify-center mb-2">
+        <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
+          <div className="w-9 h-9 rounded-xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 text-amber-700 dark:text-amber-300 flex items-center justify-center mb-2">
             <Building2 className="w-4.5 h-4.5" />
           </div>
-          <span className="text-[10px] font-bold text-amber-900 uppercase tracking-widest block">
+          <span className="text-[10px] font-bold text-amber-900 dark:text-amber-300 uppercase tracking-widest block">
             Facility Capacity
           </span>
           <div className="flex items-center justify-between mt-0.5">
-            <span className="text-2xl font-black text-amber-900 tabular-nums">
+            <span className="text-2xl font-black text-amber-900 dark:text-amber-100 tabular-nums">
               {currentCapacity}
             </span>
             <Button
               onClick={() => setIsCapacityModalOpen(true)}
               variant="outline"
               size="sm"
-              className="h-6 text-[10px] font-bold px-2 rounded-lg text-amber-900 border-amber-300 hover:bg-amber-100"
+              className="h-6 text-[10px] font-bold px-2 rounded-lg text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-950"
             >
               Scale
             </Button>
@@ -444,30 +453,30 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
       </div>
 
       {/* Members Directory Card */}
-      <Card className="p-6 md:p-8 bg-white border border-black/[0.06] shadow-card rounded-2xl">
+      <Card className="p-6 md:p-8 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl">
         {/* Search & Filter Toolbar */}
-        <div className="flex flex-col gap-4 mb-6 pb-4 border-b border-zinc-100">
+        <div className="flex flex-col gap-4 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Search Box */}
             <div className="relative w-full sm:max-w-[320px]">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
               <Input
                 type="text"
                 placeholder="Search members by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-10 text-xs border-zinc-200 rounded-xl"
+                className="pl-10 h-10 text-xs border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded-xl"
               />
             </div>
 
             {/* Attendance Filter Tabs */}
-            <div className="flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl self-start sm:self-auto border border-black/[0.04]">
+            <div className="flex items-center gap-1 bg-zinc-100/90 dark:bg-zinc-900/90 p-1 rounded-xl self-start sm:self-auto border border-black/[0.04] dark:border-white/[0.06]">
               <button
                 onClick={() => setCheckInFilter('all')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   checkInFilter === 'all'
-                    ? 'bg-white text-zinc-900 shadow-xs'
-                    : 'text-zinc-500 hover:text-zinc-900'
+                    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
                 All ({totalMembersCount})
@@ -477,7 +486,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   checkInFilter === 'inside'
                     ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-emerald-800 hover:bg-emerald-100/70'
+                    : 'text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-950/40'
                 }`}
               >
                 Inside Gym ({checkedInMembersCount})
@@ -486,8 +495,8 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                 onClick={() => setCheckInFilter('outside')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                   checkInFilter === 'outside'
-                    ? 'bg-white text-zinc-900 shadow-xs'
-                    : 'text-zinc-500 hover:text-zinc-900'
+                    ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
                 Outside ({totalMembersCount - checkedInMembersCount})
@@ -497,16 +506,16 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
 
           {/* Subscription Plan Filter Toolbar */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-xs font-bold text-zinc-700 flex items-center gap-1">
-              <CreditCard className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1">
+              <CreditCard className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
               Plans:
             </span>
             <button
               onClick={() => setPlanFilter('all')}
               className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 planFilter === 'all'
-                  ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-                  : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-xs'
+                  : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
               }`}
             >
               All Plans
@@ -515,8 +524,8 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
               onClick={() => setPlanFilter('basic')}
               className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 planFilter === 'basic'
-                  ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-                  : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300'
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-xs'
+                  : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600'
               }`}
             >
               Basic (₹999/mo)
@@ -526,7 +535,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
               className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 planFilter === 'pro'
                   ? 'bg-blue-700 text-white border-blue-700 shadow-xs'
-                  : 'bg-white text-blue-700 border-blue-200/80 hover:border-blue-300'
+                  : 'bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-400 border-blue-200/80 dark:border-blue-800/50 hover:border-blue-300'
               }`}
             >
               Pro Athlete (₹1,999/mo)
@@ -536,7 +545,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
               className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
                 planFilter === 'elite'
                   ? 'bg-amber-700 text-white border-amber-700 shadow-xs'
-                  : 'bg-white text-amber-800 border-amber-200/80 hover:border-amber-300'
+                  : 'bg-white dark:bg-zinc-800 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/50 hover:border-amber-300'
               }`}
             >
               VIP Elite (₹3,499/mo)
@@ -546,14 +555,13 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
 
         {/* Member Directory Content */}
         {isLoading ? (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 px-3"
               >
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                  {/* Avatar squircle skeleton */}
                   <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
                   <div className="space-y-2 flex-1 max-w-sm">
                     <div className="flex items-center gap-2">
@@ -577,20 +585,19 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
             ))}
           </div>
         ) : filteredMembers.length === 0 ? (
-
           <div className="py-16 text-center">
-            <Users className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
-            <h3 className="text-sm font-extrabold text-zinc-900">
+            <Users className="w-10 h-10 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+            <h3 className="text-sm font-extrabold text-zinc-900 dark:text-white">
               No members found
             </h3>
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
               {searchTerm
                 ? 'Try refining your search keyword.'
                 : 'Get started by adding your first gym member.'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {filteredMembers.map((member) => {
               const isAdmin = member.role === 'admin';
               const isInside = !!member.isCheckedIn;
@@ -608,39 +615,39 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
               return (
                 <div
                   key={member.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 px-3 hover:bg-zinc-50/70 rounded-xl transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 px-3 hover:bg-zinc-50/70 dark:hover:bg-zinc-800/50 rounded-xl transition-colors"
                 >
                   {/* Member Info */}
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shrink-0 relative ${
                         isAdmin
-                          ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                          ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60'
                           : isInside
-                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-200'
-                          : 'bg-zinc-100 text-zinc-800 border border-zinc-200/70'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200/70 dark:border-zinc-700'
                       }`}
                     >
                       {member.name ? member.name.charAt(0).toUpperCase() : 'M'}
                       {isInside && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900" />
                       )}
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-bold text-zinc-900 truncate">
+                        <span className="text-sm font-bold text-zinc-900 dark:text-white truncate">
                           {member.name}
                         </span>
 
                         {/* Live Check-In Pill */}
                         {isInside ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                             Inside Gym
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-600 border border-zinc-200/70">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/70 dark:border-zinc-700">
                             Checked Out
                           </span>
                         )}
@@ -654,20 +661,20 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
 
                         {/* Admin Badge */}
                         {isAdmin && (
-                          <Badge className="bg-amber-50 text-amber-900 border-amber-200/80 font-bold text-[9px] uppercase px-1.5 py-0">
+                          <Badge className="bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60 font-bold text-[9px] uppercase px-1.5 py-0">
                             Admin
                           </Badge>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1">
+                      <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                         <span className="flex items-center gap-1">
-                          <Mail className="w-3 h-3 text-zinc-400" />
+                          <Mail className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
                           {member.email}
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-zinc-400" />
+                          <Calendar className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
                           Joined {formattedDate}
                         </span>
                       </div>
@@ -684,8 +691,8 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                       size="sm"
                       className={`h-8 px-3 text-xs font-bold rounded-xl gap-1.5 transition-colors ${
                         isInside
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200'
-                          : 'bg-white text-zinc-800 border-zinc-200 hover:bg-zinc-100'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:text-rose-700 dark:hover:text-rose-300 hover:border-rose-200 dark:hover:border-rose-800/60'
+                          : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700'
                       }`}
                       title={isInside ? 'Check Member Out' : 'Check Member In'}
                     >
@@ -693,12 +700,12 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : isInside ? (
                         <>
-                          <LogOut className="w-3.5 h-3.5 text-emerald-700" />
+                          <LogOut className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                           Check Out
                         </>
                       ) : (
                         <>
-                          <LogIn className="w-3.5 h-3.5 text-zinc-700" />
+                          <LogIn className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
                           Check In
                         </>
                       )}
@@ -717,7 +724,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                       }
                       variant="outline"
                       size="sm"
-                      className="h-8 px-2.5 text-xs text-zinc-700 hover:bg-zinc-100 border-zinc-200 rounded-xl gap-1.5 font-semibold"
+                      className="h-8 px-2.5 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-zinc-200 dark:border-zinc-700 rounded-xl gap-1.5 font-semibold"
                       title="Edit Member Profile & Plan"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -730,7 +737,7 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
                       variant="outline"
                       size="sm"
                       disabled={deletingId === member.id}
-                      className="h-8 px-2.5 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200/80 rounded-xl gap-1.5"
+                      className="h-8 px-2.5 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 border-rose-200/80 dark:border-rose-800/60 rounded-xl gap-1.5"
                       title="Remove Member"
                     >
                       {deletingId === member.id ? (
@@ -781,5 +788,3 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
     </div>
   );
 };
-
-

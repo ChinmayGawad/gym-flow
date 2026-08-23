@@ -345,6 +345,16 @@ app.post('/api/gym/checkin-toggle', async (req, res) => {
           lastCheckInAt: new Date(),
         },
       });
+
+      // Create open visit log
+      await prisma.visitLog.create({
+        data: {
+          userId,
+          checkInTime: new Date(),
+          workoutType: 'Gym Floor Session',
+          caloriesBurned: 300,
+        },
+      });
     } else {
       // Member is checking OUT
       await prisma.user.update({
@@ -353,6 +363,25 @@ app.post('/api/gym/checkin-toggle', async (req, res) => {
           isCheckedIn: false,
         },
       });
+
+      // Close the most recent open visit log if any
+      const openVisit = await prisma.visitLog.findFirst({
+        where: { userId, checkOutTime: null },
+        orderBy: { checkInTime: 'desc' },
+      });
+
+      if (openVisit) {
+        const now = new Date();
+        const durationMins = Math.max(15, Math.round((now.getTime() - new Date(openVisit.checkInTime).getTime()) / 60000));
+        await prisma.visitLog.update({
+          where: { id: openVisit.id },
+          data: {
+            checkOutTime: now,
+            durationMinutes: durationMins,
+            caloriesBurned: Math.round(durationMins * 6),
+          },
+        });
+      }
     }
 
     // Return updated gym metrics
@@ -528,14 +557,68 @@ app.put('/api/admin/gym/capacity', async (req, res) => {
   }
 });
 
-// 4. POST /api/admin/members/:id/checkin-toggle - Admin Master Member Check-In
+// GET /api/admin/members - Get all gym members with live check-in status
+app.get('/api/admin/members', async (req, res) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    let userRole = (session?.user as any)?.role;
+    if (!userRole && session?.user?.id) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true },
+      });
+      userRole = dbUser?.role;
+    }
+
+    if (!session || userRole !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Administrator access required.' });
+    }
+
+    const members = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        plan: true,
+        planStatus: true,
+        isCheckedIn: true,
+        lastCheckInAt: true,
+        createdAt: true,
+        image: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return res.json({
+      success: true,
+      members,
+    });
+  } catch (error: any) {
+    console.error('Error fetching admin members list:', error);
+    return res.status(500).json({ error: 'Failed to fetch members list.' });
+  }
+});
+
+// POST /api/admin/members/:id/checkin-toggle - Admin Master Member Check-In
 app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
   try {
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
     });
 
-    const userRole = (session?.user as any)?.role;
+    let userRole = (session?.user as any)?.role;
+    if (!userRole && session?.user?.id) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true },
+      });
+      userRole = dbUser?.role;
+    }
+
     if (!session || userRole !== 'admin') {
       return res.status(403).json({ error: 'Unauthorized: Administrator access required.' });
     }
@@ -559,6 +642,16 @@ app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
           lastCheckInAt: new Date(),
         },
       });
+
+      // Create an active visit log
+      await prisma.visitLog.create({
+        data: {
+          userId: id,
+          checkInTime: new Date(),
+          workoutType: 'Gym Floor Session',
+          caloriesBurned: 300,
+        },
+      });
     } else {
       await prisma.user.update({
         where: { id },
@@ -566,11 +659,30 @@ app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
           isCheckedIn: false,
         },
       });
+
+      // Close the most recent open visit log if any
+      const openVisit = await prisma.visitLog.findFirst({
+        where: { userId: id, checkOutTime: null },
+        orderBy: { checkInTime: 'desc' },
+      });
+
+      if (openVisit) {
+        const now = new Date();
+        const durationMins = Math.max(15, Math.round((now.getTime() - new Date(openVisit.checkInTime).getTime()) / 60000));
+        await prisma.visitLog.update({
+          where: { id: openVisit.id },
+          data: {
+            checkOutTime: now,
+            durationMinutes: durationMins,
+            caloriesBurned: Math.round(durationMins * 6),
+          },
+        });
+      }
     }
 
     const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
 
-    // Broadcast live change immediately to all connected clients
+    // Broadcast live change immediately to all connected clients & tabs
     broadcastGymStatusUpdate();
 
     return res.json({

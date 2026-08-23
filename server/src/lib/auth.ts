@@ -56,6 +56,15 @@ export const auth = betterAuth({
         defaultValue: 'active',
         input: true,
       },
+      isCheckedIn: {
+        type: 'boolean',
+        defaultValue: false,
+        input: true,
+      },
+      lastCheckInAt: {
+        type: 'date',
+        input: false,
+      },
     },
   },
   emailAndPassword: {
