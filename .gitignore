@@ -11,6 +11,24 @@ build/
 .vite/
 **/.vite/
 
+# Android Build & SDK Artifacts
+.gradle/
+**/.gradle/
+local.properties
+**/local.properties
+*.apk
+*.aar
+*.aab
+*.dex
+*.class
+captures/
+.cxx/
+.externalNativeBuild/
+signing.properties
+*.jks
+*.keystore
+
+
 # Environment Variables & Secrets
 .env
 .env.local
