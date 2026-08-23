@@ -13,6 +13,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTheme } from '@/context/ThemeContext';
 
 interface CrowdCardProps {
   data: OccupancyData;
@@ -35,9 +36,12 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
   isLoadingCheckIn = false,
   isLoading = false,
 }) => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
   if (isLoading) {
     return (
-      <Card className="p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center min-h-[240px] bg-white border border-black/[0.06] shadow-card">
+      <Card className="p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center min-h-[240px] bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card">
         <div className="w-full md:w-[60%] space-y-4">
           <div className="flex items-center gap-2">
             <Skeleton className="h-6 w-28 rounded-full" />
@@ -52,7 +56,7 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
             <Skeleton className="h-10 w-44 rounded-xl" />
           </div>
         </div>
-        <div className="hidden sm:flex flex-col items-center justify-center w-full md:w-[220px] p-6 rounded-2xl bg-zinc-50/70 border border-zinc-200/50 mt-6 md:mt-0">
+        <div className="hidden sm:flex flex-col items-center justify-center w-full md:w-[220px] p-6 rounded-2xl bg-zinc-50/70 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800 mt-6 md:mt-0">
           <Skeleton className="w-32 h-32 rounded-full" />
         </div>
       </Card>
@@ -89,15 +93,15 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
 
   const ringColor =
     status === 'LOW'
-      ? '#059669' // emerald-600
+      ? isDark ? '#10b981' : '#059669' // emerald
       : status === 'HIGH'
-      ? '#e11d48' // rose-600
-      : '#3f3f46'; // zinc-700
+      ? isDark ? '#f43f5e' : '#e11d48' // rose
+      : isDark ? '#a1a1aa' : '#3f3f46'; // zinc
 
   const availableSlots = Math.max(0, capacity - peopleCount);
 
   return (
-    <Card className="p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center min-h-[240px] bg-white border border-black/[0.06] shadow-card relative overflow-hidden">
+    <Card className="p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center min-h-[240px] bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card relative overflow-hidden">
       {/* Left Core Section */}
       <div className="w-full md:w-[62%] flex flex-col justify-between">
         {/* Top Status Indicators (Glanceable in 0.5s) */}
@@ -107,12 +111,12 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
               {status} CROWD
             </Badge>
 
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100/90 text-zinc-800 border border-zinc-200/70 text-xs font-semibold">
-              <Clock className="w-3.5 h-3.5 text-zinc-500" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100/90 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 border border-zinc-200/70 dark:border-zinc-700/60 text-xs font-semibold">
+              <Clock className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
               <span>{waitTime} wait</span>
             </span>
 
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-[11px] font-semibold">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50 text-[11px] font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Live Sync</span>
             </span>
@@ -122,10 +126,10 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
           {isAdmin && onOpenCapacityModal && (
             <button
               onClick={onOpenCapacityModal}
-              className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl border border-amber-200/80 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 px-2.5 py-1 rounded-xl border border-amber-200/80 dark:border-amber-800/60 transition-colors cursor-pointer"
               title="Change Gym Capacity"
             >
-              <Settings className="w-3.5 h-3.5 text-amber-700" />
+              <Settings className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
               <span>Cap: {capacity}</span>
             </button>
           )}
@@ -134,25 +138,25 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
         {/* Big Numeric Display */}
         <div className="mt-4">
           <div className="flex items-baseline">
-            <span className="text-5xl sm:text-6xl font-black tracking-tight text-zinc-900 tabular-nums leading-none">
+            <span className="text-5xl sm:text-6xl font-black tracking-tight text-zinc-900 dark:text-white tabular-nums leading-none">
               {peopleCount}
             </span>
-            <span className="text-2xl font-semibold text-zinc-400 ml-2.5 tabular-nums">
+            <span className="text-2xl font-semibold text-zinc-400 dark:text-zinc-500 ml-2.5 tabular-nums">
               / {capacity}
             </span>
-            <span className="text-xs font-bold text-zinc-500 ml-3 uppercase tracking-wider">
+            <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400 ml-3 uppercase tracking-wider">
               people inside
             </span>
           </div>
 
           {/* Availability & Member Count Context */}
-          <p className="text-zinc-500 text-xs sm:text-sm font-medium mt-1.5 flex items-center gap-2">
-            <span className="font-semibold text-zinc-800 tabular-nums">
+          <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm font-medium mt-1.5 flex items-center gap-2">
+            <span className="font-semibold text-zinc-800 dark:text-zinc-200 tabular-nums">
               {availableSlots} {availableSlots === 1 ? 'slot' : 'slots'} available
             </span>
-            <span className="text-zinc-300">•</span>
-            <span className="flex items-center gap-1 text-zinc-500">
-              <Users className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="text-zinc-300 dark:text-zinc-700">•</span>
+            <span className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
+              <Users className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
               {totalRegisteredMembers} registered
             </span>
           </p>
@@ -165,15 +169,15 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
             disabled={isLoadingCheckIn}
             className={`h-10 px-5 text-xs font-extrabold rounded-xl gap-2 transition-all active:scale-[0.98] shadow-xs cursor-pointer ${
               isCheckedInSelf
-                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                : 'bg-zinc-900 hover:bg-zinc-800 text-white'
+                ? 'bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white'
+                : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100'
             }`}
           >
             {isLoadingCheckIn ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : isCheckedInSelf ? (
               <>
-                <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-200 dark:text-emerald-100" />
                 <span>Checked In (Tap to Exit)</span>
               </>
             ) : (
@@ -187,7 +191,7 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
       </div>
 
       {/* Right Section: Minimalist Radial Gauge */}
-      <div className="w-full md:w-[220px] p-5 rounded-2xl bg-zinc-50/80 border border-zinc-200/60 mt-6 md:mt-0 flex flex-col items-center justify-center shrink-0">
+      <div className="w-full md:w-[220px] p-5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/60 border border-zinc-200/60 dark:border-zinc-800 mt-6 md:mt-0 flex flex-col items-center justify-center shrink-0">
         <div className="relative w-32 h-32 flex items-center justify-center">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 128 128">
             {/* Background Track Circle */}
@@ -195,7 +199,7 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
               cx="64"
               cy="64"
               r={radius}
-              className="stroke-zinc-200/70"
+              className="stroke-zinc-200/70 dark:stroke-zinc-800"
               strokeWidth="9"
               fill="transparent"
             />
@@ -216,18 +220,18 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
 
           {/* Center Text inside Radial Ring */}
           <div className="absolute flex flex-col items-center justify-center text-center">
-            <span className="text-2xl font-black text-zinc-900 tabular-nums leading-none tracking-tight">
+            <span className="text-2xl font-black text-zinc-900 dark:text-white tabular-nums leading-none tracking-tight">
               {percentage}%
             </span>
-            <span className="text-[9px] font-bold text-zinc-400 tracking-wider uppercase mt-1">
+            <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 tracking-wider uppercase mt-1">
               OCCUPIED
             </span>
           </div>
         </div>
 
         <div className="text-center mt-2.5">
-          <span className="text-xs font-semibold text-zinc-600 flex items-center justify-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-zinc-400" />
+          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 flex items-center justify-center gap-1.5">
+            <Activity className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
             {status === 'LOW' ? 'Floor is open' : status === 'HIGH' ? 'Floor is busy' : 'Moderate flow'}
           </span>
         </div>

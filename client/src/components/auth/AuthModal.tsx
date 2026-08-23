@@ -66,21 +66,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[400px] p-6 bg-white border border-black/[0.08] rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-[400px] p-6 bg-white dark:bg-[#131418] border border-black/[0.08] dark:border-white/[0.08] rounded-2xl shadow-2xl">
         <DialogHeader className="flex flex-col items-center text-center">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs mb-2">
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center shadow-xs mb-2">
             <Dumbbell className="w-5 h-5 text-white" />
           </div>
-          <DialogTitle className="text-lg sm:text-xl font-black tracking-tight text-zinc-900">
+          <DialogTitle className="text-lg sm:text-xl font-black tracking-tight text-zinc-900 dark:text-white">
             GymFlow Account Sign In
           </DialogTitle>
-          <DialogDescription className="text-xs text-zinc-500 mt-0.5">
+          <DialogDescription className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
             Sign in with your member or admin credentials
           </DialogDescription>
         </DialogHeader>
 
         {errorMessage && (
-          <div className="mt-2 p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-start gap-2 text-xs text-rose-700">
+          <div className="mt-2 p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200/80 dark:border-rose-800/50 rounded-xl flex items-start gap-2 text-xs text-rose-700 dark:text-rose-300">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
@@ -88,16 +88,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         <form onSubmit={handleSignIn} className="space-y-4 mt-3">
           <div className="space-y-1.5">
-            <Label htmlFor="signin-email" className="text-xs font-bold text-zinc-700">Email Address</Label>
+            <Label htmlFor="signin-email" className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Email Address</Label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
               <Input
                 id="signin-email"
                 type="email"
                 placeholder="member@gymflow.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 rounded-xl border-zinc-200"
+                className="pl-10 rounded-xl border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
                 required
                 disabled={isSubmitting}
               />
@@ -105,16 +105,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="signin-password" className="text-xs font-bold text-zinc-700">Password</Label>
+            <Label htmlFor="signin-password" className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
               <Input
                 id="signin-password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 rounded-xl border-zinc-200"
+                className="pl-10 rounded-xl border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
                 required
                 disabled={isSubmitting}
               />
@@ -124,7 +124,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full mt-2 font-bold text-xs h-10 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 flex items-center justify-center gap-2 shadow-xs"
+            className="w-full mt-2 font-bold text-xs h-10 rounded-xl bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 flex items-center justify-center gap-2 shadow-xs"
           >
             {isSubmitting ? (
               <>
@@ -137,11 +137,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </Button>
         </form>
 
-        <p className="text-[11px] text-center text-zinc-400 mt-4">
+        <p className="text-[11px] text-center text-zinc-400 dark:text-zinc-500 mt-4">
           Need an account? Member accounts are issued directly by Gym Admins.
         </p>
       </DialogContent>
     </Dialog>
   );
 };
-

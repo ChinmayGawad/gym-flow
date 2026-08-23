@@ -11,9 +11,8 @@ import { AdminRoute } from '@/components/auth/AdminRoute';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { useOccupancy } from '@/hooks/useOccupancy';
-
 import { useSession } from '@/lib/auth-client';
-import { Dumbbell, Loader2 } from 'lucide-react';
+import { Dumbbell } from 'lucide-react';
 
 export function App() {
   const occupancy = useOccupancy(18, 30);
@@ -26,55 +25,55 @@ export function App() {
   const isAdmin = user?.role === 'admin';
   const isLoggedIn = !!user;
 
-  // 1. Session check skeleton loading screen
+  // 1. Session check skeleton loading screen with dark mode support
   if (isPending) {
     return (
-      <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans">
+      <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#090a0d] text-zinc-900 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
         {/* Skeleton Top Navbar */}
-        <header className="h-[72px] w-full border-b border-black/[0.06] bg-white/70 px-4 sm:px-8 flex items-center justify-between">
+        <header className="h-[72px] w-full border-b border-black/[0.06] dark:border-white/[0.08] bg-white/70 dark:bg-zinc-950/70 px-4 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shadow-card animate-pulse">
+            <div className="w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center shadow-card animate-pulse">
               <Dumbbell className="w-5 h-5 text-white" />
             </div>
-            <div className="h-5 w-24 rounded-lg bg-zinc-200/80 animate-shimmer" />
+            <div className="h-5 w-24 rounded-lg bg-zinc-200/80 dark:bg-zinc-800/80 animate-shimmer" />
           </div>
           <div className="hidden md:flex items-center gap-2">
-            <div className="h-8 w-20 rounded-xl bg-zinc-200/60 animate-shimmer" />
-            <div className="h-8 w-24 rounded-xl bg-zinc-200/60 animate-shimmer" />
-            <div className="h-8 w-20 rounded-xl bg-zinc-200/60 animate-shimmer" />
+            <div className="h-8 w-20 rounded-xl bg-zinc-200/60 dark:bg-zinc-800/60 animate-shimmer" />
+            <div className="h-8 w-24 rounded-xl bg-zinc-200/60 dark:bg-zinc-800/60 animate-shimmer" />
+            <div className="h-8 w-20 rounded-xl bg-zinc-200/60 dark:bg-zinc-800/60 animate-shimmer" />
           </div>
-          <div className="h-9 w-9 rounded-full bg-zinc-200/70 animate-shimmer" />
+          <div className="h-9 w-9 rounded-full bg-zinc-200/70 dark:bg-zinc-800/70 animate-shimmer" />
         </header>
 
         {/* Skeleton Page Content */}
         <main className="w-[90%] max-w-[1100px] mx-auto py-8 md:py-12 space-y-6 flex-1">
           {/* Welcome skeleton */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-zinc-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-zinc-100 dark:border-zinc-800">
             <div className="space-y-2">
-              <div className="h-7 w-56 rounded-xl bg-zinc-200/80 animate-shimmer" />
-              <div className="h-4 w-72 rounded-lg bg-zinc-200/50 animate-shimmer" />
+              <div className="h-7 w-56 rounded-xl bg-zinc-200/80 dark:bg-zinc-800/80 animate-shimmer" />
+              <div className="h-4 w-72 rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 animate-shimmer" />
             </div>
-            <div className="h-7 w-28 rounded-full bg-zinc-200/60 animate-shimmer" />
+            <div className="h-7 w-28 rounded-full bg-zinc-200/60 dark:bg-zinc-800/60 animate-shimmer" />
           </div>
 
           {/* Crowd Hero Card Skeleton */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-white border border-black/[0.06] shadow-card flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="p-6 sm:p-8 rounded-2xl bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-3 w-full md:w-1/2">
-              <div className="h-4 w-28 rounded-lg bg-zinc-200/60 animate-shimmer" />
-              <div className="h-9 w-44 rounded-xl bg-zinc-200/80 animate-shimmer" />
-              <div className="h-4 w-60 rounded-lg bg-zinc-200/50 animate-shimmer" />
-              <div className="h-10 w-40 rounded-xl bg-zinc-200/70 animate-shimmer mt-2" />
+              <div className="h-4 w-28 rounded-lg bg-zinc-200/60 dark:bg-zinc-800/60 animate-shimmer" />
+              <div className="h-9 w-44 rounded-xl bg-zinc-200/80 dark:bg-zinc-800/80 animate-shimmer" />
+              <div className="h-4 w-60 rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 animate-shimmer" />
+              <div className="h-10 w-40 rounded-xl bg-zinc-200/70 dark:bg-zinc-800/70 animate-shimmer mt-2" />
             </div>
-            <div className="w-36 h-36 rounded-full bg-zinc-200/60 animate-shimmer shrink-0" />
+            <div className="w-36 h-36 rounded-full bg-zinc-200/60 dark:bg-zinc-800/60 animate-shimmer shrink-0" />
           </div>
 
           {/* Quick Stats Grid Skeleton */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="p-5 rounded-2xl bg-white border border-black/[0.06] shadow-card space-y-3">
-                <div className="w-9 h-9 rounded-xl bg-zinc-200/70 animate-shimmer" />
-                <div className="h-3 w-20 rounded-md bg-zinc-200/60 animate-shimmer" />
-                <div className="h-7 w-24 rounded-lg bg-zinc-200/80 animate-shimmer" />
+              <div key={i} className="p-5 rounded-2xl bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-zinc-200/70 dark:bg-zinc-800/70 animate-shimmer" />
+                <div className="h-3 w-20 rounded-md bg-zinc-200/60 dark:bg-zinc-800/60 animate-shimmer" />
+                <div className="h-7 w-24 rounded-lg bg-zinc-200/80 dark:bg-zinc-800/80 animate-shimmer" />
               </div>
             ))}
           </div>
@@ -88,12 +87,11 @@ export function App() {
     return <AuthPage />;
   }
 
-
   // 3. Authenticated App Experience
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gym-canvas text-gym-dark flex flex-col font-sans">
-        {/* Sticky Navbar with Routing Navigation */}
+      <div className="min-h-screen bg-gym-canvas text-gym-dark dark:bg-[#090a0d] dark:text-zinc-100 flex flex-col font-sans transition-colors duration-200">
+        {/* Sticky Navbar with Routing Navigation & Theme Toggle */}
         <Navbar onOpenAuth={() => setIsAuthOpen(true)} />
 
         {/* Main Content Area with Smooth Page Transition */}
@@ -134,7 +132,6 @@ export function App() {
           </PageTransition>
         </main>
 
-
         {/* Authentication Sign-In Modal (Optional inside app) */}
         <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       </div>
@@ -143,4 +140,3 @@ export function App() {
 }
 
 export default App;
-

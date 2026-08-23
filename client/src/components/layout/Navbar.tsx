@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSession, signOut } from '@/lib/auth-client';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 interface NavbarProps {
   onOpenAuth: () => void;
@@ -38,21 +39,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
   return (
     <>
       {/* Top Sticky Navbar */}
-      <header className="sticky top-0 z-50 h-[70px] w-full glass-nav border-b border-black/[0.06] px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all">
+      <header className="sticky top-0 z-50 h-[70px] w-full glass-nav border-b border-black/[0.06] dark:border-white/[0.08] px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all">
         {/* Left Zone: Brand Logo */}
         <div className="flex-1 flex items-center justify-start">
           <Link
             to="/"
             className="flex items-center gap-2.5 group transition-opacity"
           >
-            <div className="w-8 h-8 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
               <Dumbbell className="h-4.5 w-4.5 text-white" />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-base tracking-tight text-zinc-900">
+              <span className="font-extrabold text-base tracking-tight text-zinc-900 dark:text-white">
                 GYMFLOW
               </span>
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-zinc-100 text-zinc-600 border border-zinc-200">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
                 LIVE
               </span>
             </div>
@@ -60,15 +61,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
         </div>
 
         {/* Center Zone: Centered Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center justify-center gap-1.5 bg-zinc-100/80 p-1 rounded-2xl border border-black/[0.04]">
+        <nav className="hidden md:flex items-center justify-center gap-1.5 bg-zinc-100/80 dark:bg-zinc-900/80 p-1 rounded-2xl border border-black/[0.04] dark:border-white/[0.06]">
           <NavLink
             to="/"
             end
             className={({ isActive }) =>
               `flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                 isActive
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-white/60'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-zinc-800/60'
               }`
             }
           >
@@ -81,8 +82,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             className={({ isActive }) =>
               `flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                 isActive
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-white/60'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-zinc-800/60'
               }`
             }
           >
@@ -94,8 +95,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             to="/history"
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
               isHistoryActive
-                ? 'bg-white text-zinc-900 shadow-xs'
-                : 'text-zinc-500 hover:text-zinc-900 hover:bg-white/60'
+                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-zinc-800/60'
             }`}
           >
             <Clock className="h-3.5 w-3.5" />
@@ -110,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
                 `flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                   isActive
                     ? 'bg-amber-600 text-white shadow-xs'
-                    : 'text-amber-800 hover:bg-amber-100/70'
+                    : 'text-amber-800 dark:text-amber-300 hover:bg-amber-100/70 dark:hover:bg-amber-950/40'
                 }`
               }
             >
@@ -120,30 +121,33 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
           )}
         </nav>
 
-        {/* Right Zone: User Profile, Role Badge & Sign In/Out Actions */}
+        {/* Right Zone: User Profile, Role Badge, Theme Toggle & Actions */}
         <div className="flex-1 flex items-center justify-end gap-2.5">
+          {/* Theme Toggle Button */}
+          <ThemeToggle />
+
           {/* Desktop User Status */}
           <div className="hidden md:flex items-center gap-2">
             {user ? (
-              <div className="flex items-center gap-2 bg-white/60 border border-black/[0.05] pl-1.5 pr-2 py-1 rounded-full shadow-xs">
-                <div className="w-6 h-6 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+              <div className="flex items-center gap-2 bg-white/60 dark:bg-zinc-900/80 border border-black/[0.05] dark:border-white/[0.08] pl-1.5 pr-2 py-1 rounded-full shadow-xs">
+                <div className="w-6 h-6 rounded-full bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
                   {userInitial}
                 </div>
 
                 {isAdmin && (
-                  <Badge className="bg-amber-50 text-amber-800 border-amber-200/80 font-bold text-[9px] uppercase gap-1 px-1.5 py-0">
-                    <ShieldCheck className="w-2.5 h-2.5 text-amber-700" />
+                  <Badge className="bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60 font-bold text-[9px] uppercase gap-1 px-1.5 py-0">
+                    <ShieldCheck className="w-2.5 h-2.5 text-amber-700 dark:text-amber-400" />
                     Admin
                   </Badge>
                 )}
 
-                <span className="text-xs font-semibold text-zinc-800 max-w-[120px] truncate">
+                <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 max-w-[120px] truncate">
                   {user.name || user.email?.split('@')[0]}
                 </span>
 
                 <button
                   onClick={handleSignOut}
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-0.5 cursor-pointer"
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors ml-0.5 cursor-pointer"
                   title="Sign Out"
                 >
                   <LogOut className="h-3 w-3" />
@@ -152,7 +156,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 <User className="h-3.5 w-3.5" />
                 Sign In
@@ -167,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
                 onClick={handleSignOut}
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-full bg-zinc-100 border-zinc-200 text-rose-600 hover:bg-rose-50"
+                className="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50"
                 title={`Sign Out (${user.name || user.email})`}
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -177,7 +181,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
                 onClick={onOpenAuth}
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-full bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200"
+                className="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                 title="Sign In / User Account"
               >
                 <User className="h-3.5 w-3.5" />
@@ -188,13 +192,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
       </header>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-nav border-t border-black/[0.06] flex items-center justify-around h-16 px-2 shadow-card">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-nav border-t border-black/[0.06] dark:border-white/[0.08] flex items-center justify-around h-16 px-2 shadow-card">
         <NavLink
           to="/"
           end
           className={({ isActive }) =>
             `flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] font-semibold transition-colors ${
-              isActive ? 'text-zinc-900' : 'text-zinc-400 hover:text-zinc-700'
+              isActive ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
             }`
           }
         >
@@ -202,7 +206,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             <>
               <div
                 className={`p-1 rounded-xl mb-0.5 transition-colors ${
-                  isActive ? 'bg-zinc-900 text-white' : ''
+                  isActive ? 'bg-zinc-900 dark:bg-zinc-800 text-white' : ''
                 }`}
               >
                 <Home className="w-4 h-4" />
@@ -216,7 +220,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
           to="/schedule"
           className={({ isActive }) =>
             `flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] font-semibold transition-colors ${
-              isActive ? 'text-zinc-900' : 'text-zinc-400 hover:text-zinc-700'
+              isActive ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
             }`
           }
         >
@@ -224,7 +228,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             <>
               <div
                 className={`p-1 rounded-xl mb-0.5 transition-colors ${
-                  isActive ? 'bg-zinc-900 text-white' : ''
+                  isActive ? 'bg-zinc-900 dark:bg-zinc-800 text-white' : ''
                 }`}
               >
                 <Calendar className="w-4 h-4" />
@@ -237,12 +241,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
         <Link
           to="/history"
           className={`flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] font-semibold transition-colors ${
-            isHistoryActive ? 'text-zinc-900' : 'text-zinc-400 hover:text-zinc-700'
+            isHistoryActive ? 'text-zinc-900 dark:text-white' : 'text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           }`}
         >
           <div
             className={`p-1 rounded-xl mb-0.5 transition-colors ${
-              isHistoryActive ? 'bg-zinc-900 text-white' : ''
+              isHistoryActive ? 'bg-zinc-900 dark:bg-zinc-800 text-white' : ''
             }`}
           >
             <Clock className="w-4 h-4" />
@@ -256,7 +260,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             to="/members"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center flex-1 h-full py-1 text-[11px] font-semibold transition-colors ${
-                isActive ? 'text-amber-800' : 'text-zinc-400 hover:text-amber-800'
+                isActive ? 'text-amber-800 dark:text-amber-300' : 'text-zinc-400 dark:text-zinc-500 hover:text-amber-800 dark:hover:text-amber-300'
               }`
             }
           >
@@ -278,4 +282,3 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
     </>
   );
 };
-

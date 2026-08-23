@@ -31,10 +31,10 @@ export const VisitHistorySection: React.FC = () => {
       {/* Section Header */}
       <div className="flex justify-between items-end mb-6">
         <div>
-          <span className="text-[11px] font-bold tracking-wider text-gym-subtle uppercase block">
+          <span className="text-[11px] font-bold tracking-wider text-zinc-400 dark:text-zinc-500 uppercase block">
             YOUR ACTIVITY
           </span>
-          <h2 className="text-2xl font-extrabold tracking-tight text-gym-dark mt-0.5">
+          <h2 className="text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white mt-0.5">
             Recent Gym Visits
           </h2>
         </div>
@@ -42,33 +42,33 @@ export const VisitHistorySection: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 px-3 text-[11px] border-[#d5d5d5] rounded-md font-semibold text-[#171717] hover:bg-[#eeeeee]"
+          className="h-8 px-3 text-[11px] border-zinc-200 dark:border-zinc-700 rounded-md font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
         >
           View All
         </Button>
       </div>
 
       {/* History Items Container */}
-      <Card className="overflow-hidden bg-white border-[#dedede] divide-y divide-[#eeeeee]">
+      <Card className="overflow-hidden bg-white dark:bg-[#131418] border-black/[0.06] dark:border-white/[0.08] divide-y divide-zinc-100 dark:divide-zinc-800 shadow-card">
         {HISTORY_DATA.map((item) => (
           <div
             key={item.id}
-            className="flex items-center gap-4 px-6 py-4.5 hover:bg-[#fafafa] transition-colors"
+            className="flex items-center gap-4 px-6 py-4.5 hover:bg-zinc-50/70 dark:hover:bg-zinc-800/50 transition-colors"
           >
-            <div className="w-10.5 h-10.5 rounded-full bg-[#f0f0f0] flex items-center justify-center text-[#555] shrink-0">
+            <div className="w-10.5 h-10.5 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300 shrink-0">
               <Calendar className="w-4.5 h-4.5" />
             </div>
 
             <div className="flex-1 min-w-0">
-              <strong className="text-xs font-bold text-gym-dark block">
+              <strong className="text-xs font-bold text-zinc-900 dark:text-white block">
                 {item.date}
               </strong>
-              <p className="text-xs text-gym-subtle font-medium mt-0.5">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
                 {item.timeRange}
               </p>
             </div>
 
-            <span className="text-xs font-semibold text-gym-subtle bg-[#f5f5f5] px-2.5 py-1 rounded-full border border-[#e8e8e8]">
+            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700">
               {item.duration}
             </span>
           </div>

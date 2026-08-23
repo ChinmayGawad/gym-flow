@@ -216,18 +216,18 @@ export const HistoryPage: React.FC = () => {
           <div className="flex items-center gap-1.5 mb-1">
             <Link
               to="/"
-              className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors"
+              className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Dashboard</span>
             </Link>
-            <span className="text-zinc-300">/</span>
-            <span className="text-xs font-semibold text-zinc-900">History</span>
+            <span className="text-zinc-300 dark:text-zinc-700">/</span>
+            <span className="text-xs font-semibold text-zinc-900 dark:text-white">History</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
             Workout Check-In History
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
             Review training frequency, workout durations, and consistency metrics synced with the gym.
           </p>
         </div>
@@ -235,7 +235,7 @@ export const HistoryPage: React.FC = () => {
         {/* Trigger Card Layout Modal with Backdrop Blur */}
         <Button
           onClick={() => setIsLogModalOpen(true)}
-          className="h-10 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-2 self-start md:self-auto shadow-xs cursor-pointer"
+          className="h-10 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-2 self-start md:self-auto shadow-xs cursor-pointer"
         >
           <PlusCircle className="w-4 h-4" />
           <span>Log Workout Session</span>
@@ -243,8 +243,8 @@ export const HistoryPage: React.FC = () => {
       </div>
 
       {justLogged && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200/80 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800 font-semibold animate-in fade-in">
-          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/50 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-300 font-semibold animate-in fade-in">
+          <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span>Workout session logged and synchronized to database successfully!</span>
         </div>
       )}
@@ -260,7 +260,7 @@ export const HistoryPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {isLoading ? (
           [1, 2, 3, 4].map((i) => (
-            <Card key={i} className="p-5 bg-white border border-black/[0.06] shadow-card space-y-3">
+            <Card key={i} className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card space-y-3">
               <Skeleton className="w-9 h-9 rounded-xl" />
               <Skeleton className="h-3 w-20 rounded-md" />
               <Skeleton className="h-7 w-28 rounded-lg" />
@@ -269,63 +269,63 @@ export const HistoryPage: React.FC = () => {
           ))
         ) : (
           <>
-            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-3">
+            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
+              <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700 flex items-center justify-center text-zinc-800 dark:text-zinc-200 mb-3">
                 <Calendar className="w-4.5 h-4.5" />
               </div>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
                 This Month
               </span>
-              <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+              <span className="text-2xl font-black text-zinc-900 dark:text-white mt-0.5 block tabular-nums">
                 {thisMonthVisits.length} Visits
               </span>
-              <span className="text-[11px] text-zinc-400 font-medium flex items-center gap-1 mt-1">
-                <TrendingUp className="w-3 h-3 text-zinc-400" />
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3 h-3 text-zinc-400 dark:text-zinc-500" />
                 {thisMonthVisits.length > 0 ? `${thisMonthVisits.length} recorded this month` : 'No logs recorded'}
               </span>
             </Card>
 
-            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 mb-3">
+            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
+              <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700 flex items-center justify-center text-zinc-800 dark:text-zinc-200 mb-3">
                 <Clock className="w-4.5 h-4.5" />
               </div>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
                 Avg Duration
               </span>
-              <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+              <span className="text-2xl font-black text-zinc-900 dark:text-white mt-0.5 block tabular-nums">
                 {avgDurationFormatted}
               </span>
-              <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium mt-1 block">
                 {visits.length > 0 ? 'Consistent sessions' : 'Log a session to track'}
               </span>
             </Card>
 
-            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-orange-50/70 border border-orange-200/60 flex items-center justify-center text-orange-600 mb-3">
+            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
+              <div className="w-9 h-9 rounded-xl bg-orange-50/70 dark:bg-orange-950/40 border border-orange-200/60 dark:border-orange-900/50 flex items-center justify-center text-orange-600 dark:text-orange-400 mb-3">
                 <Flame className="w-4.5 h-4.5" />
               </div>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
                 Est. Calories
               </span>
-              <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+              <span className="text-2xl font-black text-zinc-900 dark:text-white mt-0.5 block tabular-nums">
                 {totalCaloriesBurned.toLocaleString()} kcal
               </span>
-              <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium mt-1 block">
                 {visits.length > 0 ? 'Burned across logs' : 'Energy expenditure'}
               </span>
             </Card>
 
-            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-amber-50/70 border border-amber-200/60 flex items-center justify-center text-amber-600 mb-3">
+            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
+              <div className="w-9 h-9 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-3">
                 <Award className="w-4.5 h-4.5" />
               </div>
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
                 Current Streak
               </span>
-              <span className="text-2xl font-black text-zinc-900 mt-0.5 block tabular-nums">
+              <span className="text-2xl font-black text-zinc-900 dark:text-white mt-0.5 block tabular-nums">
                 {Math.min(visits.length, 5)} Days
               </span>
-              <span className="text-[11px] text-zinc-400 font-medium mt-1 block">
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium mt-1 block">
                 {visits.length > 0 ? 'Active logged routine' : 'Start your streak!'}
               </span>
             </Card>
@@ -334,25 +334,25 @@ export const HistoryPage: React.FC = () => {
       </div>
 
       {/* History Table / List Card */}
-      <Card className="p-6 md:p-8 bg-white border border-black/[0.06] shadow-card rounded-2xl">
+      <Card className="p-6 md:p-8 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl">
         {/* Filter Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-100">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <div>
-            <h3 className="text-lg font-black text-zinc-900 tracking-tight">
+            <h3 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
               Activity History
             </h3>
-            <p className="text-xs text-zinc-500 mt-0.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               Showing {filteredVisits.length} manually recorded workout sessions.
             </p>
           </div>
 
-          <div className="flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl border border-black/[0.04]">
+          <div className="flex items-center gap-1 bg-zinc-100/90 dark:bg-zinc-900/90 p-1 rounded-xl border border-black/[0.04] dark:border-white/[0.06]">
             <button
               onClick={() => setFilter('all')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 filter === 'all'
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
               All Records ({visits.length})
@@ -361,8 +361,8 @@ export const HistoryPage: React.FC = () => {
               onClick={() => setFilter('this_month')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 filter === 'this_month'
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
               This Month ({thisMonthVisits.length})
@@ -371,8 +371,8 @@ export const HistoryPage: React.FC = () => {
               onClick={() => setFilter('last_month')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 filter === 'last_month'
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
               Last Month
@@ -382,7 +382,7 @@ export const HistoryPage: React.FC = () => {
 
         {/* Visit Items List / Empty State */}
         {isLoading ? (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
@@ -404,46 +404,46 @@ export const HistoryPage: React.FC = () => {
           </div>
         ) : filteredVisits.length === 0 ? (
           <div className="py-14 px-4 text-center flex flex-col items-center justify-center">
-            <div className="w-14 h-14 rounded-2xl bg-zinc-100 border border-zinc-200/70 flex items-center justify-center text-zinc-400 mb-3.5 shadow-xs">
-              <Dumbbell className="w-6 h-6 text-zinc-400" />
+            <div className="w-14 h-14 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/70 dark:border-zinc-700 flex items-center justify-center text-zinc-400 dark:text-zinc-500 mb-3.5 shadow-xs">
+              <Dumbbell className="w-6 h-6 text-zinc-400 dark:text-zinc-500" />
             </div>
-            <h4 className="text-base font-black text-zinc-900 tracking-tight">
+            <h4 className="text-base font-black text-zinc-900 dark:text-white tracking-tight">
               No Workout Activity Recorded
             </h4>
-            <p className="text-xs text-zinc-500 max-w-sm mt-1 mb-5 leading-relaxed font-medium">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mt-1 mb-5 leading-relaxed font-medium">
               Your activity history is currently empty. Workouts will only appear here when you manually log your training sessions, exercises, duration, and calories.
             </p>
             <Button
               onClick={() => setIsLogModalOpen(true)}
-              className="h-9.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-2 shadow-xs cursor-pointer"
+              className="h-9.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-2 shadow-xs cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Log Your First Workout</span>
             </Button>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
             {filteredVisits.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-zinc-50/70 px-3 rounded-xl transition-colors group"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-zinc-50/70 dark:hover:bg-zinc-800/50 px-3 rounded-xl transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-200/60 flex items-center justify-center text-zinc-800 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/60 dark:border-zinc-700 flex items-center justify-center text-zinc-800 dark:text-zinc-200 shrink-0">
                     <Dumbbell className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-zinc-900 block">
+                    <span className="text-xs font-bold text-zinc-900 dark:text-white block">
                       {item.workoutType}
                     </span>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 mt-0.5">
-                      <span className="font-semibold text-zinc-700">{item.date}</span>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      <span className="font-semibold text-zinc-700 dark:text-zinc-300">{item.date}</span>
                       <span>•</span>
                       <span className="tabular-nums">{item.checkIn} → {item.checkOut}</span>
                       {item.notes && (
                         <>
                           <span>•</span>
-                          <span className="text-emerald-700 font-medium italic">"{item.notes}"</span>
+                          <span className="text-emerald-700 dark:text-emerald-400 font-medium italic">"{item.notes}"</span>
                         </>
                       )}
                     </div>
@@ -451,15 +451,15 @@ export const HistoryPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                  <span className="text-[11px] font-semibold text-zinc-600 bg-zinc-100/80 px-2.5 py-1 rounded-lg border border-zinc-200/60 tabular-nums">
+                  <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 bg-zinc-100/80 dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-200/60 dark:border-zinc-700 tabular-nums">
                     ~{item.calories} kcal
                   </span>
-                  <span className="text-xs font-bold text-zinc-900 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200/80 tabular-nums">
+                  <span className="text-xs font-bold text-zinc-900 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full border border-zinc-200/80 dark:border-zinc-700 tabular-nums">
                     {item.duration}
                   </span>
                   <button
                     onClick={() => handleDeleteWorkout(item.id)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-rose-600 hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
                     title="Delete workout log"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

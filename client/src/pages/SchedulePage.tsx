@@ -5,20 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Calendar,
-  Clock,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
   ArrowLeft,
   Sparkles,
-  Zap,
-  Activity,
-  ChevronRight,
 } from 'lucide-react';
 import { HourlyPrediction } from '@/types/occupancy';
 import { AttendanceWaveChart } from '@/components/schedule/AttendanceWaveChart';
 import { Skeleton } from '@/components/ui/skeleton';
-
 
 interface SchedulePageProps {
   capacity?: number;
@@ -90,26 +85,26 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
           <div className="flex items-center gap-1.5 mb-1">
             <Link
               to="/"
-              className="text-xs font-semibold text-zinc-500 hover:text-zinc-900 flex items-center gap-1 transition-colors"
+              className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Dashboard</span>
             </Link>
-            <span className="text-zinc-300">/</span>
-            <span className="text-xs font-semibold text-zinc-900">Schedule</span>
+            <span className="text-zinc-300 dark:text-zinc-700">/</span>
+            <span className="text-xs font-semibold text-zinc-900 dark:text-white">Schedule</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
             Attendance Predictions & Schedule
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
             AI-assisted hourly crowd predictions calibrated to {capacity} facility capacity benchmark.
           </p>
         </div>
 
         {/* Date / Capacity Badge */}
-        <div className="flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-xl border border-black/[0.06] shadow-card self-start md:self-auto">
-          <Calendar className="w-4 h-4 text-zinc-700" />
-          <span className="text-xs font-bold text-zinc-900 tabular-nums">Live Benchmark: {capacity} Max</span>
+        <div className="flex items-center gap-2 bg-white dark:bg-[#131418] px-3.5 py-1.5 rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-card self-start md:self-auto">
+          <Calendar className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
+          <span className="text-xs font-bold text-zinc-900 dark:text-white tabular-nums">Live Benchmark: {capacity} Max</span>
         </div>
       </div>
 
@@ -117,7 +112,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {isLoading ? (
           [1, 2, 3].map((i) => (
-            <Card key={i} className="p-5 bg-white border border-black/[0.06] shadow-card space-y-3">
+            <Card key={i} className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card space-y-3">
               <Skeleton className="h-5 w-24 rounded-full" />
               <Skeleton className="h-5 w-36 rounded-lg" />
               <Skeleton className="h-3 w-full rounded-sm" />
@@ -127,49 +122,49 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
         ) : (
           <>
             {/* Morning Quiet Window */}
-            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 uppercase">
+                <span className="text-[10px] font-bold tracking-widest text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/50 uppercase">
                   Morning Window
                 </span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
+              <h4 className="text-base font-extrabold text-zinc-900 dark:text-white mt-3 tracking-tight">
                 6:00 AM – 7:30 AM
               </h4>
-              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
                 Avg. ~{morningLowAvg} people. Ideal for power racks and cardio with 0–5 min wait times.
               </p>
             </Card>
 
             {/* Afternoon Quiet Window */}
-            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 uppercase">
+                <span className="text-[10px] font-bold tracking-widest text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/50 uppercase">
                   Afternoon Window
                 </span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
+              <h4 className="text-base font-extrabold text-zinc-900 dark:text-white mt-3 tracking-tight">
                 1:30 PM – 3:30 PM
               </h4>
-              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
                 Avg. ~{afternoonLowAvg} people. Lowest floor traffic and quiet equipment availability.
               </p>
             </Card>
 
             {/* Peak Rush Warning */}
-            <Card className="p-5 bg-white border border-black/[0.06] shadow-card hover:border-black/[0.12] transition-all">
+            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold tracking-widest text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80 uppercase">
+                <span className="text-[10px] font-bold tracking-widest text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-full border border-rose-200/80 dark:border-rose-800/50 uppercase">
                   Peak Rush Hours
                 </span>
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
+                <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
               </div>
-              <h4 className="text-base font-extrabold text-zinc-900 mt-3 tracking-tight">
+              <h4 className="text-base font-extrabold text-zinc-900 dark:text-white mt-3 tracking-tight">
                 5:30 PM – 8:00 PM
               </h4>
-              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
                 Capacity reaches 85%–97% (~{eveningPeakAvg} people). Expected equipment wait 15–25 mins.
               </p>
             </Card>
@@ -177,37 +172,36 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
         )}
       </div>
 
-
       {/* Main Chart Container Card */}
-      <Card className="p-6 md:p-8 bg-white border border-black/[0.06] shadow-card rounded-2xl">
+      <Card className="p-6 md:p-8 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 pb-4 border-b border-zinc-100">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-4.5 h-4.5 text-zinc-900" />
-              <h3 className="text-lg font-black text-zinc-900 tracking-tight">
+              <TrendingUp className="w-4.5 h-4.5 text-zinc-900 dark:text-white" />
+              <h3 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
                 Crowd Volume Forecast
               </h3>
             </div>
             <div className="flex items-center gap-2 pt-0.5">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 AI PREDICTED
               </span>
-              <span className="text-[11px] font-medium text-zinc-400">
+              <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
                 Hourly headcount progression
               </span>
             </div>
           </div>
 
           {/* Time of Day Segmented Filter Tabs */}
-          <div className="flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl self-start sm:self-center border border-black/[0.04]">
+          <div className="flex items-center gap-1 bg-zinc-100/90 dark:bg-zinc-900/90 p-1 rounded-xl self-start sm:self-center border border-black/[0.04] dark:border-white/[0.06]">
             <button
               onClick={() => setActiveFilter('all')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeFilter === 'all'
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
               All Day
@@ -216,8 +210,8 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
               onClick={() => setActiveFilter('morning')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeFilter === 'morning'
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
               Morning (6-11)
@@ -226,8 +220,8 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
               onClick={() => setActiveFilter('afternoon')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeFilter === 'afternoon'
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
               Afternoon (12-4)
@@ -236,8 +230,8 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
               onClick={() => setActiveFilter('evening')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
                 activeFilter === 'evening'
-                  ? 'bg-white text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
               Evening (5-10)
@@ -255,12 +249,12 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
         </div>
 
         {/* Daily Attendance Summary Breakdown */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-zinc-100">
-          <div className="p-3 bg-zinc-50/70 rounded-xl border border-zinc-200/50">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="p-3 bg-zinc-50/70 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800">
+            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               Early Morning (6–8 AM)
             </span>
-            <span className="text-sm font-black text-zinc-900 mt-1 block tabular-nums">
+            <span className="text-sm font-black text-zinc-900 dark:text-white mt-1 block tabular-nums">
               ~{Math.round(capacity * 0.35)} People
             </span>
             <Badge variant="low" dot className="text-[9px] px-2 py-0 mt-1.5">
@@ -268,11 +262,11 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
             </Badge>
           </div>
 
-          <div className="p-3 bg-zinc-50/70 rounded-xl border border-zinc-200/50">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+          <div className="p-3 bg-zinc-50/70 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800">
+            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               Lunch Wave (12–2 PM)
             </span>
-            <span className="text-sm font-black text-zinc-900 mt-1 block tabular-nums">
+            <span className="text-sm font-black text-zinc-900 dark:text-white mt-1 block tabular-nums">
               ~{Math.round(capacity * 0.45)} People
             </span>
             <Badge variant="moderate" dot className="text-[9px] px-2 py-0 mt-1.5">
@@ -280,11 +274,11 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
             </Badge>
           </div>
 
-          <div className="p-3 bg-rose-50/50 rounded-xl border border-rose-100">
-            <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider block">
+          <div className="p-3 bg-rose-50/50 dark:bg-rose-950/30 rounded-xl border border-rose-100 dark:border-rose-900/50">
+            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider block">
               Peak Surge (5–8 PM)
             </span>
-            <span className="text-sm font-black text-rose-950 mt-1 block tabular-nums">
+            <span className="text-sm font-black text-rose-950 dark:text-rose-100 mt-1 block tabular-nums">
               ~{Math.round(capacity * 0.90)} People
             </span>
             <Badge variant="high" dot className="text-[9px] px-2 py-0 mt-1.5">
@@ -292,11 +286,11 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
             </Badge>
           </div>
 
-          <div className="p-3 bg-zinc-50/70 rounded-xl border border-zinc-200/50">
-            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+          <div className="p-3 bg-zinc-50/70 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800">
+            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
               Late Night (9–10 PM)
             </span>
-            <span className="text-sm font-black text-zinc-900 mt-1 block tabular-nums">
+            <span className="text-sm font-black text-zinc-900 dark:text-white mt-1 block tabular-nums">
               ~{Math.round(capacity * 0.30)} People
             </span>
             <Badge variant="low" dot className="text-[9px] px-2 py-0 mt-1.5">
@@ -307,19 +301,19 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
       </Card>
 
       {/* Recommended Strategy Callout */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-white border border-black/[0.06] shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 text-white flex items-center justify-center shadow-xs shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center shadow-xs shrink-0">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase block">
+            <span className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block">
               BEST WORKOUT WINDOW
             </span>
-            <h3 className="text-base font-black text-zinc-900 mt-0.5">
+            <h3 className="text-base font-black text-zinc-900 dark:text-white mt-0.5">
               10:00 AM – 11:30 AM or 1:30 PM – 3:30 PM
             </h3>
-            <p className="text-xs text-zinc-500 font-medium mt-0.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
               Estimated &lt;{Math.round(capacity * 0.4)} members present. Minimum equipment wait time.
             </p>
           </div>
@@ -327,7 +321,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
 
         <Button
           asChild
-          className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold gap-2 shrink-0 shadow-xs"
+          className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-2 shrink-0 shadow-xs"
         >
           <Link to="/">
             Live Dashboard
@@ -338,5 +332,3 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
     </div>
   );
 };
-
-

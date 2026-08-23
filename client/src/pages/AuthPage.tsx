@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { signIn } from '@/lib/auth-client';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 export const AuthPage: React.FC = () => {
   // Sign In State
@@ -71,42 +72,47 @@ export const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex flex-col items-center justify-center p-4 md:p-8 font-sans animate-in fade-in duration-300">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#090a0d] flex flex-col items-center justify-center p-4 md:p-8 font-sans animate-in fade-in duration-300 relative">
+      {/* Top Floating Theme Toggle */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <ThemeToggle />
+      </div>
+
       {/* Brand Header */}
       <div className="flex flex-col items-center text-center mb-6">
-        <div className="w-12 h-12 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shadow-card mb-3">
+        <div className="w-12 h-12 rounded-2xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center shadow-card mb-3">
           <Dumbbell className="w-6 h-6 stroke-[2.2]" />
         </div>
-        <h1 className="text-2xl md:text-3xl font-black text-zinc-900 tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight">
           GYMFLOW
         </h1>
-        <p className="text-xs md:text-sm text-zinc-500 mt-1 font-medium max-w-[320px]">
+        <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium max-w-[320px]">
           Real-time gym occupancy monitoring & crowd prediction platform
         </p>
       </div>
 
       {/* Main Auth Card */}
-      <Card className="w-full max-w-[400px] bg-white border border-black/[0.06] shadow-card rounded-2xl p-6 sm:p-7">
+      <Card className="w-full max-w-[400px] bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl p-6 sm:p-7">
         <div className="text-center mb-5">
-          <h2 className="text-lg font-black text-zinc-900 tracking-tight">
+          <h2 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
             Member Sign In
           </h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
             Enter your credentials to access the facility dashboard
           </p>
         </div>
 
         {/* Feedback Alerts */}
         {errorMessage && (
-          <div className="mb-4 p-3 bg-rose-50 border border-rose-200/80 rounded-xl flex items-start gap-2 text-xs text-rose-700 animate-in fade-in">
+          <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200/80 dark:border-rose-800/50 rounded-xl flex items-start gap-2 text-xs text-rose-700 dark:text-rose-300 animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200/80 rounded-xl flex items-start gap-2 text-xs text-emerald-800 animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
+          <div className="mb-4 p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/50 rounded-xl flex items-start gap-2 text-xs text-emerald-800 dark:text-emerald-300 animate-in fade-in">
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -114,16 +120,16 @@ export const AuthPage: React.FC = () => {
         {/* Sign In Form */}
         <form onSubmit={handleSignIn} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="auth-signin-email" className="text-xs font-bold text-zinc-700">Email Address</Label>
+            <Label htmlFor="auth-signin-email" className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Email Address</Label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
               <Input
                 id="auth-signin-email"
                 type="email"
                 placeholder="member@gymflow.com"
                 value={signInEmail}
                 onChange={(e) => setSignInEmail(e.target.value)}
-                className="pl-10 h-10 text-xs rounded-xl border-zinc-200"
+                className="pl-10 h-10 text-xs rounded-xl border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
                 required
                 disabled={isSubmitting}
               />
@@ -131,16 +137,16 @@ export const AuthPage: React.FC = () => {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="auth-signin-password" className="text-xs font-bold text-zinc-700">Password</Label>
+            <Label htmlFor="auth-signin-password" className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
               <Input
                 id="auth-signin-password"
                 type="password"
                 placeholder="••••••••"
                 value={signInPassword}
                 onChange={(e) => setSignInPassword(e.target.value)}
-                className="pl-10 h-10 text-xs rounded-xl border-zinc-200"
+                className="pl-10 h-10 text-xs rounded-xl border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100"
                 required
                 disabled={isSubmitting}
               />
@@ -150,7 +156,7 @@ export const AuthPage: React.FC = () => {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-10 mt-1 font-bold text-xs bg-zinc-900 text-white hover:bg-zinc-800 flex items-center justify-center gap-2 rounded-xl cursor-pointer shadow-xs"
+            className="w-full h-10 mt-1 font-bold text-xs bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 flex items-center justify-center gap-2 rounded-xl cursor-pointer shadow-xs"
           >
             {isSubmitting ? (
               <>
@@ -166,13 +172,13 @@ export const AuthPage: React.FC = () => {
           </Button>
 
           {/* Quick Demo Access Divider & Buttons */}
-          <div className="pt-4 border-t border-zinc-100 mt-4">
+          <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 mt-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1">
+              <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-amber-500" />
                 Quick Demo Access
               </span>
-              <span className="text-[10px] text-zinc-400">1-click login</span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">1-click login</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
@@ -180,13 +186,13 @@ export const AuthPage: React.FC = () => {
                 type="button"
                 onClick={() => fillDemoAccount('admin')}
                 disabled={isSubmitting}
-                className="p-2.5 rounded-xl bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200/80 text-left transition-colors cursor-pointer group"
+                className="p-2.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 hover:bg-amber-100/70 dark:hover:bg-amber-900/50 border border-amber-200/80 dark:border-amber-800/60 text-left transition-colors cursor-pointer group"
               >
-                <div className="flex items-center gap-1.5 text-amber-950 font-bold text-xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
+                <div className="flex items-center gap-1.5 text-amber-950 dark:text-amber-200 font-bold text-xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                   Admin Demo
                 </div>
-                <span className="text-[10px] text-amber-700 block mt-0.5 font-medium truncate">
+                <span className="text-[10px] text-amber-700 dark:text-amber-300 block mt-0.5 font-medium truncate">
                   admin@gymflow.com
                 </span>
               </button>
@@ -195,13 +201,13 @@ export const AuthPage: React.FC = () => {
                 type="button"
                 onClick={() => fillDemoAccount('member')}
                 disabled={isSubmitting}
-                className="p-2.5 rounded-xl bg-zinc-100/80 hover:bg-zinc-200/70 border border-zinc-200/70 text-left transition-colors cursor-pointer group"
+                className="p-2.5 rounded-xl bg-zinc-100/80 dark:bg-zinc-800 hover:bg-zinc-200/70 dark:hover:bg-zinc-700 border border-zinc-200/70 dark:border-zinc-700 text-left transition-colors cursor-pointer group"
               >
-                <div className="flex items-center gap-1.5 text-zinc-900 font-bold text-xs">
-                  <User className="w-3.5 h-3.5 text-zinc-700" />
+                <div className="flex items-center gap-1.5 text-zinc-900 dark:text-zinc-100 font-bold text-xs">
+                  <User className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
                   Member Demo
                 </div>
-                <span className="text-[10px] text-zinc-500 block mt-0.5 font-medium truncate">
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 block mt-0.5 font-medium truncate">
                   member@gymflow.com
                 </span>
               </button>
@@ -209,17 +215,16 @@ export const AuthPage: React.FC = () => {
           </div>
         </form>
 
-        <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center gap-2 text-[11px] text-zinc-400 justify-center">
-          <Shield className="w-3 h-3 text-zinc-400 shrink-0" />
+        <div className="mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center gap-2 text-[11px] text-zinc-400 dark:text-zinc-500 justify-center">
+          <Shield className="w-3 h-3 text-zinc-400 dark:text-zinc-500 shrink-0" />
           <span>New accounts are managed by Gym Administrators.</span>
         </div>
       </Card>
 
       {/* Footer Info */}
-      <div className="text-center mt-6 text-xs text-zinc-400 font-medium">
+      <div className="text-center mt-6 text-xs text-zinc-400 dark:text-zinc-500 font-medium">
         <span>Protected by GymFlow Member Authentication System</span>
       </div>
     </div>
   );
 };
-

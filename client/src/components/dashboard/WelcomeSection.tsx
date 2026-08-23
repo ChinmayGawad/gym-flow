@@ -38,7 +38,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
               {timeGreeting}, {userName}
             </h1>
             {plan && (
@@ -49,7 +49,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
               </span>
             )}
           </div>
-          <p className="text-zinc-500 text-xs sm:text-sm mt-1 font-medium flex items-center gap-1.5">
+          <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 font-medium flex items-center gap-1.5">
             <span>Check live crowd density and equipment availability before you visit.</span>
           </p>
         </div>
@@ -57,5 +57,3 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
     </section>
   );
 };
-
-

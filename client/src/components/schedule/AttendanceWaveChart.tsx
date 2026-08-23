@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { HourlyPrediction } from '@/types/occupancy';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTheme } from '@/context/ThemeContext';
 
 interface AttendanceWaveChartProps {
   data: HourlyPrediction[];
@@ -16,6 +17,8 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   if (isLoading) {
     return (
@@ -36,7 +39,6 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
   if (!data || data.length === 0) {
     return null;
   }
-
 
   // Chart coordinate space
   const width = 850;
@@ -100,7 +102,7 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
                 y1={yPos}
                 x2={width - paddingRight}
                 y2={yPos}
-                stroke="#f0f0f0"
+                stroke={isDark ? '#27272a' : '#f0f0f0'}
                 strokeWidth="1"
                 strokeDasharray="3 3"
               />
@@ -109,7 +111,7 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
                 y={yPos + 3.5}
                 fontSize="10"
                 fontWeight="500"
-                fill="#a1a1aa"
+                fill={isDark ? '#71717a' : '#a1a1aa'}
                 textAnchor="end"
                 className="tabular-nums"
                 fontFamily="system-ui, sans-serif"
@@ -126,7 +128,7 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
           y1={paddingTop + chartHeight}
           x2={width - paddingRight}
           y2={paddingTop + chartHeight}
-          stroke="#e4e4e7"
+          stroke={isDark ? '#3f3f46' : '#e4e4e7'}
           strokeWidth="1"
         />
 
@@ -135,15 +137,15 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
           const isHovered = hoveredIndex === bar.index;
           const barFill = isHovered
             ? bar.isHigh
-              ? '#e11d48'
+              ? isDark ? '#f43f5e' : '#e11d48'
               : bar.isModerate
-              ? '#18181b'
-              : '#059669'
+              ? isDark ? '#e4e4e7' : '#18181b'
+              : isDark ? '#10b981' : '#059669'
             : bar.isHigh
-            ? '#fb7185'
+            ? isDark ? '#fb7185' : '#fb7185'
             : bar.isModerate
-            ? '#52525b'
-            : '#34d399';
+            ? isDark ? '#71717a' : '#52525b'
+            : isDark ? '#34d399' : '#34d399';
 
           return (
             <g
@@ -167,8 +169,8 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
                   y={paddingTop}
                   width={slotWidth - 4}
                   height={chartHeight}
-                  fill="#18181b"
-                  opacity="0.04"
+                  fill={isDark ? '#ffffff' : '#18181b'}
+                  opacity={isDark ? '0.05' : '0.04'}
                   rx="6"
                 />
               )}
@@ -190,7 +192,7 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
                 y={height - 14}
                 fontSize="10"
                 fontWeight={isHovered ? '700' : '500'}
-                fill={isHovered ? '#09090b' : '#71717a'}
+                fill={isHovered ? (isDark ? '#ffffff' : '#09090b') : (isDark ? '#a1a1aa' : '#71717a')}
                 textAnchor="middle"
                 fontFamily="system-ui, sans-serif"
                 className="transition-colors duration-150 tabular-nums"
@@ -212,8 +214,8 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
             transform: 'translate(-50%, -125%)',
           }}
         >
-          <div className="bg-zinc-900 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-card-hover border border-zinc-800 whitespace-nowrap flex items-center gap-2">
-            <span className="text-zinc-400 font-medium">{activeBar.time}:</span>
+          <div className="bg-zinc-900 dark:bg-zinc-800 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-card-hover border border-zinc-800 dark:border-zinc-700 whitespace-nowrap flex items-center gap-2">
+            <span className="text-zinc-400 dark:text-zinc-400 font-medium">{activeBar.time}:</span>
             <span className="font-bold text-white tabular-nums">
               {activeBar.peopleCount} people
             </span>
@@ -222,17 +224,16 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
                 activeBar.percentage >= 75
                   ? 'bg-rose-950 text-rose-300 border border-rose-800/60'
                   : activeBar.percentage >= 40
-                  ? 'bg-zinc-800 text-zinc-300 border border-zinc-700'
+                  ? 'bg-zinc-800 dark:bg-zinc-700 text-zinc-300 border border-zinc-700 dark:border-zinc-600'
                   : 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
               }`}
             >
               {activeBar.percentage}%
             </span>
           </div>
-          <div className="w-2 h-2 bg-zinc-900 rotate-45 mx-auto -mt-1 border-r border-b border-zinc-800" />
+          <div className="w-2 h-2 bg-zinc-900 dark:bg-zinc-800 rotate-45 mx-auto -mt-1 border-r border-b border-zinc-800 dark:border-zinc-700" />
         </div>
       )}
     </div>
   );
 };
-

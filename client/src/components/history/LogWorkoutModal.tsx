@@ -54,8 +54,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Push Day (Chest, Shoulders & Triceps)',
     shortName: 'Push Day',
     category: 'strength',
-    icon: <Dumbbell className="w-4 h-4 text-emerald-600" />,
-    iconBg: 'bg-emerald-50 border-emerald-100',
+    icon: <Dumbbell className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+    iconBg: 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-100 dark:border-emerald-900/50',
     calorieRatePerMin: 6.2,
     description: 'Bench press, incline dumbbells, lateral raises, dips',
     intensity: 'Moderate',
@@ -65,8 +65,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Pull Day (Back, Traps & Biceps)',
     shortName: 'Pull Day',
     category: 'strength',
-    icon: <Dumbbell className="w-4 h-4 text-blue-600" />,
-    iconBg: 'bg-blue-50 border-blue-100',
+    icon: <Dumbbell className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+    iconBg: 'bg-blue-50 dark:bg-blue-950/50 border-blue-100 dark:border-blue-900/50',
     calorieRatePerMin: 6.0,
     description: 'Deadlifts, lat pulldowns, barbell rows, curls',
     intensity: 'Moderate',
@@ -76,8 +76,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Legs & Calves (Quads & Hamstrings)',
     shortName: 'Legs & Calves',
     category: 'strength',
-    icon: <Zap className="w-4 h-4 text-orange-600" />,
-    iconBg: 'bg-orange-50 border-orange-100',
+    icon: <Zap className="w-4 h-4 text-orange-600 dark:text-orange-400" />,
+    iconBg: 'bg-orange-50 dark:bg-orange-950/50 border-orange-100 dark:border-orange-900/50',
     calorieRatePerMin: 7.5,
     description: 'Barbell squats, leg press, Romanian deadlifts',
     intensity: 'High',
@@ -87,8 +87,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Upper Body Power & Arms',
     shortName: 'Upper Body Power',
     category: 'strength',
-    icon: <Dumbbell className="w-4 h-4 text-purple-600" />,
-    iconBg: 'bg-purple-50 border-purple-100',
+    icon: <Dumbbell className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
+    iconBg: 'bg-purple-50 dark:bg-purple-950/50 border-purple-100 dark:border-purple-900/50',
     calorieRatePerMin: 5.8,
     description: 'Overhead press, pull-ups, supersets',
     intensity: 'Moderate',
@@ -98,8 +98,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Full Body Compound Strength',
     shortName: 'Full Body Compound',
     category: 'strength',
-    icon: <Activity className="w-4 h-4 text-indigo-600" />,
-    iconBg: 'bg-indigo-50 border-indigo-100',
+    icon: <Activity className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+    iconBg: 'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-100 dark:border-indigo-900/50',
     calorieRatePerMin: 6.8,
     description: 'Squat, bench, row, clean & press circuit',
     intensity: 'High',
@@ -109,8 +109,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Core & Abs Conditioning',
     shortName: 'Core & Abs',
     category: 'strength',
-    icon: <Flame className="w-4 h-4 text-amber-600" />,
-    iconBg: 'bg-amber-50 border-amber-100',
+    icon: <Flame className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
+    iconBg: 'bg-amber-50 dark:bg-amber-950/50 border-amber-100 dark:border-amber-900/50',
     calorieRatePerMin: 5.0,
     description: 'Hanging leg raises, planks, ab rollout',
     intensity: 'Moderate',
@@ -122,8 +122,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Treadmill & Cardio Endurance',
     shortName: 'Treadmill & Cardio',
     category: 'cardio',
-    icon: <Heart className="w-4 h-4 text-rose-600" />,
-    iconBg: 'bg-rose-50 border-rose-100',
+    icon: <Heart className="w-4 h-4 text-rose-600 dark:text-rose-400" />,
+    iconBg: 'bg-rose-50 dark:bg-rose-950/50 border-rose-100 dark:border-rose-900/50',
     calorieRatePerMin: 8.5,
     description: 'Incline treadmill, stairmaster, rowing',
     intensity: 'High',
@@ -133,8 +133,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'HIIT & Functional Circuit',
     shortName: 'HIIT Circuit',
     category: 'cardio',
-    icon: <Flame className="w-4 h-4 text-red-600" />,
-    iconBg: 'bg-red-50 border-red-100',
+    icon: <Flame className="w-4 h-4 text-red-600 dark:text-red-400" />,
+    iconBg: 'bg-red-50 dark:bg-red-950/50 border-red-100 dark:border-red-900/50',
     calorieRatePerMin: 9.5,
     description: 'Kettlebells, battle ropes, box jumps',
     intensity: 'High',
@@ -144,8 +144,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Spinning & Stationary Bike',
     shortName: 'Spinning / Cycling',
     category: 'cardio',
-    icon: <Zap className="w-4 h-4 text-cyan-600" />,
-    iconBg: 'bg-cyan-50 border-cyan-100',
+    icon: <Zap className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />,
+    iconBg: 'bg-cyan-50 dark:bg-cyan-950/50 border-cyan-100 dark:border-cyan-900/50',
     calorieRatePerMin: 8.0,
     description: 'High-resistance interval spin session, sprints',
     intensity: 'High',
@@ -157,8 +157,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Mobility, Yoga & Active Recovery',
     shortName: 'Yoga & Mobility',
     category: 'mobility',
-    icon: <Sparkles className="w-4 h-4 text-teal-600" />,
-    iconBg: 'bg-teal-50 border-teal-100',
+    icon: <Sparkles className="w-4 h-4 text-teal-600 dark:text-teal-400" />,
+    iconBg: 'bg-teal-50 dark:bg-teal-950/50 border-teal-100 dark:border-teal-900/50',
     calorieRatePerMin: 3.5,
     description: 'Dynamic stretching, foam rolling, yoga flow',
     intensity: 'Recovery',
@@ -168,8 +168,8 @@ const WORKOUT_ITEMS: WorkoutCategoryItem[] = [
     name: 'Custom Workout Routine',
     shortName: 'Custom Routine',
     category: 'mobility',
-    icon: <Activity className="w-4 h-4 text-zinc-700" />,
-    iconBg: 'bg-zinc-100 border-zinc-200',
+    icon: <Activity className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />,
+    iconBg: 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700',
     calorieRatePerMin: 6.0,
     description: 'Specify your own custom routine title & notes',
     intensity: 'Moderate',
@@ -240,15 +240,15 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[540px] p-6 max-h-[88vh] overflow-y-auto bg-white border border-black/[0.08] rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-[540px] p-6 max-h-[88vh] overflow-y-auto bg-white dark:bg-[#131418] border border-black/[0.08] dark:border-white/[0.08] rounded-2xl shadow-2xl">
         <DialogHeader className="flex flex-col items-center text-center">
-          <div className="w-11 h-11 rounded-2xl bg-zinc-900 text-white flex items-center justify-center shadow-xs mx-auto mb-2">
+          <div className="w-11 h-11 rounded-2xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center shadow-xs mx-auto mb-2">
             <Dumbbell className="w-5 h-5 text-white" />
           </div>
-          <DialogTitle className="text-lg sm:text-xl font-black tracking-tight text-zinc-900">
+          <DialogTitle className="text-lg sm:text-xl font-black tracking-tight text-zinc-900 dark:text-white">
             Log Workout Session
           </DialogTitle>
-          <DialogDescription className="text-xs text-zinc-500 mt-0.5">
+          <DialogDescription className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
             Record your training routine, duration, and estimated calorie burn.
           </DialogDescription>
         </DialogHeader>
@@ -257,10 +257,10 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
           {/* 1. Category Filter Tabs */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              <label className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
                 1. Select Training Split
               </label>
-              <div className="flex items-center gap-1 bg-zinc-100/90 p-0.5 rounded-lg border border-black/[0.04]">
+              <div className="flex items-center gap-1 bg-zinc-100/90 dark:bg-zinc-900/90 p-0.5 rounded-lg border border-black/[0.04] dark:border-white/[0.06]">
                 {CATEGORY_TABS.map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeCategory === tab.id;
@@ -271,8 +271,8 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
                       onClick={() => setActiveCategory(tab.id as any)}
                       className={`flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-md transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-white text-zinc-900 shadow-xs'
-                          : 'text-zinc-500 hover:text-zinc-900'
+                          ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs'
+                          : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
                       }`}
                     >
                       <Icon className="w-3 h-3" />
@@ -293,8 +293,8 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
                     onClick={() => setSelectedSplitId(item.id)}
                     className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-150 relative ${
                       isSelected
-                        ? 'border-zinc-900 bg-zinc-900/[0.04] ring-1 ring-zinc-900'
-                        : 'border-zinc-200/80 bg-white hover:border-zinc-300 hover:bg-zinc-50/70'
+                        ? 'border-zinc-900 dark:border-white bg-zinc-900/[0.04] dark:bg-white/[0.06] ring-1 ring-zinc-900 dark:ring-white'
+                        : 'border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50/70 dark:hover:bg-zinc-800/60'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-1.5">
@@ -302,15 +302,15 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
                         <div className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 ${item.iconBg}`}>
                           {item.icon}
                         </div>
-                        <span className="text-xs font-bold text-zinc-900 truncate">
+                        <span className="text-xs font-bold text-zinc-900 dark:text-white truncate">
                           {item.shortName}
                         </span>
                       </div>
                       {isSelected ? (
-                        <Check className="w-3.5 h-3.5 text-zinc-900 stroke-[3] shrink-0" />
+                        <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-white stroke-[3] shrink-0" />
                       ) : null}
                     </div>
-                    <p className="text-[10px] text-zinc-400 font-medium mt-1 truncate">
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium mt-1 truncate">
                       ~{item.calorieRatePerMin} kcal/min • {item.intensity}
                     </p>
                   </div>
@@ -321,13 +321,13 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
             {/* Custom Routine Title Input */}
             {selectedSplitId === 'custom' && (
               <div className="pt-1 space-y-1">
-                <label className="text-xs font-bold text-zinc-700">Custom Title</label>
+                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Custom Title</label>
                 <Input
                   type="text"
                   placeholder="e.g. Olympic Weightlifting, Calisthenics..."
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
-                  className="h-9 text-xs rounded-xl border-zinc-200"
+                  className="h-9 text-xs rounded-xl border-zinc-200 dark:border-zinc-700"
                   required
                 />
               </div>
@@ -337,10 +337,10 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
           {/* 2. Duration Selector */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              <label className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
                 2. Session Duration
               </label>
-              <span className="text-xs font-bold text-zinc-900 tabular-nums">
+              <span className="text-xs font-bold text-zinc-900 dark:text-white tabular-nums">
                 {duration} minutes
               </span>
             </div>
@@ -355,8 +355,8 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
                     onClick={() => setDuration(mins)}
                     className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer tabular-nums border ${
                       isSelected
-                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-                        : 'bg-zinc-50 text-zinc-800 border-zinc-200/80 hover:bg-zinc-100'
+                        ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white shadow-xs'
+                        : 'bg-zinc-50 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border-zinc-200/80 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700'
                     }`}
                   >
                     {mins}m
@@ -367,7 +367,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
           </div>
 
           {/* 3. Live Calorie & Intensity Calculation Pill */}
-          <div className="p-3 bg-zinc-900 text-white rounded-xl border border-zinc-800 flex items-center justify-between shadow-xs">
+          <div className="p-3 bg-zinc-900 dark:bg-black/60 text-white rounded-xl border border-zinc-800 dark:border-zinc-800 flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-orange-500/20 text-orange-400 flex items-center justify-center shrink-0">
                 <Flame className="w-4 h-4" />
@@ -397,10 +397,10 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
           {/* 4. Workout Notes (Optional) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">
+              <label className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
                 3. Notes & PRs
               </label>
-              <span className="text-[10px] text-zinc-400">Optional</span>
+              <span className="text-[10px] text-zinc-400 dark:text-zinc-500">Optional</span>
             </div>
             <div className="relative">
               <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400 pointer-events-none" />
@@ -409,7 +409,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
                 placeholder="e.g. Hit 100kg Bench PR, 4x10 Incline Dumbbells..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="pl-9 h-9 text-xs rounded-xl border-zinc-200"
+                className="pl-9 h-9 text-xs rounded-xl border-zinc-200 dark:border-zinc-700"
               />
             </div>
           </div>
@@ -417,7 +417,7 @@ export const LogWorkoutModal: React.FC<LogWorkoutModalProps> = ({
           {/* 5. Submit Button */}
           <Button
             type="submit"
-            className="w-full h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer mt-2"
+            className="w-full h-11 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 font-bold text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer mt-2"
           >
             <span>Save Workout Log (~{estimatedCalories} kcal)</span>
             <ArrowRight className="w-4 h-4" />
