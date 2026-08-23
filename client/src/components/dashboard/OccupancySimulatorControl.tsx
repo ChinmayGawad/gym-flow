@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, Pause, Plus, Minus, Sliders } from 'lucide-react';
+import { Play, Pause, Plus, Minus, Sliders, X, Sparkles } from 'lucide-react';
 
 interface OccupancySimulatorControlProps {
   isAutoSimulating: boolean;
@@ -20,85 +20,140 @@ export const OccupancySimulatorControl: React.FC<OccupancySimulatorControlProps>
   onDecrement,
   onSetOccupants,
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
   const lowPreset = Math.max(1, Math.round(capacity * 0.25));
   const modPreset = Math.max(1, Math.round(capacity * 0.55));
   const highPreset = Math.max(1, Math.round(capacity * 0.85));
 
   return (
-    <div className="mt-5 p-3.5 sm:p-4 rounded-2xl bg-white border border-black/[0.06] shadow-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-700 shrink-0">
-          <Sliders className="w-3.5 h-3.5" />
-        </div>
-        <span className="font-bold text-zinc-900">Live Simulator:</span>
-        <Badge variant={isAutoSimulating ? 'low' : 'moderate'} dot={isAutoSimulating} className="font-semibold text-[10px] px-2 py-0.5">
-          {isAutoSimulating ? 'AUTO LOOP' : 'PAUSED'}
-        </Badge>
-        <Button
-          onClick={onToggleAutoSimulating}
-          variant="outline"
-          size="sm"
-          className="h-7 px-2.5 text-[11px] gap-1 rounded-lg"
-        >
-          {isAutoSimulating ? (
-            <>
-              <Pause className="w-3 h-3" /> Pause
-            </>
-          ) : (
-            <>
-              <Play className="w-3 h-3" /> Resume
-            </>
-          )}
-        </Button>
+    <>
+      {/* Floating Bottom-Right Trigger Button */}
+      <div className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40">
+        {!isOpen ? (
+          <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-zinc-900/90 hover:bg-zinc-900 text-white text-xs font-bold shadow-card-hover backdrop-blur-md border border-white/10 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            title="Open Live Gym Simulation Controls"
+          >
+            <Sliders className="w-3.5 h-3.5 text-amber-400" />
+            <span>Simulate</span>
+            {isAutoSimulating && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            )}
+          </button>
+        ) : (
+          /* Expanded Floating Simulator Control Card */
+          <div className="w-[320px] sm:w-[350px] p-4 rounded-2xl bg-white/95 backdrop-blur-xl border border-black/[0.1] shadow-2xl animate-in fade-in slide-in-from-bottom-3 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-800">
+                  <Sliders className="w-3.5 h-3.5 text-zinc-900" />
+                </div>
+                <h4 className="text-xs font-black text-zinc-900 uppercase tracking-wider">
+                  Live Gym Simulator
+                </h4>
+              </div>
+
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
+                title="Close"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Auto Loop Status & Toggle */}
+            <div className="flex items-center justify-between bg-zinc-50 p-2.5 rounded-xl border border-zinc-200/50 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-zinc-700">Auto Live Loop:</span>
+                <Badge
+                  variant={isAutoSimulating ? 'low' : 'moderate'}
+                  dot={isAutoSimulating}
+                  className="text-[10px] px-2 py-0.5"
+                >
+                  {isAutoSimulating ? 'RUNNING' : 'PAUSED'}
+                </Badge>
+              </div>
+
+              <Button
+                onClick={onToggleAutoSimulating}
+                size="sm"
+                variant="outline"
+                className="h-7 px-2.5 text-xs font-bold gap-1 rounded-lg border-zinc-300"
+              >
+                {isAutoSimulating ? (
+                  <>
+                    <Pause className="w-3 h-3" /> Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3 h-3 text-emerald-600" /> Start
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Presets */}
+            <div className="space-y-1.5 mb-3">
+              <span className="text-[11px] font-bold text-zinc-500 block">
+                Crowd Density Presets:
+              </span>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  onClick={() => onSetOccupants(lowPreset)}
+                  className="py-1.5 px-2 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100/80 rounded-xl border border-emerald-200/70 transition-colors text-center cursor-pointer"
+                >
+                  Low ({lowPreset})
+                </button>
+                <button
+                  onClick={() => onSetOccupants(modPreset)}
+                  className="py-1.5 px-2 text-xs font-bold text-zinc-800 bg-zinc-100 hover:bg-zinc-200/80 rounded-xl border border-zinc-200 transition-colors text-center cursor-pointer"
+                >
+                  Mod ({modPreset})
+                </button>
+                <button
+                  onClick={() => onSetOccupants(highPreset)}
+                  className="py-1.5 px-2 text-xs font-bold text-rose-800 bg-rose-50 hover:bg-rose-100/80 rounded-xl border border-rose-200/70 transition-colors text-center cursor-pointer"
+                >
+                  High ({highPreset})
+                </button>
+              </div>
+            </div>
+
+            {/* Manual Step Increments */}
+            <div className="flex items-center justify-between pt-2 border-t border-zinc-100">
+              <span className="text-[11px] font-medium text-zinc-500">
+                Manual Floor Ticks:
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  onClick={onDecrement}
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs font-bold rounded-lg border-zinc-300 gap-1"
+                  title="Member Exit (-1)"
+                >
+                  <Minus className="w-3 h-3" />
+                  Exit (-1)
+                </Button>
+                <Button
+                  onClick={onIncrement}
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs font-bold rounded-lg border-zinc-300 gap-1"
+                  title="Member Entry (+1)"
+                >
+                  <Plus className="w-3 h-3" />
+                  Entry (+1)
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-end">
-        <span className="text-[11px] font-semibold text-zinc-400 mr-1">Presets:</span>
-        <div className="flex items-center gap-1 bg-zinc-100/80 p-0.5 rounded-xl border border-zinc-200/50">
-          <button
-            onClick={() => onSetOccupants(lowPreset)}
-            className="px-2.5 py-1 text-[10px] font-semibold text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-          >
-            Low ({lowPreset})
-          </button>
-          <button
-            onClick={() => onSetOccupants(modPreset)}
-            className="px-2.5 py-1 text-[10px] font-semibold text-zinc-700 hover:bg-zinc-200 rounded-lg transition-colors cursor-pointer"
-          >
-            Mod ({modPreset})
-          </button>
-          <button
-            onClick={() => onSetOccupants(highPreset)}
-            className="px-2.5 py-1 text-[10px] font-semibold text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-          >
-            High ({highPreset})
-          </button>
-        </div>
-
-        <div className="h-4 w-[1px] bg-zinc-200 mx-1 hidden sm:block" />
-
-        <div className="flex items-center gap-1">
-          <Button
-            onClick={onDecrement}
-            variant="outline"
-            size="icon"
-            className="h-7 w-7 rounded-lg"
-            title="Manual Exit (-1)"
-          >
-            <Minus className="w-3 h-3" />
-          </Button>
-          <Button
-            onClick={onIncrement}
-            variant="outline"
-            size="icon"
-            className="h-7 w-7 rounded-lg"
-            title="Manual Check-In (+1)"
-          >
-            <Plus className="w-3 h-3" />
-          </Button>
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
-
