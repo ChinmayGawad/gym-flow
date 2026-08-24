@@ -14,7 +14,8 @@
     "server:start": "bun server/src/index.ts",
     "prisma:generate": "bun run --cwd server prisma generate",
     "prisma:push": "bun run --cwd server prisma db push",
-    "create-admin": "bun run --cwd server src/scripts/create-admin.ts"
+    "create-admin": "bun run --cwd server src/scripts/create-admin.ts",
+    "test": "bun run --cwd core test && bun run --cwd server test && bun run --cwd client test"
   }
 }
 
