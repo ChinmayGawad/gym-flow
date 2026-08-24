@@ -80,6 +80,8 @@ export function useForecast({ date, enabled = true }: UseForecastOptions = {}) {
               setForecastData((prev) => ({
                 ...prev,
                 ...data,
+                // Preserve userPlannedVisit because the broadcast is global and has userPlannedVisit=null
+                userPlannedVisit: prev?.userPlannedVisit || null,
               }));
             }
           } catch {
@@ -134,6 +136,9 @@ export function useForecast({ date, enabled = true }: UseForecastOptions = {}) {
 
   // Actions: Book Slot & Cancel Slot
   const cancelSlot = useCallback(async (visitId: string) => {
+    // Optimistically clear userPlannedVisit
+    setForecastData((prev) => (prev ? { ...prev, userPlannedVisit: null } : null));
+
     try {
       const res = await fetch(`${API_BASE}/api/gym/planned-visits/${visitId}`, {
         method: 'DELETE',
@@ -141,7 +146,7 @@ export function useForecast({ date, enabled = true }: UseForecastOptions = {}) {
       });
 
       if (res.ok) {
-        fetchForecast(selectedDate, true);
+        await fetchForecast(selectedDate, true);
         try {
           const bc = new BroadcastChannel('gymflow_realtime_sync');
           bc.postMessage({ type: 'GYM_VISIT_CANCELLED', visitId });

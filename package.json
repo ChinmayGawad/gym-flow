@@ -15,8 +15,10 @@
     "prisma:generate": "bun run --cwd server prisma generate",
     "prisma:push": "bun run --cwd server prisma db push",
     "create-admin": "bun run --cwd server src/scripts/create-admin.ts",
-    "test": "bun run --cwd core test && bun run --cwd server test && bun run --cwd client test"
+    "test": "bun run --cwd core test && bun run --cwd server test && bun run --cwd client test",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }
-
-

@@ -94,3 +94,10 @@ skills/
 skills-lock.json
 .skill-lock.json
 .skill-lock*
+
+# Playwright E2E Artifacts
+test-results/
+playwright-report/
+blob-report/
+server/prisma/e2e-test.db
+server/prisma/e2e-test.db-journal
