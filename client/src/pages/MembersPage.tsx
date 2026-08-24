@@ -130,7 +130,20 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
     }
   }, []);
 
-  // 3. Tab focus auto-sync
+  // 3. Sync members check-in states live with SSE checkedInUserIds
+  useEffect(() => {
+    if (occupancy?.checkedInUserIds) {
+      const liveIds = occupancy.checkedInUserIds;
+      setMembers((prev) =>
+        prev.map((m) => ({
+          ...m,
+          isCheckedIn: liveIds.includes(m.id),
+        }))
+      );
+    }
+  }, [occupancy?.checkedInUserIds]);
+
+  // 4. Tab focus auto-sync
   useEffect(() => {
     const handleFocus = () => {
       fetchMembers(true);

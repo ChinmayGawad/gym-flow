@@ -85,6 +85,12 @@ export const PowerRackBookingModal: React.FC<PowerRackBookingModalProps> = ({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to book power rack station.');
 
+      try {
+        const bc = new BroadcastChannel('gymflow_realtime_sync');
+        bc.postMessage({ type: 'GYM_VISIT_PLANNED', scheduledDate: selectedDate });
+        bc.close();
+      } catch {}
+
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: any) {

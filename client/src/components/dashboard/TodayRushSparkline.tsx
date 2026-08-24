@@ -96,21 +96,25 @@ export const TodayRushSparkline: React.FC<TodayRushSparklineProps> = ({
                   >
                     {/* Tooltip on Hover */}
                     {isHovered && (
-                      <div className="absolute -top-11 left-1/2 -translate-x-1/2 z-20 pointer-events-none bg-zinc-900 dark:bg-zinc-800 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-card border border-zinc-800 dark:border-zinc-700 whitespace-nowrap flex items-center gap-1.5">
+                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none bg-zinc-900 dark:bg-zinc-800 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow-xl border border-zinc-800 dark:border-zinc-700 whitespace-nowrap flex items-center gap-2 animate-in fade-in">
                         <span>{item.time}:</span>
-                        <span className="text-zinc-200">~{people} exp</span>
-                        <span className="text-zinc-400 font-normal">({item.plannedCount} plan)</span>
+                        <span className="text-emerald-400 font-extrabold">~{people} people expected</span>
                         <span
-                          className={`px-1 py-0.2 rounded text-[9px] ${
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
                             item.isHigh
-                              ? 'text-rose-300 bg-rose-950/80'
+                              ? 'text-rose-300 bg-rose-950/80 border border-rose-800/60'
                               : pct >= 40
                               ? 'text-zinc-300 bg-zinc-800 dark:bg-zinc-700'
-                              : 'text-emerald-300 bg-emerald-950/80'
+                              : 'text-emerald-300 bg-emerald-950/80 border border-emerald-800/60'
                           }`}
                         >
-                          {pct}%
+                          {pct}% full
                         </span>
+                        {item.plannedCount > 0 && (
+                          <span className="text-zinc-400 font-normal">
+                            ({item.plannedCount} member{item.plannedCount > 1 ? 's' : ''} booked)
+                          </span>
+                        )}
                       </div>
                     )}
 

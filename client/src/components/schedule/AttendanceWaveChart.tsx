@@ -249,15 +249,10 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
           }}
         >
           <div className="bg-zinc-900 dark:bg-zinc-800 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-card-hover border border-zinc-800 dark:border-zinc-700 whitespace-nowrap flex items-center gap-2">
-            <span className="text-zinc-400 dark:text-zinc-400 font-medium">{activeBar.time}:</span>
-            <span className="font-bold text-white tabular-nums">
-              {activeBar.peopleCount} expected
+            <span className="text-zinc-400 font-medium">{activeBar.time}:</span>
+            <span className="font-extrabold text-emerald-400 tabular-nums">
+              ~{activeBar.peopleCount} people expected
             </span>
-            {typeof (activeBar as any).plannedCount === 'number' && (
-              <span className="text-zinc-300 text-[10px]">
-                ({(activeBar as any).plannedCount} planned)
-              </span>
-            )}
             <span
               className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
                 activeBar.percentage >= 75
@@ -267,11 +262,16 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
                   : 'bg-emerald-950 text-emerald-300 border border-emerald-800/60'
               }`}
             >
-              {activeBar.percentage}%
+              {activeBar.percentage}% full
             </span>
+            {typeof (activeBar as any).plannedCount === 'number' && (activeBar as any).plannedCount > 0 && (
+              <span className="text-zinc-400 text-[10px] font-normal">
+                ({(activeBar as any).plannedCount} member{(activeBar as any).plannedCount > 1 ? 's' : ''} booked)
+              </span>
+            )}
             {(activeBar as any).hasUserBooked && (
-              <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.5 rounded font-bold">
-                Your Slot
+              <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.5 rounded font-bold border border-emerald-500/40">
+                Your Booked Slot
               </span>
             )}
           </div>

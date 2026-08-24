@@ -13,9 +13,8 @@ import {
   Clock,
   Users,
   Plus,
-  Check,
-  X,
   Radio,
+  UserCheck,
 } from 'lucide-react';
 import { HourlyForecastSlot } from '@/types/occupancy';
 import { AttendanceWaveChart } from '@/components/schedule/AttendanceWaveChart';
@@ -43,6 +42,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
     forecast: rawSlots,
     optimalWindow,
     totalPlannedVisits,
+    userPlannedVisit,
     capacity: forecastCapacity,
     isLoading,
     refetch,
@@ -51,18 +51,20 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
 
   // Modal states
   const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
-  const [targetSlotHour, setTargetSlotHour] = useState<number>(11);
+  const [modalInitialHour, setModalInitialHour] = useState<number>(11);
+  const [modalInitialExactTime, setModalInitialExactTime] = useState<string>('11:00 AM');
 
-  const handleOpenPlanModal = (hour: number = 11) => {
-    setTargetSlotHour(hour);
+  const effectiveCapacity = forecastCapacity || propCapacity;
+
+  const handleOpenPlanModal = (hour: number = 11, exactTime: string = '11:00 AM') => {
+    setModalInitialHour(hour);
+    setModalInitialExactTime(exactTime);
     setIsPlanModalOpen(true);
   };
 
   const handleCancelSlot = async (visitId: string) => {
     await cancelSlot(visitId);
   };
-
-  const effectiveCapacity = forecastCapacity || propCapacity;
 
   const filteredSchedule = rawSlots.filter((item) => {
     const hour24 = item.hour24;
@@ -99,7 +101,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
           </p>
         </div>
 
-        {/* Action Controls: Day Switcher & Plan Visit */}
+        {/* Action Controls: Day Switcher & Primary Plan Visit Button */}
         <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
           {/* Quick Date Pills */}
           <div className="flex items-center gap-1 bg-zinc-100/90 dark:bg-zinc-900/90 p-1 rounded-xl border border-black/[0.04] dark:border-white/[0.06]">
@@ -136,14 +138,57 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
           </div>
 
           <Button
-            onClick={() => handleOpenPlanModal(11)}
+            onClick={() => handleOpenPlanModal(11, '11:00 AM')}
             className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-2 shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Plan Visit Slot</span>
+            <span>Plan Visit</span>
           </Button>
         </div>
       </div>
+
+      {/* User's Active Declared Visit Banner (if any for this date) */}
+      {userPlannedVisit && (
+        <Card className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold shrink-0">
+              <UserCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  Your Scheduled Visit
+                </span>
+                <Badge variant="low" className="text-[10px] px-1.5 py-0">
+                  Confirmed
+                </Badge>
+              </div>
+              <h4 className="text-sm font-black text-zinc-900 dark:text-white">
+                {userPlannedVisit.timeSlot} · {userPlannedVisit.workoutFocus || 'General Workout'}
+              </h4>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleOpenPlanModal(userPlannedVisit.hour24, userPlannedVisit.timeSlot)}
+              className="h-8 text-xs font-bold rounded-xl border-zinc-300 dark:border-zinc-700"
+            >
+              Change Time
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => handleCancelSlot(userPlannedVisit.id)}
+              className="h-8 text-xs font-bold rounded-xl text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+            >
+              Cancel
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Recommended Time Highlights (3 Bento Cards) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -208,9 +253,8 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
         )}
       </div>
 
-      {/* Main Chart Container Card */}
+      {/* Main Attendance Wave Chart Card */}
       <Card className="p-6 md:p-8 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -286,144 +330,12 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
         </div>
       </Card>
 
-      {/* Hourly Slot Detail Cards Grid */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
-              Hourly Slot Breakdown & Member Intents
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-              Click "+ I'm Going" on any time slot to declare your visit note and calibrate the forecast.
-            </p>
-          </div>
-          <Badge variant="outline" className="text-xs font-bold">
-            {filteredSchedule.length} Slots
-          </Badge>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {filteredSchedule.map((slot) => {
-            const hasUserBooked = slot.hasUserBooked;
-            const badgeVariant =
-              slot.status === 'LOW' ? 'low' : slot.status === 'HIGH' ? 'high' : 'moderate';
-
-            return (
-              <Card
-                key={slot.id}
-                className={`p-4.5 rounded-2xl border transition-all ${
-                  hasUserBooked
-                    ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-400 dark:ring-emerald-700 shadow-sm'
-                    : 'bg-white dark:bg-[#131418] border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15]'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-zinc-500" />
-                      <span className="text-base font-extrabold text-zinc-900 dark:text-white tabular-nums">
-                        {slot.time}
-                      </span>
-                      <Badge variant={badgeVariant as any} dot className="text-[10px] px-2 py-0.2">
-                        {slot.status} · {slot.waitTime} wait
-                      </Badge>
-                      {slot.isOptimal && (
-                        <span className="text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 px-1.5 py-0.2 rounded-md">
-                          Best Slot
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-300 pt-1">
-                      <span className="font-bold tabular-nums">
-                        ~{slot.predictedCount} people expected
-                      </span>
-                      <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                      <span className="inline-flex items-center gap-1 font-medium text-zinc-500 dark:text-zinc-400">
-                        <Users className="w-3 h-3 text-zinc-400" />
-                        {slot.plannedCount} declared visits
-                      </span>
-                    </div>
-
-                    {/* Member Attendee Chips if any */}
-                    {slot.plannedMembers && slot.plannedMembers.length > 0 && (
-                      <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
-                        {slot.plannedMembers.map((m) => (
-                          <span
-                            key={m.id}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700"
-                            title={m.workoutFocus || 'General Workout'}
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                            <span className="truncate max-w-[90px]">{m.name}</span>
-                            {m.workoutFocus && (
-                              <span className="text-zinc-400 font-normal text-[9px] truncate max-w-[70px]">
-                                ({m.workoutFocus.split(' ')[0]})
-                              </span>
-                            )}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Slot Action Button */}
-                  <div className="shrink-0">
-                    {hasUserBooked ? (
-                      <div className="flex items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-xs">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                          <span>Attending</span>
-                        </span>
-                        {slot.userVisitId && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleCancelSlot(slot.userVisitId!)}
-                            className="h-8 w-8 p-0 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
-                            title="Cancel your visit"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => handleOpenPlanModal(slot.hour24)}
-                        className="h-8 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-1 shadow-xs cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>I'm Going</span>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden mt-3">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${
-                      slot.percentage >= 75
-                        ? 'bg-rose-500'
-                        : slot.percentage >= 40
-                        ? 'bg-zinc-700 dark:bg-zinc-300'
-                        : 'bg-emerald-500'
-                    }`}
-                    style={{ width: `${slot.percentage}%` }}
-                  />
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Plan Visit Modal */}
       <PlanVisitModal
         isOpen={isPlanModalOpen}
         onClose={() => setIsPlanModalOpen(false)}
-        initialHour={targetSlotHour}
+        initialHour={modalInitialHour}
+        initialExactTime={modalInitialExactTime}
         initialDate={targetDateStr}
         forecastSlots={rawSlots}
         onSuccess={() => refetch()}

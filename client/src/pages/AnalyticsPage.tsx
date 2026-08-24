@@ -7,7 +7,6 @@ import {
   TrendingUp,
   Clock,
   Sparkles,
-  AlertTriangle,
   ArrowLeft,
   Calendar,
   Activity,
@@ -21,19 +20,14 @@ import {
   Plus,
   Sliders,
   Flame,
-  Shield,
   Moon,
   Sun,
   Dumbbell,
-  Heart,
+  Check,
 } from 'lucide-react';
 import { useOccupancy } from '@/hooks/useOccupancy';
 import { useForecast } from '@/hooks/useForecast';
 import { PlanVisitModal } from '@/components/schedule/PlanVisitModal';
-import { PowerRackBookingModal } from '@/components/analytics/PowerRackBookingModal';
-import { CardioBookingModal } from '@/components/analytics/CardioBookingModal';
-import { DumbbellCableBookingModal } from '@/components/analytics/DumbbellCableBookingModal';
-import { SaunaRecoveryBookingModal } from '@/components/analytics/SaunaRecoveryBookingModal';
 
 interface AnalyticsPageProps {
   occupancy?: ReturnType<typeof useOccupancy>;
@@ -62,19 +56,39 @@ const WEEKLY_HEATMAP_DATA: Record<string, number[]> = {
   Sun: [8, 18, 35, 55, 68, 72, 60, 45, 32, 28, 30, 32, 28, 20, 15, 10, 5],
 };
 
+const EQUIPMENT_ZONES = [
+  { id: 'squat', name: 'Power Racks & Squats', icon: Flame, color: 'text-rose-600 dark:text-rose-400', border: 'border-rose-500', bg: 'bg-rose-50 dark:bg-rose-950/40' },
+  { id: 'cardio', name: 'Cardio & Treadmills', icon: Activity, color: 'text-blue-600 dark:text-blue-400', border: 'border-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+  { id: 'freeweights', name: 'Dumbbells & Cables', icon: Zap, color: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+  { id: 'sauna', name: 'Sauna & Recovery', icon: Sparkles, color: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500', bg: 'bg-amber-50 dark:bg-amber-950/40' },
+];
+
+const POPULAR_EXACT_TIMES = [
+  { hour: 7, minute: '00', label: '7:00 AM', tag: 'Early' },
+  { hour: 11, minute: '00', label: '11:00 AM', tag: 'Quiet ★' },
+  { hour: 17, minute: '30', label: '5:30 PM', tag: 'Evening' },
+  { hour: 18, minute: '00', label: '6:00 PM', tag: 'Peak Rush' },
+  { hour: 20, minute: '30', label: '8:30 PM', tag: 'Calm' },
+];
+
+const MINUTE_OPTIONS = ['00', '15', '30', '45'];
+
 export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'matrix' | 'equipment'>('overview');
   const [selectedDayKey, setSelectedDayKey] = useState<string>('Mon');
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
-  const [equipmentTargetHour, setEquipmentTargetHour] = useState<number>(11);
 
-  // Separate Booking Modals State
+  // Simplified Quick Slot Booking State
+  const [selectedZone, setSelectedZone] = useState<string>(EQUIPMENT_ZONES[0].name);
+  const [slotHour, setSlotHour] = useState<number>(17); // Default 5 PM
+  const [slotMinute, setSlotMinute] = useState<string>('30'); // Default :30 (5:30 PM)
+  const [isExactCustomOpen, setIsExactCustomOpen] = useState<boolean>(false);
+
+  // Plan Visit Modal State
   const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
-  const [planModalHour, setPlanModalHour] = useState<number>(11);
-  const [isRackModalOpen, setIsRackModalOpen] = useState<boolean>(false);
-  const [isCardioModalOpen, setIsCardioModalOpen] = useState<boolean>(false);
-  const [isDumbbellModalOpen, setIsDumbbellModalOpen] = useState<boolean>(false);
-  const [isSaunaModalOpen, setIsSaunaModalOpen] = useState<boolean>(false);
+  const [planModalHour, setPlanModalHour] = useState<number>(17);
+  const [planModalExactTime, setPlanModalExactTime] = useState<string>('5:30 PM');
+  const [planModalWorkoutFocus, setPlanModalWorkoutFocus] = useState<string>('Power Racks & Squats');
 
   const forecastState = useForecast();
   const capacity = occupancy?.capacity || forecastState.capacity || 30;
@@ -97,8 +111,19 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
   const livePct = Math.round((livePeople / capacity) * 100);
   const diffFromTypical = livePct - typicalPctForNow;
 
-  const handleOpenPlanModal = (hour: number) => {
+  // Format exact time string e.g. "5:30 PM"
+  const formatTime = (h: number, m: string) => {
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayHour = h % 12 === 0 ? 12 : h % 12;
+    return `${displayHour}:${m} ${period}`;
+  };
+
+  const currentExactTimeStr = formatTime(slotHour, slotMinute);
+
+  const handleOpenPlanModal = (hour: number, exactTimeStr?: string, focus?: string) => {
     setPlanModalHour(hour);
+    setPlanModalExactTime(exactTimeStr || `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? 'PM' : 'AM'}`);
+    setPlanModalWorkoutFocus(focus || selectedZone);
     setIsPlanModalOpen(true);
   };
 
@@ -114,28 +139,17 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
     return 'bg-emerald-400/40 text-zinc-800 dark:text-zinc-200';
   };
 
-  const getStatusFromPct = (pct: number): 'LOW' | 'MODERATE' | 'HIGH' => {
-    if (pct >= 75) return 'HIGH';
-    if (pct >= 40) return 'MODERATE';
-    return 'LOW';
-  };
-
   const getWaitTimeFromPct = (pct: number): string => {
     if (pct >= 75) return '15–25 min';
     if (pct >= 40) return '10 min';
     return '0–5 min';
   };
 
-  // Equipment zone availability calculation based on hour
-  const targetHourIdx = Math.max(0, Math.min(HOURS_RANGE.length - 1, equipmentTargetHour - 6));
+  // Forecast for selected quick slot hour
+  const targetHourIdx = Math.max(0, Math.min(HOURS_RANGE.length - 1, slotHour - 6));
   const targetPct = dayHourlyPcts[targetHourIdx] || 45;
   const targetHeadcount = Math.round((targetPct / 100) * capacity);
-
-  // Station availability metrics
-  const powerRacksFree = Math.max(0, 4 - Math.round((targetPct / 100) * 4));
-  const cardioFree = Math.max(1, 12 - Math.round((targetPct / 100) * 11));
-  const dumbbellsFree = Math.max(0, 8 - Math.round((targetPct / 100) * 8));
-  const saunaFree = Math.max(0, 6 - Math.round((targetPct / 100) * 5));
+  const targetWait = getWaitTimeFromPct(targetPct);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
@@ -157,7 +171,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
             Crowd Insights & Flow Analytics
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
-            Analyze facility headcount curves, inspect equipment availability, and reserve specialized stations.
+            Analyze facility headcount curves, inspect quiet windows, and select your exact visit slot.
           </p>
         </div>
 
@@ -196,7 +210,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
             }`}
           >
             <Timer className="w-3.5 h-3.5" />
-            <span>Equipment & Zones</span>
+            <span>Quick Slot Booking</span>
           </button>
         </div>
       </div>
@@ -238,11 +252,11 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
         </div>
 
         <Button
-          onClick={() => handleOpenPlanModal(11)}
+          onClick={() => handleOpenPlanModal(11, '11:00 AM')}
           className="w-full sm:w-auto h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-1.5 shrink-0 cursor-pointer shadow-xs"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Plan General Visit</span>
+          <span>Plan Visit</span>
         </Button>
       </Card>
 
@@ -353,7 +367,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                       className="flex-1 flex flex-col items-center justify-end h-full relative group cursor-pointer"
                       onMouseEnter={() => setHoveredHour(hour24)}
                       onMouseLeave={() => setHoveredHour(null)}
-                      onClick={() => handleOpenPlanModal(hour24)}
+                      onClick={() => handleOpenPlanModal(hour24, timeLabel)}
                     >
                       {/* Tooltip on Hover */}
                       {isHovered && (
@@ -422,7 +436,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                 </p>
               </div>
               <Button
-                onClick={() => setIsCardioModalOpen(true)}
+                onClick={() => handleOpenPlanModal(7, '7:00 AM', 'Cardio & Treadmills')}
                 variant="outline"
                 size="sm"
                 className="w-full h-8 text-xs font-bold rounded-xl border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
@@ -448,7 +462,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                 </p>
               </div>
               <Button
-                onClick={() => setIsRackModalOpen(true)}
+                onClick={() => handleOpenPlanModal(11, '11:00 AM', 'Power Racks & Squats')}
                 size="sm"
                 className="w-full h-8 text-xs font-bold rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 cursor-pointer shadow-xs"
               >
@@ -473,7 +487,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                 </p>
               </div>
               <Button
-                onClick={() => setIsSaunaModalOpen(true)}
+                onClick={() => handleOpenPlanModal(20, '8:30 PM', 'Sauna & Recovery')}
                 variant="outline"
                 size="sm"
                 className="w-full h-8 text-xs font-bold rounded-xl border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
@@ -572,7 +586,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                       return (
                         <button
                           key={hour24}
-                          onClick={() => handleOpenPlanModal(hour24)}
+                          onClick={() => handleOpenPlanModal(hour24, `${hour24}:00 AM`)}
                           className={`h-7 rounded-md text-[11px] font-black flex items-center justify-center transition-transform hover:scale-110 cursor-pointer tabular-nums ${getHeatmapColorClass(
                             pct
                           )}`}
@@ -592,7 +606,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                       return (
                         <button
                           key={hour24}
-                          onClick={() => handleOpenPlanModal(hour24)}
+                          onClick={() => handleOpenPlanModal(hour24, `${hour24 > 12 ? hour24 - 12 : hour24}:00 PM`)}
                           className={`h-7 rounded-md text-[11px] font-black flex items-center justify-center transition-transform hover:scale-110 cursor-pointer tabular-nums ${getHeatmapColorClass(
                             pct
                           )}`}
@@ -612,7 +626,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                       return (
                         <button
                           key={hour24}
-                          onClick={() => handleOpenPlanModal(hour24)}
+                          onClick={() => handleOpenPlanModal(hour24, `${hour24 - 12}:00 PM`)}
                           className={`h-7 rounded-md text-[11px] font-black flex items-center justify-center transition-transform hover:scale-110 cursor-pointer tabular-nums ${getHeatmapColorClass(
                             pct
                           )}`}
@@ -635,430 +649,217 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
         </Card>
       )}
 
-      {/* ================= TAB 3: EQUIPMENT & ZONES (VISUAL & SEPARATE BOOKING MODULES) ================= */}
+      {/* ================= TAB 3: STREAMLINED QUICK SLOT BOOKING (CLEAN & SINGLE BUTTON) ================= */}
       {activeTab === 'equipment' && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          {/* Interactive Hour Target Card with Quick Preset Chips */}
-          <Card className="p-6 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-800 dark:text-zinc-200">
-                  <Sliders className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                    Equipment Availability & Station Booking
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Select a time preset or scrub the slider to instantly inspect station queues and launch dedicated equipment booking modules.
-                  </p>
-                </div>
+        <Card className="p-6 md:p-8 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl space-y-6 animate-in fade-in duration-200 max-w-3xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center shadow-xs shrink-0">
+                <Timer className="w-5 h-5" />
               </div>
-
-              <div className="flex items-center gap-2 self-start sm:self-auto">
-                <span className="text-xs font-bold text-zinc-500 dark:text-zinc-400">Time:</span>
-                <span className="px-3 py-1 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 text-xs font-black tabular-nums shadow-xs">
-                  {equipmentTargetHour > 12 ? `${equipmentTargetHour - 12}:00 PM` : `${equipmentTargetHour}:00 AM`}
-                </span>
-                <span className="text-xs text-zinc-400 font-bold tabular-nums">
-                  (~{targetHeadcount} ppl)
-                </span>
+              <div>
+                <h3 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
+                  Quick Workout Slot Booking
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Select your workout area and exact arrival time (e.g. 5:30 PM) to book in 1 tap.
+                </p>
               </div>
             </div>
 
-            {/* Quick 1-Tap Time Preset Chips */}
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-                Quick Time Presets:
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  onClick={() => setEquipmentTargetHour(7)}
-                  className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer flex items-center justify-between ${
-                    equipmentTargetHour === 7
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200 border-blue-400 dark:border-blue-700 shadow-xs'
-                      : 'bg-zinc-50 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 border-zinc-200/60 dark:border-zinc-800 hover:border-zinc-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Sun className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                    <span>7:00 AM</span>
-                  </div>
-                  <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400">Early</span>
-                </button>
-
-                <button
-                  onClick={() => setEquipmentTargetHour(11)}
-                  className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer flex items-center justify-between ${
-                    equipmentTargetHour === 11
-                      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 border-emerald-400 dark:border-emerald-700 shadow-xs'
-                      : 'bg-zinc-50 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 border-zinc-200/60 dark:border-zinc-800 hover:border-zinc-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                    <span>11:00 AM</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Quiet ★</span>
-                </button>
-
-                <button
-                  onClick={() => setEquipmentTargetHour(18)}
-                  className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer flex items-center justify-between ${
-                    equipmentTargetHour === 18
-                      ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200 border-rose-400 dark:border-rose-700 shadow-xs'
-                      : 'bg-zinc-50 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 border-zinc-200/60 dark:border-zinc-800 hover:border-zinc-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Flame className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-                    <span>6:00 PM</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400">Peak</span>
-                </button>
-
-                <button
-                  onClick={() => setEquipmentTargetHour(20)}
-                  className={`p-2.5 rounded-xl border text-xs font-bold text-left transition-all cursor-pointer flex items-center justify-between ${
-                    equipmentTargetHour === 20
-                      ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-900 dark:text-purple-200 border-purple-400 dark:border-purple-700 shadow-xs'
-                      : 'bg-zinc-50 dark:bg-zinc-900/60 text-zinc-700 dark:text-zinc-300 border-zinc-200/60 dark:border-zinc-800 hover:border-zinc-400'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Moon className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                    <span>8:30 PM</span>
-                  </div>
-                  <span className="text-[10px] font-medium text-purple-600 dark:text-purple-400">Calm</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Slider Input */}
-            <div className="pt-2 px-1">
-              <input
-                type="range"
-                min="6"
-                max="22"
-                step="1"
-                value={equipmentTargetHour}
-                onChange={(e) => setEquipmentTargetHour(parseInt(e.target.value, 10))}
-                className="w-full accent-zinc-900 dark:accent-white h-2 bg-zinc-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mt-2 tabular-nums">
-                <span>6 AM</span>
-                <span>9 AM</span>
-                <span>12 PM</span>
-                <span>3 PM</span>
-                <span>6 PM</span>
-                <span>8 PM</span>
-                <span>10 PM</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* 4 Separate Equipment Zones Cards triggering Dedicated Booking Modals */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Zone 1: Power Racks & Squat Platforms */}
-            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-800/50 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
-                    <Flame className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-zinc-900 dark:text-white tracking-tight">
-                      Power Racks & Squat Platforms
-                    </h4>
-                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                      4 Heavy Olympic Barbell Stations
-                    </span>
-                  </div>
-                </div>
-
-                <Badge
-                  variant={targetPct >= 75 ? 'high' : targetPct >= 40 ? 'moderate' : 'low'}
-                  className="text-xs font-bold"
-                >
-                  {targetPct >= 75 ? '15–20m wait' : targetPct >= 40 ? '5–10m wait' : '0m (Open)'}
-                </Badge>
-              </div>
-
-              {/* Visual Segmented Meter for 4 Stations */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-zinc-700 dark:text-zinc-300">Station Availability:</span>
-                  <span className={`tabular-nums ${powerRacksFree > 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {powerRacksFree} / 4 Free
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 gap-1.5 pt-1">
-                  {[1, 2, 3, 4].map((stationNum) => {
-                    const isAvailable = stationNum <= powerRacksFree;
-                    return (
-                      <div
-                        key={stationNum}
-                        className={`h-3.5 rounded-md transition-all ${
-                          isAvailable
-                            ? 'bg-emerald-500 dark:bg-emerald-400 shadow-xs'
-                            : 'bg-rose-400/80 dark:bg-rose-600/80'
-                        }`}
-                        title={`Rack #${stationNum}: ${isAvailable ? 'Available' : 'Occupied'}`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  {targetPct >= 75 ? 'Heavy compound lift rush' : 'Quick set turnaround'}
-                </span>
-                <Button
-                  onClick={() => setIsRackModalOpen(true)}
-                  size="sm"
-                  className="h-8 px-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold gap-1 cursor-pointer shadow-xs"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Book Leg/Squat Slot</span>
-                </Button>
-              </div>
-            </Card>
-
-            {/* Zone 2: Cardio & Treadmill Suite */}
-            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-zinc-900 dark:text-white tracking-tight">
-                      Treadmills & Cardio Rowers
-                    </h4>
-                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                      12 Incline Runners & Rowers
-                    </span>
-                  </div>
-                </div>
-
-                <Badge variant={targetPct >= 85 ? 'moderate' : 'low'} className="text-xs font-bold">
-                  {targetPct >= 85 ? '0–5m wait' : 'Immediate Open'}
-                </Badge>
-              </div>
-
-              {/* Visual Segmented Meter for 12 Cardio Units */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-zinc-700 dark:text-zinc-300">Treadmill Units:</span>
-                  <span className="tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {cardioFree} / 12 Free
-                  </span>
-                </div>
-                <div className="grid grid-cols-12 gap-1 pt-1">
-                  {[...Array(12)].map((_, i) => {
-                    const isAvailable = i + 1 <= cardioFree;
-                    return (
-                      <div
-                        key={i}
-                        className={`h-3.5 rounded-sm transition-all ${
-                          isAvailable
-                            ? 'bg-emerald-500 dark:bg-emerald-400 shadow-xs'
-                            : 'bg-zinc-300 dark:bg-zinc-700'
-                        }`}
-                        title={`Treadmill #${i + 1}: ${isAvailable ? 'Available' : 'Occupied'}`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Continuous high rotation flow
-                </span>
-                <Button
-                  onClick={() => setIsCardioModalOpen(true)}
-                  size="sm"
-                  className="h-8 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold gap-1 cursor-pointer shadow-xs"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Book Cardio Slot</span>
-                </Button>
-              </div>
-            </Card>
-
-            {/* Zone 3: Dumbbells & Cable Stations */}
-            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                    <Zap className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-zinc-900 dark:text-white tracking-tight">
-                      Dumbbells & Cable Crossover
-                    </h4>
-                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                      8 Adjustable Benches & Cable Towers
-                    </span>
-                  </div>
-                </div>
-
-                <Badge
-                  variant={targetPct >= 75 ? 'moderate' : 'low'}
-                  className="text-xs font-bold"
-                >
-                  {targetPct >= 75 ? '0–5m wait' : '0m wait'}
-                </Badge>
-              </div>
-
-              {/* Visual Segmented Meter for 8 Benches */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-zinc-700 dark:text-zinc-300">Free Benches & Cables:</span>
-                  <span className="tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {dumbbellsFree} / 8 Free
-                  </span>
-                </div>
-                <div className="grid grid-cols-8 gap-1 pt-1">
-                  {[...Array(8)].map((_, i) => {
-                    const isAvailable = i + 1 <= dumbbellsFree;
-                    return (
-                      <div
-                        key={i}
-                        className={`h-3.5 rounded-sm transition-all ${
-                          isAvailable
-                            ? 'bg-emerald-500 dark:bg-emerald-400 shadow-xs'
-                            : 'bg-amber-400/80 dark:bg-amber-600/80'
-                        }`}
-                        title={`Bench #${i + 1}: ${isAvailable ? 'Available' : 'Occupied'}`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Multiple paired stations open
-                </span>
-                <Button
-                  onClick={() => setIsDumbbellModalOpen(true)}
-                  size="sm"
-                  className="h-8 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold gap-1 cursor-pointer shadow-xs"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Book Upper/Arms Slot</span>
-                </Button>
-              </div>
-            </Card>
-
-            {/* Zone 4: Sauna & Recovery Lounge */}
-            <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-zinc-900 dark:text-white tracking-tight">
-                      Sauna & Recovery Lounge
-                    </h4>
-                    <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                      Steam Room & Hydro Space (Cap: 6)
-                    </span>
-                  </div>
-                </div>
-
-                <Badge variant="low" className="text-xs font-bold">
-                  Open Access
-                </Badge>
-              </div>
-
-              {/* Visual Segmented Meter for 6 Sauna spots */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-zinc-700 dark:text-zinc-300">Recovery Capacity:</span>
-                  <span className="tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {saunaFree} / 6 Open Spots
-                  </span>
-                </div>
-                <div className="grid grid-cols-6 gap-1 pt-1">
-                  {[...Array(6)].map((_, i) => {
-                    const isAvailable = i + 1 <= saunaFree;
-                    return (
-                      <div
-                        key={i}
-                        className={`h-3.5 rounded-sm transition-all ${
-                          isAvailable
-                            ? 'bg-emerald-500 dark:bg-emerald-400 shadow-xs'
-                            : 'bg-zinc-300 dark:bg-zinc-700'
-                        }`}
-                        title={`Spot #${i + 1}: ${isAvailable ? 'Available' : 'Occupied'}`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Comfortable, clean temperature
-                </span>
-                <Button
-                  onClick={() => setIsSaunaModalOpen(true)}
-                  size="sm"
-                  className="h-8 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold gap-1 cursor-pointer shadow-xs"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Book Recovery Slot</span>
-                </Button>
-              </div>
-            </Card>
+            <Badge variant="low" className="text-xs font-bold self-start sm:self-auto">
+              Real-Time Sync
+            </Badge>
           </div>
-        </div>
+
+          {/* 1. Select Training Category */}
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
+              1. Select Training Area / Focus
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {EQUIPMENT_ZONES.map((zone) => {
+                const Icon = zone.icon;
+                const isSelected = selectedZone === zone.name;
+                return (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    onClick={() => setSelectedZone(zone.name)}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                      isSelected
+                        ? `${zone.border} ${zone.bg} ring-2 ring-zinc-900 dark:ring-white shadow-xs`
+                        : 'border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Icon className={`w-4 h-4 ${zone.color}`} />
+                      {isSelected && <Check className="w-3.5 h-3.5 text-zinc-900 dark:text-white stroke-[3]" />}
+                    </div>
+                    <span className="text-xs font-extrabold text-zinc-900 dark:text-white leading-tight">
+                      {zone.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Select Arrival Time (Popular Presets + Exact Minute Picker) */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
+                2. Select Arrival Time
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-zinc-900 dark:text-white flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-xl">
+                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                  {currentExactTimeStr}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsExactCustomOpen(!isExactCustomOpen)}
+                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <Sliders className="w-3 h-3" />
+                  <span>{isExactCustomOpen ? 'Show Quick Chips' : 'Exact Custom Time'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Popular Presets Chips */}
+            {!isExactCustomOpen ? (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {POPULAR_EXACT_TIMES.map((preset) => {
+                  const isSelected = slotHour === preset.hour && slotMinute === preset.minute;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        setSlotHour(preset.hour);
+                        setSlotMinute(preset.minute);
+                      }}
+                      className={`p-2.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected
+                          ? 'border-zinc-900 dark:border-white bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
+                          : 'border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black tabular-nums">{preset.label}</span>
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                      <span className={`text-[9px] font-bold mt-0.5 ${isSelected ? 'opacity-80' : 'text-zinc-400'}`}>
+                        {preset.tag}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Custom Exact Hour & Minute Selection (e.g. 5:30 PM) */
+              <div className="p-4 bg-zinc-50 dark:bg-zinc-900/60 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                  <span>Pick Exact Hour & Minute:</span>
+                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                    {currentExactTimeStr}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Hour Selector */}
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
+                      Hour (6 AM – 10 PM)
+                    </label>
+                    <select
+                      value={slotHour}
+                      onChange={(e) => setSlotHour(parseInt(e.target.value, 10))}
+                      className="w-full h-10 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-bold text-zinc-900 dark:text-white px-3 cursor-pointer"
+                    >
+                      {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22].map((h) => {
+                        const label = h > 12 ? `${h - 12} PM` : h === 12 ? '12 PM' : `${h} AM`;
+                        return (
+                          <option key={h} value={h}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {/* Minute Selector */}
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">
+                      Minute
+                    </label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {MINUTE_OPTIONS.map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setSlotMinute(m)}
+                          className={`h-10 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer ${
+                            slotMinute === m
+                              ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-zinc-900 dark:border-white shadow-xs'
+                              : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50'
+                          }`}
+                        >
+                          :{m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Live Crowd & Wait Time Indicator Box */}
+          <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200/70 dark:border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${targetPct >= 75 ? 'bg-rose-500' : targetPct >= 40 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-zinc-900 dark:text-white">
+                    {currentExactTimeStr} Arrival Status
+                  </span>
+                  <Badge variant={targetPct >= 75 ? 'high' : targetPct >= 40 ? 'moderate' : 'low'} className="text-[10px] font-bold py-0">
+                    {targetPct >= 75 ? 'Peak Rush' : targetPct >= 40 ? 'Moderate' : 'Low Crowd'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Expected crowd: ~{targetHeadcount} members inside ({targetPct}% cap) · Est. wait: {targetWait}
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs font-extrabold text-emerald-700 dark:text-emerald-400 shrink-0">
+              {targetPct < 40 ? '★ Optimal Time' : 'Reserve Ahead'}
+            </span>
+          </div>
+
+          {/* Single Prominent Booking Action Button */}
+          <Button
+            onClick={() => handleOpenPlanModal(slotHour, currentExactTimeStr, selectedZone)}
+            className="w-full h-12 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 font-extrabold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+          >
+            <span>Confirm & Book Slot for {currentExactTimeStr}</span>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </Card>
       )}
 
-      {/* 1. General Visit Planner Modal */}
+      {/* Plan Visit Modal (Handles both general & exact equipment slot bookings) */}
       <PlanVisitModal
         isOpen={isPlanModalOpen}
         onClose={() => setIsPlanModalOpen(false)}
         initialHour={planModalHour}
+        initialExactTime={planModalExactTime}
+        initialWorkoutFocus={planModalWorkoutFocus}
         forecastSlots={forecastState.forecast}
-        onSuccess={handleRefresh}
-      />
-
-      {/* 2. Power Rack & Platform Booking Modal */}
-      <PowerRackBookingModal
-        isOpen={isRackModalOpen}
-        onClose={() => setIsRackModalOpen(false)}
-        targetHour={equipmentTargetHour}
-        capacity={capacity}
-        onSuccess={handleRefresh}
-      />
-
-      {/* 3. Cardio Machine Booking Modal */}
-      <CardioBookingModal
-        isOpen={isCardioModalOpen}
-        onClose={() => setIsCardioModalOpen(false)}
-        targetHour={equipmentTargetHour}
-        onSuccess={handleRefresh}
-      />
-
-      {/* 4. Dumbbell & Cable Booking Modal */}
-      <DumbbellCableBookingModal
-        isOpen={isDumbbellModalOpen}
-        onClose={() => setIsDumbbellModalOpen(false)}
-        targetHour={equipmentTargetHour}
-        onSuccess={handleRefresh}
-      />
-
-      {/* 5. Sauna & Recovery Lounge Booking Modal */}
-      <SaunaRecoveryBookingModal
-        isOpen={isSaunaModalOpen}
-        onClose={() => setIsSaunaModalOpen(false)}
-        targetHour={equipmentTargetHour}
         onSuccess={handleRefresh}
       />
     </div>

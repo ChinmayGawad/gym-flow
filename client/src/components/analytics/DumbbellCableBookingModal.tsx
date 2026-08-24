@@ -82,6 +82,12 @@ export const DumbbellCableBookingModal: React.FC<DumbbellCableBookingModalProps>
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to book free weight station.');
 
+      try {
+        const bc = new BroadcastChannel('gymflow_realtime_sync');
+        bc.postMessage({ type: 'GYM_VISIT_PLANNED', scheduledDate: selectedDate });
+        bc.close();
+      } catch {}
+
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: any) {
