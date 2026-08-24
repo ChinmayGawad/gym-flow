@@ -8,7 +8,7 @@ import { auth } from './lib/auth';
 import { prisma } from './lib/db';
 
 
-const app = express();
+export const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
@@ -903,8 +903,9 @@ app.put('/api/admin/gym/capacity', async (req, res) => {
       },
     });
 
-    // Broadcast live change immediately to all connected clients
-    broadcastGymStatusUpdate();
+    // Broadcast live change and updated forecast immediately to all connected clients
+    await broadcastGymStatusUpdate();
+    await broadcastForecastUpdate();
 
     return res.json({
       success: true,
@@ -1301,12 +1302,15 @@ async function ensureInitialSeed() {
   }
 }
 
-const portNumber = Number(process.env.PORT) || 3000;
+// Start server unless running under a test runner (tests import the app directly)
+if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
+  const portNumber = Number(process.env.PORT) || 3000;
 
-app.listen(portNumber, '0.0.0.0', async () => {
-  console.log(`🚀 GymFlow Server running on port ${portNumber}`);
-  await ensureInitialSeed();
-});
+  app.listen(portNumber, '0.0.0.0', async () => {
+    console.log(`🚀 GymFlow Server running on port ${portNumber}`);
+    await ensureInitialSeed();
+  });
+}
 
 
 
