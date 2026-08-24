@@ -151,6 +151,182 @@ export async function broadcastGymStatusUpdate() {
   }
 }
 
+// 17 Hourly Slot Definitions (6 AM to 10 PM)
+const HOURLY_SLOTS_CONFIG = [
+  { id: '1', hour24: 6, time: '6 AM', baselineRatio: 0.15 },
+  { id: '2', hour24: 7, time: '7 AM', baselineRatio: 0.20 },
+  { id: '3', hour24: 8, time: '8 AM', baselineRatio: 0.35 },
+  { id: '4', hour24: 9, time: '9 AM', baselineRatio: 0.25 },
+  { id: '5', hour24: 10, time: '10 AM', baselineRatio: 0.18 },
+  { id: '6', hour24: 11, time: '11 AM', baselineRatio: 0.20 },
+  { id: '7', hour24: 12, time: '12 PM', baselineRatio: 0.28 },
+  { id: '8', hour24: 13, time: '1 PM', baselineRatio: 0.22 },
+  { id: '9', hour24: 14, time: '2 PM', baselineRatio: 0.18 },
+  { id: '10', hour24: 15, time: '3 PM', baselineRatio: 0.22 },
+  { id: '11', hour24: 16, time: '4 PM', baselineRatio: 0.45 },
+  { id: '12', hour24: 17, time: '5 PM', baselineRatio: 0.65 },
+  { id: '13', hour24: 18, time: '6 PM', baselineRatio: 0.75 },
+  { id: '14', hour24: 19, time: '7 PM', baselineRatio: 0.80 },
+  { id: '15', hour24: 20, time: '8 PM', baselineRatio: 0.55 },
+  { id: '16', hour24: 21, time: '9 PM', baselineRatio: 0.35 },
+  { id: '17', hour24: 22, time: '10 PM', baselineRatio: 0.15 },
+];
+
+export async function generateForecastData(targetDate: string, currentUserId: string | null = null) {
+  const settings = await getOrCreateGymSettings();
+  const capacity = settings.capacity;
+
+  const plannedVisits = await prisma.plannedVisit.findMany({
+    where: {
+      scheduledDate: targetDate,
+      status: 'planned',
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          image: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  let maxCount = 0;
+  const rawSlots = HOURLY_SLOTS_CONFIG.map((slot) => {
+    const slotVisits = plannedVisits.filter((v) => v.hour24 === slot.hour24);
+    const plannedCount = slotVisits.length;
+    const walkIns = Math.round(capacity * slot.baselineRatio * 0.4);
+    const predictedCount = Math.min(capacity, plannedCount + walkIns);
+
+    if (predictedCount > maxCount) {
+      maxCount = predictedCount;
+    }
+
+    const percentage = Math.round((predictedCount / capacity) * 100);
+    let status: 'LOW' | 'MODERATE' | 'HIGH' = 'MODERATE';
+    let waitTime = '10 min';
+
+    if (percentage < 40) {
+      status = 'LOW';
+      waitTime = '0–5 min';
+    } else if (percentage < 75) {
+      status = 'MODERATE';
+      waitTime = '10 min';
+    } else {
+      status = 'HIGH';
+      waitTime = '15–25 min';
+    }
+
+    const hasUserBooked = !!currentUserId && slotVisits.some((v) => v.userId === currentUserId);
+    const userVisit = currentUserId ? slotVisits.find((v) => v.userId === currentUserId) : undefined;
+
+    return {
+      id: slot.id,
+      time: slot.time,
+      hour24: slot.hour24,
+      plannedCount,
+      predictedCount: Math.max(1, predictedCount),
+      percentage: Math.max(8, percentage),
+      status,
+      waitTime,
+      isHigh: percentage >= 75,
+      isHighest: false,
+      isOptimal: false,
+      plannedMembers: slotVisits.map((v) => ({
+        id: v.user.id,
+        name: v.user.name,
+        image: v.user.image,
+        workoutFocus: v.workoutFocus,
+      })),
+      hasUserBooked,
+      userVisitId: userVisit?.id,
+    };
+  });
+
+  // Mark highest slot
+  let minCount = Infinity;
+  let optimalSlot = rawSlots[4]; // default 10 AM
+
+  const forecast = rawSlots.map((slot) => {
+    const isHighest = slot.predictedCount === maxCount && maxCount > 0;
+    // Find quietest operational window (prefer morning 10 AM or afternoon 2 PM when low)
+    if (slot.predictedCount <= minCount && slot.hour24 >= 8 && slot.hour24 <= 16) {
+      minCount = slot.predictedCount;
+      optimalSlot = slot;
+    }
+    return {
+      ...slot,
+      isHighest,
+    };
+  });
+
+  // Mark optimal
+  forecast.forEach((slot) => {
+    if (slot.hour24 === optimalSlot.hour24) {
+      slot.isOptimal = true;
+    }
+  });
+
+  // User's planned visit for the day if any
+  const userPlannedVisit = currentUserId
+    ? await prisma.plannedVisit.findFirst({
+        where: {
+          userId: currentUserId,
+          scheduledDate: targetDate,
+          status: 'planned',
+        },
+      })
+    : null;
+
+  return {
+    success: true,
+    date: targetDate,
+    capacity,
+    totalPlannedVisits: plannedVisits.length,
+    optimalWindow: {
+      timeRange: optimalSlot.hour24 <= 11 ? `${optimalSlot.time} – 11:30 AM` : `${optimalSlot.time} – 3:30 PM`,
+      expectedPeople: optimalSlot.predictedCount,
+      plannedCount: optimalSlot.plannedCount,
+      status: optimalSlot.status,
+    },
+    forecast,
+    userPlannedVisit: userPlannedVisit
+      ? {
+          id: userPlannedVisit.id,
+          scheduledDate: userPlannedVisit.scheduledDate,
+          timeSlot: userPlannedVisit.timeSlot,
+          hour24: userPlannedVisit.hour24,
+          workoutFocus: userPlannedVisit.workoutFocus,
+          notes: userPlannedVisit.notes,
+        }
+      : null,
+  };
+}
+
+export async function broadcastForecastUpdate(date?: string) {
+  if (sseClients.size === 0) return;
+  try {
+    const targetDate = date || new Date().toISOString().split('T')[0];
+    const forecastData = await generateForecastData(targetDate, null);
+    const payload = JSON.stringify({
+      type: 'forecast_update',
+      ...forecastData,
+      timestamp: new Date().toISOString(),
+    });
+    for (const client of sseClients) {
+      try {
+        client.write(`data: ${payload}\n\n`);
+      } catch {
+        sseClients.delete(client);
+      }
+    }
+  } catch (err) {
+    console.error('Error broadcasting forecast update:', err);
+  }
+}
+
 // Helper to get or create Gym Settings (Default Capacity: 30)
 async function getOrCreateGymSettings() {
   let settings = await prisma.gymSettings.findUnique({
@@ -311,6 +487,190 @@ app.get('/api/gym/status', async (req, res) => {
   } catch (error: any) {
     console.error('Error fetching gym status:', error);
     return res.status(500).json({ error: 'Failed to fetch gym status.' });
+  }
+});
+
+// 1.1 GET /api/gym/forecast - Dynamic Hourly Crowd Predictions based on Planned Member Visits
+app.get('/api/gym/forecast', async (req, res) => {
+  try {
+    const queryDate = (req.query.date as string) || new Date().toISOString().split('T')[0];
+
+    // Check if user is logged in
+    let userId: string | null = null;
+    try {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        userId = session.user.id;
+      }
+    } catch {
+      userId = null;
+    }
+
+    const forecastData = await generateForecastData(queryDate, userId);
+    return res.json(forecastData);
+  } catch (error: any) {
+    console.error('Error generating gym forecast:', error);
+    return res.status(500).json({ error: 'Failed to generate crowd forecast.' });
+  }
+});
+
+// 1.2 POST /api/gym/planned-visits - Schedule / Declare Member Visit Slot (e.g. 11:00 AM)
+app.post('/api/gym/planned-visits', async (req, res) => {
+  try {
+    let userId: string | null = null;
+    try {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        userId = session.user.id;
+      }
+    } catch {
+      userId = null;
+    }
+
+    if (!userId) {
+      // Fallback to first active member for seamless demo if unauthenticated
+      const demoUser = await prisma.user.findFirst({ where: { role: 'user' } });
+      if (demoUser) {
+        userId = demoUser.id;
+      } else {
+        return res.status(401).json({ error: 'Authentication required to schedule a visit.' });
+      }
+    }
+
+    const { scheduledDate, timeSlot, hour24, workoutFocus, notes } = req.body;
+
+    if (!scheduledDate || !timeSlot || typeof hour24 !== 'number') {
+      return res.status(400).json({ error: 'scheduledDate, timeSlot, and hour24 are required.' });
+    }
+
+    const parsedHour = Math.max(6, Math.min(22, parseInt(String(hour24), 10)));
+
+    // Upsert or replace user's planned visit for this date
+    const existing = await prisma.plannedVisit.findFirst({
+      where: {
+        userId,
+        scheduledDate,
+      },
+    });
+
+    let plannedVisit;
+    if (existing) {
+      plannedVisit = await prisma.plannedVisit.update({
+        where: { id: existing.id },
+        data: {
+          timeSlot: timeSlot.trim(),
+          hour24: parsedHour,
+          workoutFocus: workoutFocus?.trim() || 'General Strength & Conditioning',
+          notes: notes?.trim() || null,
+          status: 'planned',
+        },
+      });
+    } else {
+      plannedVisit = await prisma.plannedVisit.create({
+        data: {
+          userId,
+          scheduledDate,
+          timeSlot: timeSlot.trim(),
+          hour24: parsedHour,
+          workoutFocus: workoutFocus?.trim() || 'General Strength & Conditioning',
+          notes: notes?.trim() || null,
+          status: 'planned',
+        },
+      });
+    }
+
+    // Broadcast updated forecast and live status immediately to all connected clients & tabs
+    await broadcastForecastUpdate(scheduledDate);
+    await broadcastGymStatusUpdate();
+
+    return res.json({
+      success: true,
+      message: `Visit scheduled for ${timeSlot} on ${scheduledDate}.`,
+      plannedVisit,
+    });
+  } catch (error: any) {
+    console.error('Error scheduling planned visit:', error);
+    return res.status(500).json({ error: 'Failed to schedule planned visit.' });
+  }
+});
+
+// 1.3 DELETE /api/gym/planned-visits/:id - Cancel Scheduled Visit Slot
+app.delete('/api/gym/planned-visits/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.plannedVisit.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Planned visit not found.' });
+    }
+
+    const targetDate = existing.scheduledDate;
+    await prisma.plannedVisit.delete({
+      where: { id },
+    });
+
+    // Broadcast updated forecast to all connected clients
+    await broadcastForecastUpdate(targetDate);
+    await broadcastGymStatusUpdate();
+
+    return res.json({
+      success: true,
+      message: 'Scheduled visit cancelled successfully.',
+    });
+  } catch (error: any) {
+    console.error('Error cancelling planned visit:', error);
+    return res.status(500).json({ error: 'Failed to cancel scheduled visit.' });
+  }
+});
+
+// 1.4 GET /api/user/planned-visits - Fetch Current Member's Upcoming Scheduled Visits
+app.get('/api/user/planned-visits', async (req, res) => {
+  try {
+    let userId: string | null = null;
+    try {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      });
+      if (session?.user?.id) {
+        userId = session.user.id;
+      }
+    } catch {
+      userId = null;
+    }
+
+    if (!userId) {
+      const demoUser = await prisma.user.findFirst({ where: { role: 'user' } });
+      if (demoUser) userId = demoUser.id;
+      else return res.json({ success: true, visits: [] });
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const upcomingVisits = await prisma.plannedVisit.findMany({
+      where: {
+        userId,
+        scheduledDate: { gte: todayStr },
+        status: 'planned',
+      },
+      orderBy: [
+        { scheduledDate: 'asc' },
+        { hour24: 'asc' },
+      ],
+    });
+
+    return res.json({
+      success: true,
+      visits: upcomingVisits,
+    });
+  } catch (error: any) {
+    console.error('Error fetching user planned visits:', error);
+    return res.status(500).json({ error: 'Failed to fetch planned visits.' });
   }
 });
 
@@ -896,6 +1256,44 @@ async function ensureInitialSeed() {
           where: { id: memberRes.user.id },
           data: { role: 'user', plan: 'pro', planStatus: 'active' },
         });
+      }
+    }
+
+    // Seed realistic planned visits for today if none exist
+    const todayStr = new Date().toISOString().split('T')[0];
+    const existingVisitsCount = await prisma.plannedVisit.count({
+      where: { scheduledDate: todayStr },
+    });
+
+    if (existingVisitsCount === 0) {
+      const allMembers = await prisma.user.findMany({ take: 10 });
+      if (allMembers.length > 0) {
+        const seedSlots = [
+          { hour: 8, time: '8:00 AM', focus: 'HIIT & Mobility' },
+          { hour: 11, time: '11:00 AM', focus: 'Chest & Triceps' },
+          { hour: 11, time: '11:00 AM', focus: 'Upper Body Power' },
+          { hour: 17, time: '5:00 PM', focus: 'Leg Day & Squats' },
+          { hour: 18, time: '6:00 PM', focus: 'Back & Biceps' },
+          { hour: 18, time: '6:00 PM', focus: 'Deadlifts & Core' },
+          { hour: 19, time: '7:00 PM', focus: 'Strength & Conditioning' },
+        ];
+
+        for (let i = 0; i < seedSlots.length; i++) {
+          const member = allMembers[i % allMembers.length];
+          const slot = seedSlots[i];
+          await prisma.plannedVisit.create({
+            data: {
+              userId: member.id,
+              scheduledDate: todayStr,
+              timeSlot: slot.time,
+              hour24: slot.hour,
+              workoutFocus: slot.focus,
+              notes: 'Scheduled for regular training session',
+              status: 'planned',
+            },
+          });
+        }
+        console.log(`[Seed] Initialized ${seedSlots.length} sample planned visit notes for ${todayStr}`);
       }
     }
   } catch (seedErr) {

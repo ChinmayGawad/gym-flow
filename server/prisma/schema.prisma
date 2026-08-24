@@ -27,6 +27,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   visitLogs     VisitLog[]
+  plannedVisits PlannedVisit[]
 
   @@map("user")
 }
@@ -116,3 +117,23 @@ model VisitLog {
   @@map("visit_log")
   @@index([userId])
 }
+
+model PlannedVisit {
+  id            String   @id @default(cuid())
+  userId        String
+  scheduledDate String   // ISO date string: YYYY-MM-DD
+  timeSlot      String   // e.g. "11:00 AM", "6:00 PM"
+  hour24        Int      // 6 to 22
+  workoutFocus  String?  @default("General Strength & Conditioning")
+  notes         String?
+  status        String   @default("planned") // "planned" | "completed" | "cancelled"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("planned_visit")
+  @@index([userId])
+  @@index([scheduledDate, hour24])
+}
+

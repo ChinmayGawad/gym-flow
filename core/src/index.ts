@@ -123,3 +123,62 @@ export function calculateOccupancyStatus(peopleCount: number, capacity: number):
   return { percentage, status, waitTime };
 }
 
+// ================= PLANNED VISITS & FORECASTING =================
+
+export const createPlannedVisitSchema = z.object({
+  scheduledDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
+  timeSlot: z.string().min(3),
+  hour24: z.number().int().min(6).max(22),
+  workoutFocus: z.string().max(80).optional(),
+  notes: z.string().max(200).optional(),
+});
+
+export type CreatePlannedVisitInput = z.infer<typeof createPlannedVisitSchema>;
+
+export interface PlannedMemberSummary {
+  id: string;
+  name: string;
+  image?: string | null;
+  workoutFocus?: string | null;
+}
+
+export interface HourlyForecastSlot {
+  id: string;
+  time: string;
+  hour24: number;
+  plannedCount: number;
+  predictedCount: number;
+  percentage: number;
+  status: OccupancyLevel;
+  waitTime: string;
+  isHigh: boolean;
+  isHighest: boolean;
+  isOptimal: boolean;
+  plannedMembers: PlannedMemberSummary[];
+  hasUserBooked?: boolean;
+  userVisitId?: string;
+}
+
+export interface ForecastResponse {
+  success: boolean;
+  date: string;
+  capacity: number;
+  totalPlannedVisits: number;
+  optimalWindow: {
+    timeRange: string;
+    expectedPeople: number;
+    plannedCount: number;
+    status: OccupancyLevel;
+  };
+  forecast: HourlyForecastSlot[];
+  userPlannedVisit?: {
+    id: string;
+    scheduledDate: string;
+    timeSlot: string;
+    hour24: number;
+    workoutFocus?: string | null;
+    notes?: string | null;
+  } | null;
+}
+
+
