@@ -1,5 +1,8 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -12,6 +15,35 @@ export const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
+// 1. Security Headers (Defense-in-depth: MIME-sniffing, Clickjacking, Referrer-policy)
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Compatible with Vite client & inline styles
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// 2. API Rate Limiting
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 60, // Limit each IP to 60 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+const generalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Generous limit for dashboard polling and SSE reconnects
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please slow down.' },
+  skip: (req) => process.env.NODE_ENV === 'test' || req.path === '/api/gym/live-stream',
+});
+
+app.use('/api/auth/', authRateLimiter);
+app.use('/api/', generalApiLimiter);
 
 const clientUrl = process.env.CLIENT_URL || '';
 const clientOrigins = clientUrl
@@ -46,8 +78,8 @@ app.use(
 );
 
 // Body Parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Better Auth Route Handler (Web Standard Adapter compatible with Bun/Node/Docker)
 app.all('/api/auth/*', async (req, res) => {
@@ -516,6 +548,41 @@ app.get('/api/gym/forecast', async (req, res) => {
   }
 });
 
+// Zod Input Validation Schemas
+const PlannedVisitSchema = z.object({
+  scheduledDate: z.string().min(1, 'scheduledDate, timeSlot, and hour24 are required.'),
+  timeSlot: z.string().min(1, 'scheduledDate, timeSlot, and hour24 are required.'),
+  hour24: z.number({ required_error: 'scheduledDate, timeSlot, and hour24 are required.', invalid_type_error: 'scheduledDate, timeSlot, and hour24 are required.' }).transform((val) => Math.max(6, Math.min(22, parseInt(String(val), 10)))),
+  workoutFocus: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const CapacityUpdateSchema = z.object({
+  capacity: z.any().refine((val) => {
+    const n = typeof val === 'number' ? val : parseInt(String(val), 10);
+    return !isNaN(n) && Number.isInteger(n) && n >= 10 && n <= 2000;
+  }, {
+    message: 'Capacity must be a valid number between 10 and 2000.',
+  }).transform((val) => typeof val === 'number' ? val : parseInt(String(val), 10)),
+  gymName: z.string().min(1).optional(),
+});
+
+const MemberUpdateSchema = z.object({
+  name: z.string().optional(),
+  email: z.string().optional(),
+  role: z.string().optional(),
+  plan: z.string().optional(),
+  planStatus: z.string().optional(),
+  password: z.string().optional(),
+});
+
+const WorkoutLogSchema = z.object({
+  workoutType: z.string().min(1).max(100).optional(),
+  durationMinutes: z.coerce.number().int().min(1).max(480).optional(),
+  calories: z.coerce.number().int().min(0).max(5000).optional(),
+  notes: z.string().max(500).optional(),
+});
+
 // 1.2 POST /api/gym/planned-visits - Schedule / Declare Member Visit Slot (e.g. 11:00 AM)
 app.post('/api/gym/planned-visits', async (req, res) => {
   try {
@@ -532,7 +599,10 @@ app.post('/api/gym/planned-visits', async (req, res) => {
     }
 
     if (!userId) {
-      // Fallback to first active member for seamless demo if unauthenticated
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(401).json({ error: 'Authentication required to schedule a visit.' });
+      }
+      // Fallback to first active member for seamless local demo if unauthenticated
       const demoUser = await prisma.user.findFirst({ where: { role: 'user' } });
       if (demoUser) {
         userId = demoUser.id;
@@ -541,13 +611,15 @@ app.post('/api/gym/planned-visits', async (req, res) => {
       }
     }
 
-    const { scheduledDate, timeSlot, hour24, workoutFocus, notes } = req.body;
-
-    if (!scheduledDate || !timeSlot || typeof hour24 !== 'number') {
-      return res.status(400).json({ error: 'scheduledDate, timeSlot, and hour24 are required.' });
+    const parseResult = PlannedVisitSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: parseResult.error.errors[0]?.message || 'scheduledDate, timeSlot, and hour24 are required.',
+        details: parseResult.error.flatten().fieldErrors,
+      });
     }
 
-    const parsedHour = Math.max(6, Math.min(22, parseInt(String(hour24), 10)));
+    const { scheduledDate, timeSlot, hour24, workoutFocus, notes } = parseResult.data;
 
     // Upsert or replace user's planned visit for this date
     const existing = await prisma.plannedVisit.findFirst({
@@ -563,7 +635,7 @@ app.post('/api/gym/planned-visits', async (req, res) => {
         where: { id: existing.id },
         data: {
           timeSlot: timeSlot.trim(),
-          hour24: parsedHour,
+          hour24,
           workoutFocus: workoutFocus?.trim() || 'General Strength & Conditioning',
           notes: notes?.trim() || null,
           status: 'planned',
@@ -575,7 +647,7 @@ app.post('/api/gym/planned-visits', async (req, res) => {
           userId,
           scheduledDate,
           timeSlot: timeSlot.trim(),
-          hour24: parsedHour,
+          hour24,
           workoutFocus: workoutFocus?.trim() || 'General Strength & Conditioning',
           notes: notes?.trim() || null,
           status: 'planned',
@@ -824,6 +896,9 @@ app.post('/api/user/visits', async (req, res) => {
     }
 
     if (!userId) {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(401).json({ error: 'Authentication required to log workouts.' });
+      }
       const firstUser = await prisma.user.findFirst();
       if (firstUser) {
         userId = firstUser.id;
@@ -832,9 +907,17 @@ app.post('/api/user/visits', async (req, res) => {
       }
     }
 
-    const { workoutType, durationMinutes, calories, notes } = req.body;
-    const duration = parseInt(durationMinutes, 10) || 60;
-    const caloriesBurned = parseInt(calories, 10) || 300;
+    const parseResult = WorkoutLogSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: 'Invalid workout details.',
+        details: parseResult.error.flatten().fieldErrors,
+      });
+    }
+
+    const { workoutType, durationMinutes, calories, notes } = parseResult.data;
+    const duration = durationMinutes || 60;
+    const caloriesBurned = calories || 300;
 
     const checkInTime = new Date();
     const checkOutTime = new Date(checkInTime.getTime() + duration * 60 * 1000);
@@ -869,17 +952,28 @@ app.put('/api/admin/gym/capacity', async (req, res) => {
       headers: fromNodeHeaders(req.headers),
     });
 
-    const userRole = (session?.user as any)?.role;
+    let userRole = (session?.user as any)?.role;
+    if (!userRole && session?.user?.id) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true },
+      });
+      userRole = dbUser?.role;
+    }
+
     if (!session || userRole !== 'admin') {
       return res.status(403).json({ error: 'Unauthorized: Administrator access required.' });
     }
 
-    const { capacity, gymName } = req.body;
-    const parsedCapacity = parseInt(capacity, 10);
-
-    if (isNaN(parsedCapacity) || parsedCapacity < 10 || parsedCapacity > 2000) {
-      return res.status(400).json({ error: 'Capacity must be a valid number between 10 and 2000.' });
+    const parseResult = CapacityUpdateSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: parseResult.error.errors[0]?.message || 'Capacity must be a valid number between 10 and 2000.',
+        details: parseResult.error.flatten().fieldErrors,
+      });
     }
+
+    const { capacity: parsedCapacity, gymName } = parseResult.data;
 
     const updatedSettings = await prisma.gymSettings.upsert({
       where: { id: 'default' },
@@ -1079,13 +1173,29 @@ app.put('/api/admin/members/:id', async (req, res) => {
       headers: fromNodeHeaders(req.headers),
     });
 
-    const userRole = (session?.user as any)?.role;
+    let userRole = (session?.user as any)?.role;
+    if (!userRole && session?.user?.id) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true },
+      });
+      userRole = dbUser?.role;
+    }
+
     if (!session || userRole !== 'admin') {
       return res.status(403).json({ error: 'Unauthorized: Administrator access required.' });
     }
 
+    const parseResult = MemberUpdateSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: 'Invalid member update payload.',
+        details: parseResult.error.flatten().fieldErrors,
+      });
+    }
+
     const { id } = req.params;
-    const { name, email, role, plan, planStatus, password } = req.body;
+    const { name, email, role, plan, planStatus, password } = parseResult.data;
 
     // Check if target user exists
     const existingUser = await prisma.user.findUnique({
@@ -1114,7 +1224,7 @@ app.put('/api/admin/members/:id', async (req, res) => {
         ...(email ? { email: email.toLowerCase().trim() } : {}),
         ...(role && (role === 'admin' || role === 'user') ? { role } : {}),
         ...(plan && ['basic', 'pro', 'elite'].includes(plan) ? { plan } : {}),
-        ...(planStatus ? { planStatus } : {}),
+        ...(planStatus && ['active', 'paused', 'expired'].includes(planStatus) ? { planStatus } : {}),
       },
     });
 
