@@ -47,60 +47,66 @@ export const PlannedVisitBanner: React.FC<PlannedVisitBannerProps> = ({
 
   if (userPlannedVisit) {
     return (
-      <Card className="p-5 sm:p-6 bg-gradient-to-br from-white to-zinc-50 dark:from-[#131418] dark:to-[#171920] border border-black/[0.08] dark:border-white/[0.08] shadow-card rounded-2xl relative overflow-hidden flex flex-col justify-between">
+      <Card className="p-5 sm:p-6 bg-gradient-to-br from-white to-zinc-50 dark:from-[#131418] dark:to-[#171920] border border-black/[0.08] dark:border-white/[0.08] shadow-card rounded-2xl relative overflow-hidden flex flex-col justify-between gap-4">
         {/* Subtle accent corner glow */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center shadow-xs shrink-0 mt-0.5">
-              <Calendar className="w-5 h-5 stroke-[2.25]" />
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-bold tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/60 uppercase">
-                  Confirmed Session
-                </span>
-                <span className="text-xs text-zinc-400 dark:text-zinc-500 font-medium">
-                  {userPlannedVisit.scheduledDate}
-                </span>
-              </div>
-
-              <h3 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
-                Scheduled for {userPlannedVisit.timeSlot}
-              </h3>
-
-              <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-600 dark:text-zinc-300 font-medium pt-0.5">
-                <span className="inline-flex items-center gap-1.5 font-bold text-zinc-900 dark:text-white">
-                  <Dumbbell className="w-3.5 h-3.5 text-zinc-500" />
-                  {userPlannedVisit.workoutFocus || 'General Workout'}
-                </span>
-                {userPlannedVisit.notes && (
-                  <>
-                    <span className="text-zinc-300 dark:text-zinc-700">•</span>
-                    <span className="text-zinc-500 italic max-w-[200px] sm:max-w-xs truncate">
-                      "{userPlannedVisit.notes}"
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
+        {/* Top Info Section */}
+        <div className="flex items-start gap-3.5 min-w-0">
+          <div className="w-10 h-10 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center shadow-xs shrink-0 mt-0.5">
+            <Calendar className="w-5 h-5 stroke-[2.25]" />
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end pt-2 sm:pt-0">
-            {!isCheckedInSelf && onCheckIn && (
-              <Button
-                onClick={onCheckIn}
-                disabled={isLoading}
-                className="h-9 px-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 font-bold text-xs shadow-xs gap-1.5 cursor-pointer"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
-                <span>Check In</span>
-              </Button>
-            )}
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-bold tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/60 uppercase">
+                Confirmed Session
+              </span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500 font-medium">
+                {userPlannedVisit.scheduledDate}
+              </span>
+            </div>
 
+            <h3 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight truncate">
+              Scheduled for {userPlannedVisit.timeSlot}
+            </h3>
+
+            <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-600 dark:text-zinc-300 font-medium pt-0.5 min-w-0">
+              <span className="inline-flex items-center gap-1.5 font-bold text-zinc-900 dark:text-white truncate">
+                <Dumbbell className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                {userPlannedVisit.workoutFocus || 'General Workout'}
+              </span>
+              {userPlannedVisit.notes && (
+                <>
+                  <span className="text-zinc-300 dark:text-zinc-700 shrink-0">•</span>
+                  <span className="text-zinc-500 italic truncate max-w-full">
+                    "{userPlannedVisit.notes}"
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Action buttons bar */}
+        <div className="flex items-center justify-between gap-2 flex-wrap pt-3 border-t border-zinc-100 dark:border-zinc-800/60 w-full">
+          {!isCheckedInSelf && onCheckIn ? (
+            <Button
+              onClick={onCheckIn}
+              disabled={isLoading}
+              className="h-9 px-3.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 font-bold text-xs shadow-xs gap-1.5 cursor-pointer shrink-0"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 dark:text-emerald-600" />
+              <span>Check In</span>
+            </Button>
+          ) : (
+            <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Checked In</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
@@ -129,13 +135,13 @@ export const PlannedVisitBanner: React.FC<PlannedVisitBannerProps> = ({
 
   // State B: Prompt to schedule a visit slot
   return (
-    <Card className="p-5 sm:p-6 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
-      <div className="flex items-center gap-3.5">
+    <Card className="p-5 sm:p-6 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all min-w-0">
+      <div className="flex items-center gap-3.5 min-w-0 flex-1">
         <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex items-center justify-center shadow-xs shrink-0">
           <Sparkles className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         </div>
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase">
               PLANNED VISIT INTENT
             </span>
@@ -143,7 +149,7 @@ export const PlannedVisitBanner: React.FC<PlannedVisitBannerProps> = ({
               Forecasting
             </Badge>
           </div>
-          <h3 className="text-base font-black text-zinc-900 dark:text-white mt-0.5 tracking-tight">
+          <h3 className="text-base font-black text-zinc-900 dark:text-white mt-0.5 tracking-tight truncate">
             Planning to workout today?
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">

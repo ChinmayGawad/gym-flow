@@ -170,6 +170,8 @@ body {
     align-items: center;
 
     min-height: 255px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .crowd-info {

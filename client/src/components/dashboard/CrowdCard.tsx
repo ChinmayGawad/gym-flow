@@ -103,9 +103,9 @@ export const CrowdCard: React.FC<CrowdCardProps> = ({
   const availableSlots = Math.max(0, capacity - peopleCount);
 
   return (
-    <Card className="p-6 sm:p-7 flex flex-col md:flex-row justify-between items-start md:items-center min-h-[220px] bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card relative overflow-hidden">
+    <Card className="p-6 sm:p-7 flex flex-col md:flex-row justify-between items-start md:items-center min-h-[220px] bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card relative overflow-hidden min-w-0">
       {/* Left Core Section */}
-      <div className="w-full md:w-[64%] flex flex-col justify-between">
+      <div className="w-full md:w-[64%] flex flex-col justify-between min-w-0">
         {/* Top Status Indicators (Glanceable in 0.5s) */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
