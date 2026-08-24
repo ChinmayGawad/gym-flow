@@ -1,14 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarDays, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { API_BASE } from '@/lib/api-config';
+import { ForecastResponse } from '@/types/occupancy';
 
 interface BestTimeCardProps {
   capacity?: number;
 }
 
 export const BestTimeCard: React.FC<BestTimeCardProps> = ({ capacity = 30 }) => {
-  const expectedPeople = Math.max(1, Math.round(capacity * 0.3));
+  const [timeRange, setTimeRange] = useState<string>('10:00 AM – 11:30 AM');
+  const [expectedPeople, setExpectedPeople] = useState<number>(Math.max(1, Math.round(capacity * 0.25)));
+  const [status, setStatus] = useState<string>('LOW');
+
+  useEffect(() => {
+    const fetchOptimal = async () => {
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const res = await fetch(`${API_BASE}/api/gym/forecast?date=${todayStr}`, {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data: ForecastResponse = await res.json();
+          if (data.success && data.optimalWindow) {
+            setTimeRange(data.optimalWindow.timeRange);
+            setExpectedPeople(data.optimalWindow.expectedPeople);
+            setStatus(data.optimalWindow.status);
+          }
+        }
+      } catch {}
+    };
+
+    fetchOptimal();
+  }, [capacity]);
 
   return (
     <Card className="mt-4 p-6 sm:p-7 flex items-center justify-between bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
@@ -20,13 +45,19 @@ export const BestTimeCard: React.FC<BestTimeCardProps> = ({ capacity = 30 }) => 
           </span>
         </div>
         <h2 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 dark:text-white mt-0.5">
-          10:00 AM – 11:30 AM
+          {timeRange}
         </h2>
         <p className="text-zinc-500 dark:text-zinc-400 text-xs sm:text-sm mt-1 flex items-center gap-2">
           <span>Expected occupancy:</span>
-          <strong className="text-zinc-900 dark:text-white font-bold tabular-nums">~{expectedPeople} people</strong>
-          <Badge variant="low" dot className="px-2.5 py-0.5 text-[10px]">
-            LOW CROWD
+          <strong className="text-zinc-900 dark:text-white font-bold tabular-nums">
+            ~{expectedPeople} people
+          </strong>
+          <Badge
+            variant={status === 'LOW' ? 'low' : status === 'HIGH' ? 'high' : 'moderate'}
+            dot
+            className="px-2.5 py-0.5 text-[10px]"
+          >
+            {status} CROWD
           </Badge>
         </p>
       </div>

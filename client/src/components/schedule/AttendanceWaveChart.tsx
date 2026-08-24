@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { HourlyPrediction } from '@/types/occupancy';
+import { HourlyPrediction, HourlyForecastSlot } from '@/types/occupancy';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTheme } from '@/context/ThemeContext';
 
+export type ChartSlotData = HourlyPrediction | HourlyForecastSlot;
+
 interface AttendanceWaveChartProps {
-  data: HourlyPrediction[];
+  data: ChartSlotData[];
   capacity: number;
   activeFilter?: 'all' | 'morning' | 'afternoon' | 'evening';
   isLoading?: boolean;
@@ -51,8 +53,18 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
+  const getHeadcount = (item: ChartSlotData): number => {
+    if ('predictedCount' in item && typeof item.predictedCount === 'number') {
+      return item.predictedCount;
+    }
+    if ('peopleCount' in item && typeof item.peopleCount === 'number') {
+      return item.peopleCount;
+    }
+    return 1;
+  };
+
   // Compute 4 Y-axis steps
-  const maxBenchmark = Math.max(capacity, ...data.map((d) => d.peopleCount));
+  const maxBenchmark = Math.max(capacity, ...data.map(getHeadcount));
   const step = Math.ceil(maxBenchmark / 4);
   const yAxisTicks = [0, step, step * 2, step * 3, step * 4];
   const maxTick = step * 4;
@@ -63,8 +75,9 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
 
   // Compute bar dimensions
   const bars = data.map((item, index) => {
+    const peopleCount = getHeadcount(item);
     const x = paddingLeft + index * slotWidth + (slotWidth - barWidth) / 2;
-    const barHeight = Math.max(5, (item.peopleCount / maxTick) * chartHeight);
+    const barHeight = Math.max(5, (peopleCount / maxTick) * chartHeight);
     const y = paddingTop + chartHeight - barHeight;
     const centerX = paddingLeft + index * slotWidth + slotWidth / 2;
 
@@ -73,6 +86,7 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
 
     return {
       ...item,
+      peopleCount,
       x,
       y,
       barHeight,
@@ -186,13 +200,33 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
                 className="transition-colors duration-150"
               />
 
+              {/* User booked ring / indicator */}
+              {(bar as any).hasUserBooked && (
+                <rect
+                  x={bar.x - 2}
+                  y={bar.y - 2}
+                  width={barWidth + 4}
+                  height={bar.barHeight + 4}
+                  rx="6"
+                  fill="none"
+                  stroke={isDark ? '#ffffff' : '#18181b'}
+                  strokeWidth="2"
+                />
+              )}
+
               {/* X-Axis Time Label */}
               <text
                 x={bar.centerX}
                 y={height - 14}
                 fontSize="10"
-                fontWeight={isHovered ? '700' : '500'}
-                fill={isHovered ? (isDark ? '#ffffff' : '#09090b') : (isDark ? '#a1a1aa' : '#71717a')}
+                fontWeight={isHovered || (bar as any).hasUserBooked ? '700' : '500'}
+                fill={
+                  (bar as any).hasUserBooked
+                    ? (isDark ? '#34d399' : '#059669')
+                    : isHovered
+                    ? (isDark ? '#ffffff' : '#09090b')
+                    : (isDark ? '#a1a1aa' : '#71717a')
+                }
                 textAnchor="middle"
                 fontFamily="system-ui, sans-serif"
                 className="transition-colors duration-150 tabular-nums"
@@ -217,8 +251,13 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
           <div className="bg-zinc-900 dark:bg-zinc-800 text-white text-xs font-semibold px-3 py-1.5 rounded-xl shadow-card-hover border border-zinc-800 dark:border-zinc-700 whitespace-nowrap flex items-center gap-2">
             <span className="text-zinc-400 dark:text-zinc-400 font-medium">{activeBar.time}:</span>
             <span className="font-bold text-white tabular-nums">
-              {activeBar.peopleCount} people
+              {activeBar.peopleCount} expected
             </span>
+            {typeof (activeBar as any).plannedCount === 'number' && (
+              <span className="text-zinc-300 text-[10px]">
+                ({(activeBar as any).plannedCount} planned)
+              </span>
+            )}
             <span
               className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
                 activeBar.percentage >= 75
@@ -230,6 +269,11 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
             >
               {activeBar.percentage}%
             </span>
+            {(activeBar as any).hasUserBooked && (
+              <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.5 rounded font-bold">
+                Your Slot
+              </span>
+            )}
           </div>
           <div className="w-2 h-2 bg-zinc-900 dark:bg-zinc-800 rotate-45 mx-auto -mt-1 border-r border-b border-zinc-800 dark:border-zinc-700" />
         </div>

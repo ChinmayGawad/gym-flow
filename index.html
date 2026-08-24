@@ -205,6 +205,32 @@
 
 
 
+    <!-- ================= PLAN VISIT NOTE WIDGET ================= -->
+    <section class="best-time" style="margin-top: 14px; background: #ffffff; border: 1px solid #e5e5e5;">
+        <div style="flex: 1;">
+            <span class="small-title">
+                SCHEDULE YOUR WORKOUT INTENT
+            </span>
+            <h2 id="userVisitTitle" style="font-size: 18px; margin-top: 4px;">
+                Visiting at 11:00 AM?
+            </h2>
+            <p id="userVisitSub" style="font-size: 12px; color: #666; margin-top: 4px;">
+                Select your planned time slot to calibrate today's crowd forecast.
+            </p>
+
+            <div style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;" id="slotButtons">
+                <button type="button" class="slot-chip" data-slot="8 AM" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #ddd; background: #f9f9f9; font-size: 11px; font-weight: 700; cursor: pointer;">8:00 AM</button>
+                <button type="button" class="slot-chip active" data-slot="11 AM" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #171717; background: #171717; color: white; font-size: 11px; font-weight: 700; cursor: pointer;">11:00 AM</button>
+                <button type="button" class="slot-chip" data-slot="5 PM" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #ddd; background: #f9f9f9; font-size: 11px; font-weight: 700; cursor: pointer;">5:00 PM</button>
+                <button type="button" class="slot-chip" data-slot="7 PM" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #ddd; background: #f9f9f9; font-size: 11px; font-weight: 700; cursor: pointer;">7:00 PM</button>
+            </div>
+        </div>
+
+        <div class="calendar-icon" style="background: #f0f0f0;">
+            <i class="fa-solid fa-clock"></i>
+        </div>
+    </section>
+
     <!-- ================= BUTTON ================= -->
 
     <div class="button-container">
@@ -213,7 +239,7 @@
             class="main-button"
             id="viewCrowdBtn">
 
-            VIEW TODAY'S CROWD
+            VIEW TODAY'S FORECAST
 
             <i class="fa-solid fa-arrow-right"></i>
 
@@ -531,6 +557,24 @@ function simulateLocalTick() {
     people += change;
     updateDashboard(people);
 }
+
+// Slot chip interaction for visit declaration
+document.querySelectorAll(".slot-chip").forEach(btn => {
+    btn.addEventListener("click", function() {
+        document.querySelectorAll(".slot-chip").forEach(b => {
+            b.style.background = "#f9f9f9";
+            b.style.color = "#171717";
+            b.style.borderColor = "#ddd";
+        });
+        this.style.background = "#171717";
+        this.style.color = "#ffffff";
+        this.style.borderColor = "#171717";
+
+        const slotName = this.getAttribute("data-slot");
+        document.getElementById("userVisitTitle").textContent = `Visiting at ${slotName}? (Noted)`;
+        document.getElementById("userVisitSub").textContent = `Your visit intent at ${slotName} has been recorded to calibrate crowd forecasts.`;
+    });
+});
 
 // View crowd button
 document

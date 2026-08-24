@@ -10,77 +10,75 @@ import {
   CheckCircle2,
   ArrowLeft,
   Sparkles,
+  Clock,
+  Users,
+  Plus,
+  Check,
+  X,
+  Radio,
 } from 'lucide-react';
-import { HourlyPrediction } from '@/types/occupancy';
+import { HourlyForecastSlot } from '@/types/occupancy';
 import { AttendanceWaveChart } from '@/components/schedule/AttendanceWaveChart';
+import { PlanVisitModal } from '@/components/schedule/PlanVisitModal';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useForecast } from '@/hooks/useForecast';
 
 interface SchedulePageProps {
   capacity?: number;
   isLoading?: boolean;
 }
 
-const SCHEDULE_CURVE = [
-  { id: '1', time: '6 AM', factor: 0.30 },
-  { id: '2', time: '7 AM', factor: 0.37 },
-  { id: '3', time: '8 AM', factor: 0.53 },
-  { id: '4', time: '9 AM', factor: 0.43 },
-  { id: '5', time: '10 AM', factor: 0.33 },
-  { id: '6', time: '11 AM', factor: 0.37 },
-  { id: '7', time: '12 PM', factor: 0.47 },
-  { id: '8', time: '1 PM', factor: 0.40 },
-  { id: '9', time: '2 PM', factor: 0.32 },
-  { id: '10', time: '3 PM', factor: 0.38 },
-  { id: '11', time: '4 PM', factor: 0.63 },
-  { id: '12', time: '5 PM', factor: 0.82, isHigh: true },
-  { id: '13', time: '6 PM', factor: 0.90, isHigh: true },
-  { id: '14', time: '7 PM', factor: 0.97, isHighest: true },
-  { id: '15', time: '8 PM', factor: 0.73 },
-  { id: '16', time: '9 PM', factor: 0.50 },
-  { id: '17', time: '10 PM', factor: 0.25 },
-];
-
-export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoading = false }) => {
+export const SchedulePage: React.FC<SchedulePageProps> = ({
+  capacity: propCapacity = 30,
+}) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'morning' | 'afternoon' | 'evening'>('all');
+  const [selectedDateOffset, setSelectedDateOffset] = useState<number>(0);
 
-  const fullHourlySchedule: HourlyPrediction[] = SCHEDULE_CURVE.map((item) => {
-    const peopleCount = Math.max(1, Math.round(capacity * item.factor));
-    const percentage = Math.round((peopleCount / capacity) * 100);
-    return {
-      id: item.id,
-      time: item.time,
-      peopleCount,
-      percentage,
-      isHigh: item.isHigh,
-      isHighest: item.isHighest,
-    };
-  });
+  // Compute selected date string
+  const targetDateObj = new Date();
+  targetDateObj.setDate(targetDateObj.getDate() + selectedDateOffset);
+  const targetDateStr = targetDateObj.toISOString().split('T')[0];
 
-  const filteredSchedule = fullHourlySchedule.filter((item) => {
-    const [numStr, period] = item.time.split(' ');
-    const num = parseInt(numStr, 10);
-    const hour24 = period === 'AM' ? (num === 12 ? 0 : num) : (num === 12 ? 12 : num + 12);
+  const {
+    forecast: rawSlots,
+    optimalWindow,
+    totalPlannedVisits,
+    capacity: forecastCapacity,
+    isLoading,
+    refetch,
+    cancelSlot,
+  } = useForecast({ date: targetDateStr });
 
-    if (activeFilter === 'morning') {
-      return hour24 >= 6 && hour24 <= 11;
-    }
-    if (activeFilter === 'afternoon') {
-      return hour24 >= 12 && hour24 <= 16;
-    }
-    if (activeFilter === 'evening') {
-      return hour24 >= 17 && hour24 <= 22;
-    }
+  // Modal states
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
+  const [targetSlotHour, setTargetSlotHour] = useState<number>(11);
+
+  const handleOpenPlanModal = (hour: number = 11) => {
+    setTargetSlotHour(hour);
+    setIsPlanModalOpen(true);
+  };
+
+  const handleCancelSlot = async (visitId: string) => {
+    await cancelSlot(visitId);
+  };
+
+  const effectiveCapacity = forecastCapacity || propCapacity;
+
+  const filteredSchedule = rawSlots.filter((item) => {
+    const hour24 = item.hour24;
+    if (activeFilter === 'morning') return hour24 >= 6 && hour24 <= 11;
+    if (activeFilter === 'afternoon') return hour24 >= 12 && hour24 <= 16;
+    if (activeFilter === 'evening') return hour24 >= 17 && hour24 <= 22;
     return true;
   });
 
-  const morningLowAvg = Math.max(1, Math.round(capacity * 0.33));
-  const afternoonLowAvg = Math.max(1, Math.round(capacity * 0.35));
-  const eveningPeakAvg = Math.max(1, Math.round(capacity * 0.92));
+  const morningSlot = rawSlots.find((s) => s.hour24 === 7) || rawSlots[1];
+  const eveningPeakSlot = rawSlots.find((s) => s.isHighest) || rawSlots[12];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300 pb-12">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-100 dark:border-zinc-800">
         <div>
           <div className="flex items-center gap-1.5 mb-1">
             <Link
@@ -94,17 +92,56 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
             <span className="text-xs font-semibold text-zinc-900 dark:text-white">Schedule</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-            Attendance Predictions & Schedule
+            Planned Visits & Crowd Forecast
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-            AI-assisted hourly crowd predictions calibrated to {capacity} facility capacity benchmark.
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
+            Hourly crowd predictions dynamically computed from {totalPlannedVisits} member declarations ({effectiveCapacity} max capacity).
           </p>
         </div>
 
-        {/* Date / Capacity Badge */}
-        <div className="flex items-center gap-2 bg-white dark:bg-[#131418] px-3.5 py-1.5 rounded-xl border border-black/[0.06] dark:border-white/[0.08] shadow-card self-start md:self-auto">
-          <Calendar className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
-          <span className="text-xs font-bold text-zinc-900 dark:text-white tabular-nums">Live Benchmark: {capacity} Max</span>
+        {/* Action Controls: Day Switcher & Plan Visit */}
+        <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
+          {/* Quick Date Pills */}
+          <div className="flex items-center gap-1 bg-zinc-100/90 dark:bg-zinc-900/90 p-1 rounded-xl border border-black/[0.04] dark:border-white/[0.06]">
+            <button
+              onClick={() => setSelectedDateOffset(0)}
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                selectedDateOffset === 0
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs font-bold'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+              }`}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => setSelectedDateOffset(1)}
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                selectedDateOffset === 1
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs font-bold'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+              }`}
+            >
+              Tomorrow
+            </button>
+            <button
+              onClick={() => setSelectedDateOffset(2)}
+              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                selectedDateOffset === 2
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs font-bold'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
+              }`}
+            >
+              Day After
+            </button>
+          </div>
+
+          <Button
+            onClick={() => handleOpenPlanModal(11)}
+            className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-2 shadow-xs cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Plan Visit Slot</span>
+          </Button>
         </div>
       </div>
 
@@ -116,7 +153,6 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
               <Skeleton className="h-5 w-24 rounded-full" />
               <Skeleton className="h-5 w-36 rounded-lg" />
               <Skeleton className="h-3 w-full rounded-sm" />
-              <Skeleton className="h-3 w-4/5 rounded-sm" />
             </Card>
           ))
         ) : (
@@ -130,26 +166,26 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
               <h4 className="text-base font-extrabold text-zinc-900 dark:text-white mt-3 tracking-tight">
-                6:00 AM – 7:30 AM
+                6:00 AM – 8:00 AM
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                Avg. ~{morningLowAvg} people. Ideal for power racks and cardio with 0–5 min wait times.
+                Avg. ~{morningSlot?.predictedCount || 5} people ({morningSlot?.plannedCount || 0} planned). 0–5 min wait time.
               </p>
             </Card>
 
-            {/* Afternoon Quiet Window */}
+            {/* Optimal Window */}
             <Card className="p-5 bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15] transition-all">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold tracking-widest text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/50 uppercase">
-                  Afternoon Window
+                  Optimal Quiet Window
                 </span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
               <h4 className="text-base font-extrabold text-zinc-900 dark:text-white mt-3 tracking-tight">
-                1:30 PM – 3:30 PM
+                {optimalWindow?.timeRange || '10:00 AM – 11:30 AM'}
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                Avg. ~{afternoonLowAvg} people. Lowest floor traffic and quiet equipment availability.
+                Lowest planned attendance (~{optimalWindow?.expectedPeople || 6} expected). Immediate power rack availability.
               </p>
             </Card>
 
@@ -165,7 +201,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
                 5:30 PM – 8:00 PM
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                Capacity reaches 85%–97% (~{eveningPeakAvg} people). Expected equipment wait 15–25 mins.
+                ~{eveningPeakSlot?.predictedCount || 26} members expected ({eveningPeakSlot?.plannedCount || 0} planned). Expected wait: 15–25 mins.
               </p>
             </Card>
           </>
@@ -180,16 +216,16 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4.5 h-4.5 text-zinc-900 dark:text-white" />
               <h3 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
-                Crowd Volume Forecast
+                Hourly Attendance Wave & Planned Visitations
               </h3>
             </div>
             <div className="flex items-center gap-2 pt-0.5">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                AI PREDICTED
+                <Radio className="w-3 h-3 text-emerald-500 animate-pulse" />
+                DYNAMIC VISITATION FORECAST
               </span>
               <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                Hourly headcount progression
+                Derived from member intent notes
               </span>
             </div>
           </div>
@@ -204,7 +240,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
                   : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white'
               }`}
             >
-              All Day
+              All Day (6-22)
             </button>
             <button
               onClick={() => setActiveFilter('morning')}
@@ -239,96 +275,159 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({ capacity = 30, isLoa
           </div>
         </div>
 
-        {/* Clean Bar Chart */}
+        {/* Attendance Wave Chart */}
         <div className="py-2">
           <AttendanceWaveChart
             data={filteredSchedule}
-            capacity={capacity}
+            capacity={effectiveCapacity}
             activeFilter={activeFilter}
+            isLoading={isLoading}
           />
-        </div>
-
-        {/* Daily Attendance Summary Breakdown */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-          <div className="p-3 bg-zinc-50/70 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800">
-            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-              Early Morning (6–8 AM)
-            </span>
-            <span className="text-sm font-black text-zinc-900 dark:text-white mt-1 block tabular-nums">
-              ~{Math.round(capacity * 0.35)} People
-            </span>
-            <Badge variant="low" dot className="text-[9px] px-2 py-0 mt-1.5">
-              Low Crowd
-            </Badge>
-          </div>
-
-          <div className="p-3 bg-zinc-50/70 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800">
-            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-              Lunch Wave (12–2 PM)
-            </span>
-            <span className="text-sm font-black text-zinc-900 dark:text-white mt-1 block tabular-nums">
-              ~{Math.round(capacity * 0.45)} People
-            </span>
-            <Badge variant="moderate" dot className="text-[9px] px-2 py-0 mt-1.5">
-              Moderate
-            </Badge>
-          </div>
-
-          <div className="p-3 bg-rose-50/50 dark:bg-rose-950/30 rounded-xl border border-rose-100 dark:border-rose-900/50">
-            <span className="text-[10px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wider block">
-              Peak Surge (5–8 PM)
-            </span>
-            <span className="text-sm font-black text-rose-950 dark:text-rose-100 mt-1 block tabular-nums">
-              ~{Math.round(capacity * 0.90)} People
-            </span>
-            <Badge variant="high" dot className="text-[9px] px-2 py-0 mt-1.5">
-              High Surge
-            </Badge>
-          </div>
-
-          <div className="p-3 bg-zinc-50/70 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/50 dark:border-zinc-800">
-            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
-              Late Night (9–10 PM)
-            </span>
-            <span className="text-sm font-black text-zinc-900 dark:text-white mt-1 block tabular-nums">
-              ~{Math.round(capacity * 0.30)} People
-            </span>
-            <Badge variant="low" dot className="text-[9px] px-2 py-0 mt-1.5">
-              Low Crowd
-            </Badge>
-          </div>
         </div>
       </Card>
 
-      {/* Recommended Strategy Callout */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#131418] border border-black/[0.06] dark:border-white/[0.08] shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-center shadow-xs shrink-0">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
+      {/* Hourly Slot Detail Cards Grid */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase block">
-              BEST WORKOUT WINDOW
-            </span>
-            <h3 className="text-base font-black text-zinc-900 dark:text-white mt-0.5">
-              10:00 AM – 11:30 AM or 1:30 PM – 3:30 PM
+            <h3 className="text-lg font-black text-zinc-900 dark:text-white tracking-tight">
+              Hourly Slot Breakdown & Member Intents
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
-              Estimated &lt;{Math.round(capacity * 0.4)} members present. Minimum equipment wait time.
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+              Click "+ I'm Going" on any time slot to declare your visit note and calibrate the forecast.
             </p>
           </div>
+          <Badge variant="outline" className="text-xs font-bold">
+            {filteredSchedule.length} Slots
+          </Badge>
         </div>
 
-        <Button
-          asChild
-          className="h-9 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-2 shrink-0 shadow-xs"
-        >
-          <Link to="/">
-            Live Dashboard
-            <TrendingUp className="w-3.5 h-3.5" />
-          </Link>
-        </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filteredSchedule.map((slot) => {
+            const hasUserBooked = slot.hasUserBooked;
+            const badgeVariant =
+              slot.status === 'LOW' ? 'low' : slot.status === 'HIGH' ? 'high' : 'moderate';
+
+            return (
+              <Card
+                key={slot.id}
+                className={`p-4.5 rounded-2xl border transition-all ${
+                  hasUserBooked
+                    ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-400 dark:ring-emerald-700 shadow-sm'
+                    : 'bg-white dark:bg-[#131418] border-black/[0.06] dark:border-white/[0.08] shadow-card hover:border-black/[0.12] dark:hover:border-white/[0.15]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-zinc-500" />
+                      <span className="text-base font-extrabold text-zinc-900 dark:text-white tabular-nums">
+                        {slot.time}
+                      </span>
+                      <Badge variant={badgeVariant as any} dot className="text-[10px] px-2 py-0.2">
+                        {slot.status} · {slot.waitTime} wait
+                      </Badge>
+                      {slot.isOptimal && (
+                        <span className="text-[9px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 px-1.5 py-0.2 rounded-md">
+                          Best Slot
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 text-xs text-zinc-600 dark:text-zinc-300 pt-1">
+                      <span className="font-bold tabular-nums">
+                        ~{slot.predictedCount} people expected
+                      </span>
+                      <span className="text-zinc-300 dark:text-zinc-700">•</span>
+                      <span className="inline-flex items-center gap-1 font-medium text-zinc-500 dark:text-zinc-400">
+                        <Users className="w-3 h-3 text-zinc-400" />
+                        {slot.plannedCount} declared visits
+                      </span>
+                    </div>
+
+                    {/* Member Attendee Chips if any */}
+                    {slot.plannedMembers && slot.plannedMembers.length > 0 && (
+                      <div className="flex items-center gap-1.5 pt-1.5 flex-wrap">
+                        {slot.plannedMembers.map((m) => (
+                          <span
+                            key={m.id}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700"
+                            title={m.workoutFocus || 'General Workout'}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span className="truncate max-w-[90px]">{m.name}</span>
+                            {m.workoutFocus && (
+                              <span className="text-zinc-400 font-normal text-[9px] truncate max-w-[70px]">
+                                ({m.workoutFocus.split(' ')[0]})
+                              </span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Slot Action Button */}
+                  <div className="shrink-0">
+                    {hasUserBooked ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-xs">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          <span>Attending</span>
+                        </span>
+                        {slot.userVisitId && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCancelSlot(slot.userVisitId!)}
+                            className="h-8 w-8 p-0 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                            title="Cancel your visit"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handleOpenPlanModal(slot.hour24)}
+                        className="h-8 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-1 shadow-xs cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>I'm Going</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden mt-3">
+                  <div
+                    className={`h-full rounded-full transition-all duration-300 ${
+                      slot.percentage >= 75
+                        ? 'bg-rose-500'
+                        : slot.percentage >= 40
+                        ? 'bg-zinc-700 dark:bg-zinc-300'
+                        : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${slot.percentage}%` }}
+                  />
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Plan Visit Modal */}
+      <PlanVisitModal
+        isOpen={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        initialHour={targetSlotHour}
+        initialDate={targetDateStr}
+        forecastSlots={rawSlots}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 };

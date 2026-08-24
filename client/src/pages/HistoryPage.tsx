@@ -232,14 +232,27 @@ export const HistoryPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Trigger Card Layout Modal with Backdrop Blur */}
-        <Button
-          onClick={() => setIsLogModalOpen(true)}
-          className="h-10 px-5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-2 self-start md:self-auto shadow-xs cursor-pointer"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Log Workout Session</span>
-        </Button>
+        {/* Action Buttons: Quick Modal Log + Full Split Logger Page */}
+        <div className="flex items-center gap-2 self-start md:self-auto">
+          <Button
+            asChild
+            variant="outline"
+            className="h-10 px-4 rounded-xl border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-xs font-semibold gap-1.5 shadow-xs"
+          >
+            <Link to="/log-workout">
+              <Dumbbell className="w-3.5 h-3.5" />
+              <span>Splits Builder</span>
+            </Link>
+          </Button>
+
+          <Button
+            onClick={() => setIsLogModalOpen(true)}
+            className="h-10 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 text-xs font-bold gap-2 shadow-xs cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Quick Log</span>
+          </Button>
+        </div>
       </div>
 
       {justLogged && (
