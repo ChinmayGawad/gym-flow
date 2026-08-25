@@ -63,7 +63,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     await cancelSlot(visitId);
   };
 
-  const eveningPeak = forecast.find((s) => s.isHighest) || forecast[12];
+  const peakSlot = forecast.find((s) => s.isHighest && s.predictedCount > 0);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
@@ -162,13 +162,13 @@ export const HomePage: React.FC<HomePageProps> = ({
             <AlertTriangle className="w-4 h-4" />
           </div>
           <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-widest block">
-            Evening Peak
+            {peakSlot ? 'Peak Window' : 'Crowd Flow'}
           </span>
           <span className="text-sm sm:text-base font-extrabold text-zinc-900 dark:text-white tracking-tight block mt-0.5 truncate">
-            5:30 PM – 8:00 PM
+            {peakSlot ? `${peakSlot.time} Rush` : 'No Rush Expected'}
           </span>
           <span className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1 block">
-            ~{eveningPeak?.predictedCount || 26} expected members
+            {peakSlot ? `~${peakSlot.predictedCount} expected member${peakSlot.predictedCount > 1 ? 's' : ''}` : 'Floor fully available'}
           </span>
         </Card>
       </div>

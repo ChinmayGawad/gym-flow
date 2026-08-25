@@ -214,7 +214,7 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
                 6:00 AM – 8:00 AM
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                Avg. ~{morningSlot?.predictedCount || 5} people ({morningSlot?.plannedCount || 0} planned). 0–5 min wait time.
+                Avg. ~{morningSlot?.predictedCount ?? 0} people ({morningSlot?.plannedCount ?? 0} planned). 0–5 min wait time.
               </p>
             </Card>
 
@@ -227,10 +227,10 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
                 <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               </div>
               <h4 className="text-base font-extrabold text-zinc-900 dark:text-white mt-3 tracking-tight">
-                {optimalWindow?.timeRange || '10:00 AM – 11:30 AM'}
+                {optimalWindow?.timeRange || 'All Day Quiet'}
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                Lowest planned attendance (~{optimalWindow?.expectedPeople || 6} expected). Immediate power rack availability.
+                Lowest planned attendance (~{optimalWindow?.expectedPeople ?? 0} expected). Immediate power rack availability.
               </p>
             </Card>
 
@@ -243,10 +243,12 @@ export const SchedulePage: React.FC<SchedulePageProps> = ({
                 <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
               </div>
               <h4 className="text-base font-extrabold text-zinc-900 dark:text-white mt-3 tracking-tight">
-                5:30 PM – 8:00 PM
+                {eveningPeakSlot && eveningPeakSlot.predictedCount > 0 ? `${eveningPeakSlot.time} Rush` : 'No Rush Expected'}
               </h4>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                ~{eveningPeakSlot?.predictedCount || 26} members expected ({eveningPeakSlot?.plannedCount || 0} planned). Expected wait: 15–25 mins.
+                {eveningPeakSlot && eveningPeakSlot.predictedCount > 0
+                  ? `~${eveningPeakSlot.predictedCount} members expected (${eveningPeakSlot.plannedCount} planned). Expected wait: ${eveningPeakSlot.waitTime}.`
+                  : 'No high-density rush slots planned for this day. Immediate equipment availability.'}
               </p>
             </Card>
           </>

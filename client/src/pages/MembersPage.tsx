@@ -241,16 +241,12 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
     setActionFeedback(null);
 
     try {
-      const res = await authClient.admin.removeUser({
-        userId,
+      const res = await fetch(`${API_BASE}/api/admin/members/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
       });
 
-      if (res?.error) {
-        setActionFeedback({
-          type: 'error',
-          message: res.error.message || 'Failed to remove member.',
-        });
-      } else {
+      if (res.ok) {
         setActionFeedback({
           type: 'success',
           message: `Member "${memberName}" has been removed.`,
@@ -258,6 +254,23 @@ export const MembersPage: React.FC<MembersPageProps> = ({ occupancy }) => {
         setMembers((prev) => prev.filter((m) => m.id !== userId));
         if (occupancy?.refreshStatus) {
           occupancy.refreshStatus();
+        }
+      } else {
+        const authRes = await authClient.admin.removeUser({ userId });
+        if (authRes?.error) {
+          setActionFeedback({
+            type: 'error',
+            message: authRes.error.message || 'Failed to remove member.',
+          });
+        } else {
+          setActionFeedback({
+            type: 'success',
+            message: `Member "${memberName}" has been removed.`,
+          });
+          setMembers((prev) => prev.filter((m) => m.id !== userId));
+          if (occupancy?.refreshStatus) {
+            occupancy.refreshStatus();
+          }
         }
       }
     } catch (err: any) {

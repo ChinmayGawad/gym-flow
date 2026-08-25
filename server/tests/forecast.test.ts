@@ -76,6 +76,7 @@ const plannedVisits = [
 function arrangeHappyPath() {
   m(prisma.gymSettings.findUnique).mockResolvedValue(settings);
   m(prisma.plannedVisit.findMany).mockResolvedValue(plannedVisits);
+  m(prisma.user.count).mockResolvedValue(0);
 }
 
 describe('generateForecastData', () => {
@@ -95,20 +96,22 @@ describe('generateForecastData', () => {
     expect(data.forecast[16]).toMatchObject({ id: '17', hour24: 22, time: '10 PM' });
   });
 
-  it('combines planned visits with the walk-in baseline for predictions', async () => {
+  it('strictly derives forecast from planned visits in database', async () => {
     const data = await generateForecastData('2026-08-24');
 
-    // 6 PM slot: 2 planned + round(50 * 0.75 * 0.4)=15 walk-ins -> 17 predicted (34% -> LOW)
+    // 6 PM slot: 2 planned -> 2 predicted (4% -> LOW)
     const slot18 = data.forecast.find((s) => s.hour24 === 18)!;
     expect(slot18.plannedCount).toBe(2);
-    expect(slot18.predictedCount).toBe(17);
-    expect(slot18.percentage).toBe(34);
+    expect(slot18.predictedCount).toBe(2);
+    expect(slot18.percentage).toBe(4);
     expect(slot18.status).toBe('LOW');
-    expect(slot18.isHighest).toBe(true); // busiest hour of the day
+    expect(slot18.isHighest).toBe(true); // highest planned count of the day
 
-    // 7 PM slot: round(50*0.8*0.4)=16 walk-ins, no plans
+    // 7 PM slot: 0 planned -> 0 predicted (0%)
     const slot19 = data.forecast.find((s) => s.hour24 === 19)!;
-    expect(slot19.predictedCount).toBe(16);
+    expect(slot19.plannedCount).toBe(0);
+    expect(slot19.predictedCount).toBe(0);
+    expect(slot19.percentage).toBe(0);
     expect(slot19.isHighest).toBe(false);
 
     // 8 AM slot has Cara's planned visit attached
@@ -121,21 +124,13 @@ describe('generateForecastData', () => {
     expect(data.totalPlannedVisits).toBe(3);
   });
 
-  it('flags exactly one optimal window and prefers the quietest daytime hour (ties resolve to later hours)', async () => {
+  it('flags optimal window for quietest daytime hour', async () => {
     const data = await generateForecastData('2026-08-24');
 
     const optimalSlots = data.forecast.filter((s) => s.isOptimal);
     expect(optimalSlots).toHaveLength(1);
-
-    // Hours 10, 11, 13, 14, 15 all predict 4 people; the last tie wins (3 PM).
-    expect(optimalSlots[0].hour24).toBe(15);
-    expect(optimalSlots[0].predictedCount).toBe(4);
-    expect(data.optimalWindow).toEqual({
-      timeRange: '3 PM – 3:30 PM',
-      expectedPeople: 4,
-      plannedCount: 0,
-      status: 'LOW',
-    });
+    expect(optimalSlots[0].plannedCount).toBe(0);
+    expect(data.optimalWindow.status).toBe('LOW');
   });
 
   it('marks booking state and visit id for the current user', async () => {

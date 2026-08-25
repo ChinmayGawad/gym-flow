@@ -225,20 +225,32 @@ export async function generateForecastData(targetDate: string, currentUserId: st
     orderBy: { createdAt: 'asc' },
   });
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isToday = targetDate === todayStr;
+  const currentHour = new Date().getHours();
+  let currentCheckedInCount = 0;
+  if (isToday) {
+    currentCheckedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
+  }
+
   let maxCount = 0;
   const rawSlots = HOURLY_SLOTS_CONFIG.map((slot) => {
     const slotVisits = plannedVisits.filter((v) => v.hour24 === slot.hour24);
     const plannedCount = slotVisits.length;
-    const walkIns = Math.round(capacity * slot.baselineRatio * 0.4);
-    const predictedCount = Math.min(capacity, plannedCount + walkIns);
+    // For current hour of today, include the actual checked in members count if higher
+    let predictedCount = plannedCount;
+    if (isToday && slot.hour24 === currentHour) {
+      predictedCount = Math.max(plannedCount, currentCheckedInCount);
+    }
+    predictedCount = Math.min(capacity, predictedCount);
 
     if (predictedCount > maxCount) {
       maxCount = predictedCount;
     }
 
-    const percentage = Math.round((predictedCount / capacity) * 100);
-    let status: 'LOW' | 'MODERATE' | 'HIGH' = 'MODERATE';
-    let waitTime = '10 min';
+    const percentage = capacity > 0 ? Math.round((predictedCount / capacity) * 100) : 0;
+    let status: 'LOW' | 'MODERATE' | 'HIGH' = 'LOW';
+    let waitTime = '0–5 min';
 
     if (percentage < 40) {
       status = 'LOW';
@@ -259,8 +271,8 @@ export async function generateForecastData(targetDate: string, currentUserId: st
       time: slot.time,
       hour24: slot.hour24,
       plannedCount,
-      predictedCount: Math.max(1, predictedCount),
-      percentage: Math.max(8, percentage),
+      predictedCount,
+      percentage,
       status,
       waitTime,
       isHigh: percentage >= 75,
@@ -312,13 +324,20 @@ export async function generateForecastData(targetDate: string, currentUserId: st
       })
     : null;
 
+  const optimalWindowTimeRange =
+    optimalSlot.predictedCount === 0 && maxCount === 0
+      ? 'All Day Quiet'
+      : optimalSlot.hour24 <= 11
+      ? `${optimalSlot.time} – 11:30 AM`
+      : `${optimalSlot.time} – 3:30 PM`;
+
   return {
     success: true,
     date: targetDate,
     capacity,
     totalPlannedVisits: plannedVisits.length,
     optimalWindow: {
-      timeRange: optimalSlot.hour24 <= 11 ? `${optimalSlot.time} – 11:30 AM` : `${optimalSlot.time} – 3:30 PM`,
+      timeRange: optimalWindowTimeRange,
       expectedPeople: optimalSlot.predictedCount,
       plannedCount: optimalSlot.plannedCount,
       status: optimalSlot.status,
@@ -823,7 +842,8 @@ app.post('/api/gym/checkin-toggle', async (req, res) => {
     const percentage = Math.round((checkedInCount / settings.capacity) * 100);
 
     // Broadcast live change immediately to all connected clients
-    broadcastGymStatusUpdate();
+    await broadcastGymStatusUpdate();
+    await broadcastForecastUpdate();
 
     return res.json({
       success: true,
@@ -1138,7 +1158,8 @@ app.post('/api/admin/members/:id/checkin-toggle', async (req, res) => {
     const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
 
     // Broadcast live change immediately to all connected clients & tabs
-    broadcastGymStatusUpdate();
+    await broadcastGymStatusUpdate();
+    await broadcastForecastUpdate();
 
     return res.json({
       success: true,
@@ -1244,7 +1265,7 @@ app.put('/api/admin/members/:id', async (req, res) => {
     }
 
     // Broadcast live change immediately to all connected clients
-    broadcastGymStatusUpdate();
+    await broadcastGymStatusUpdate();
 
     return res.json({
       success: true,
@@ -1254,6 +1275,120 @@ app.put('/api/admin/members/:id', async (req, res) => {
   } catch (error: any) {
     console.error('Error updating member:', error);
     return res.status(500).json({ error: error.message || 'Internal server error while updating member.' });
+  }
+});
+
+// Admin: Delete Member Endpoint
+app.delete('/api/admin/members/:id', async (req, res) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+
+    let userRole = (session?.user as any)?.role;
+    if (!userRole && session?.user?.id) {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true },
+      });
+      userRole = dbUser?.role;
+    }
+
+    if (!session || userRole !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized: Administrator access required.' });
+    }
+
+    const { id } = req.params;
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Member not found.' });
+    }
+
+    // Cascade delete relations
+    await prisma.plannedVisit.deleteMany({ where: { userId: id } });
+    await prisma.visitLog.deleteMany({ where: { userId: id } });
+    await prisma.session.deleteMany({ where: { userId: id } });
+    await prisma.account.deleteMany({ where: { userId: id } });
+    await prisma.user.delete({ where: { id } });
+
+    await broadcastGymStatusUpdate();
+    await broadcastForecastUpdate();
+
+    return res.json({ success: true, message: `Member ${existing.name} removed successfully.` });
+  } catch (err: any) {
+    console.error('Error deleting member by admin:', err);
+    return res.status(500).json({ error: 'Failed to delete member.' });
+  }
+});
+
+// GET /api/gym/analytics/weekly - Weekly Dynamic Heatmap aggregated directly from Database
+app.get('/api/gym/analytics/weekly', async (req, res) => {
+  try {
+    const settings = await getOrCreateGymSettings();
+    const capacity = settings.capacity;
+
+    // Fetch all planned visits and recent visit logs
+    const plannedVisits = await prisma.plannedVisit.findMany({
+      where: { status: 'planned' },
+      select: { scheduledDate: true, hour24: true },
+    });
+
+    const visitLogs = await prisma.visitLog.findMany({
+      select: { checkInTime: true },
+    });
+
+    const dayKeys = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const heatmap: Record<string, number[]> = {
+      Mon: new Array(17).fill(0),
+      Tue: new Array(17).fill(0),
+      Wed: new Array(17).fill(0),
+      Thu: new Array(17).fill(0),
+      Fri: new Array(17).fill(0),
+      Sat: new Array(17).fill(0),
+      Sun: new Array(17).fill(0),
+    };
+
+    // Aggregate planned visits into day-of-week slots
+    plannedVisits.forEach((pv) => {
+      try {
+        const d = new Date(pv.scheduledDate);
+        const dayName = dayKeys[d.getDay()];
+        const hourIdx = pv.hour24 - 6;
+        if (dayName && hourIdx >= 0 && hourIdx < 17 && heatmap[dayName]) {
+          heatmap[dayName][hourIdx] += 1;
+        }
+      } catch {}
+    });
+
+    // Aggregate past visit logs into day-of-week slots
+    visitLogs.forEach((vl) => {
+      try {
+        const d = new Date(vl.checkInTime);
+        const dayName = dayKeys[d.getDay()];
+        const hourIdx = d.getHours() - 6;
+        if (dayName && hourIdx >= 0 && hourIdx < 17 && heatmap[dayName]) {
+          heatmap[dayName][hourIdx] += 1;
+        }
+      } catch {}
+    });
+
+    // Convert headcount counts into percentages based on gym capacity
+    const heatmapPct: Record<string, number[]> = {};
+    for (const day of Object.keys(heatmap)) {
+      heatmapPct[day] = heatmap[day].map((count) =>
+        capacity > 0 ? Math.min(100, Math.round((count / capacity) * 100)) : 0
+      );
+    }
+
+    return res.json({
+      success: true,
+      capacity,
+      heatmapCounts: heatmap,
+      heatmapPercentages: heatmapPct,
+    });
+  } catch (error: any) {
+    console.error('Error generating weekly analytics:', error);
+    return res.status(500).json({ error: 'Failed to compute weekly analytics.' });
   }
 });
 
@@ -1302,6 +1437,7 @@ app.post('/api/gym/simulation-step', async (req, res) => {
 
     // Broadcast update to all live streams immediately
     await broadcastGymStatusUpdate();
+    await broadcastForecastUpdate();
 
     const checkedInCount = await prisma.user.count({ where: { isCheckedIn: true } });
     return res.json({ success: true, peopleCount: checkedInCount, capacity: settings.capacity });
@@ -1367,44 +1503,6 @@ async function ensureInitialSeed() {
           where: { id: memberRes.user.id },
           data: { role: 'user', plan: 'pro', planStatus: 'active' },
         });
-      }
-    }
-
-    // Seed realistic planned visits for today if none exist
-    const todayStr = new Date().toISOString().split('T')[0];
-    const existingVisitsCount = await prisma.plannedVisit.count({
-      where: { scheduledDate: todayStr },
-    });
-
-    if (existingVisitsCount === 0) {
-      const allMembers = await prisma.user.findMany({ take: 10 });
-      if (allMembers.length > 0) {
-        const seedSlots = [
-          { hour: 8, time: '8:00 AM', focus: 'HIIT & Mobility' },
-          { hour: 11, time: '11:00 AM', focus: 'Chest & Triceps' },
-          { hour: 11, time: '11:00 AM', focus: 'Upper Body Power' },
-          { hour: 17, time: '5:00 PM', focus: 'Leg Day & Squats' },
-          { hour: 18, time: '6:00 PM', focus: 'Back & Biceps' },
-          { hour: 18, time: '6:00 PM', focus: 'Deadlifts & Core' },
-          { hour: 19, time: '7:00 PM', focus: 'Strength & Conditioning' },
-        ];
-
-        for (let i = 0; i < seedSlots.length; i++) {
-          const member = allMembers[i % allMembers.length];
-          const slot = seedSlots[i];
-          await prisma.plannedVisit.create({
-            data: {
-              userId: member.id,
-              scheduledDate: todayStr,
-              timeSlot: slot.time,
-              hour24: slot.hour,
-              workoutFocus: slot.focus,
-              notes: 'Scheduled for regular training session',
-              status: 'planned',
-            },
-          });
-        }
-        console.log(`[Seed] Initialized ${seedSlots.length} sample planned visit notes for ${todayStr}`);
       }
     }
   } catch (seedErr) {

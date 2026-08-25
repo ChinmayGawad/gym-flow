@@ -60,7 +60,7 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
     if ('peopleCount' in item && typeof item.peopleCount === 'number') {
       return item.peopleCount;
     }
-    return 1;
+    return 0;
   };
 
   // Compute 4 Y-axis steps
@@ -77,7 +77,7 @@ export const AttendanceWaveChart: React.FC<AttendanceWaveChartProps> = ({
   const bars = data.map((item, index) => {
     const peopleCount = getHeadcount(item);
     const x = paddingLeft + index * slotWidth + (slotWidth - barWidth) / 2;
-    const barHeight = Math.max(5, (peopleCount / maxTick) * chartHeight);
+    const barHeight = peopleCount > 0 ? Math.max(6, (peopleCount / maxTick) * chartHeight) : 2;
     const y = paddingTop + chartHeight - barHeight;
     const centerX = paddingLeft + index * slotWidth + slotWidth / 2;
 

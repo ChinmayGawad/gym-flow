@@ -117,9 +117,6 @@ describe('POST /api/gym/checkin-toggle (member self service)', () => {
   });
 
   it('checks a member OUT: closes the open visit log with duration and calories', async () => {
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date('2026-08-24T18:00:00Z'));
-
     session({ id: 'u1' });
     m(prisma.user.findUnique).mockResolvedValue({
       id: 'u1',
@@ -129,7 +126,7 @@ describe('POST /api/gym/checkin-toggle (member self service)', () => {
     // Open visit started exactly 90 minutes ago
     m(prisma.visitLog.findFirst).mockResolvedValue({
       id: 'log1',
-      checkInTime: new Date('2026-08-24T16:30:00Z'),
+      checkInTime: new Date(Date.now() - 90 * 60 * 1000),
     });
 
     const res = await request(app).post('/api/gym/checkin-toggle');
@@ -204,9 +201,6 @@ describe('POST /api/admin/members/:id/checkin-toggle', () => {
   });
 
   it('checks a member OUT and clamps short visits to a 15-minute minimum', async () => {
-    vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date('2026-08-24T12:00:00Z'));
-
     session({ id: 'a1', role: 'admin' });
     m(prisma.user.findUnique).mockResolvedValue({
       id: 'm1',
@@ -216,7 +210,7 @@ describe('POST /api/admin/members/:id/checkin-toggle', () => {
     // Visit opened only 1 minute ago -> duration must clamp to 15
     m(prisma.visitLog.findFirst).mockResolvedValue({
       id: 'log9',
-      checkInTime: new Date('2026-08-24T11:59:00Z'),
+      checkInTime: new Date(Date.now() - 60 * 1000),
     });
 
     const res = await request(app).post('/api/admin/members/m1/checkin-toggle');
@@ -226,7 +220,7 @@ describe('POST /api/admin/members/:id/checkin-toggle', () => {
     expect(res.body.message).toBe('Jane Doe is now checked out.');
     expect(m(prisma.visitLog.update)).toHaveBeenCalledWith({
       where: { id: 'log9' },
-      data: expect.objectContaining({ durationMinutes: 15, caloriesBurned: 90 }),
+      data: { checkOutTime: expect.any(Date), durationMinutes: 15, caloriesBurned: 90 },
     });
   });
 });

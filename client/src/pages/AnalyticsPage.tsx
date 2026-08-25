@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ import {
 import { useOccupancy } from '@/hooks/useOccupancy';
 import { useForecast } from '@/hooks/useForecast';
 import { PlanVisitModal } from '@/components/schedule/PlanVisitModal';
+import { API_BASE } from '@/lib/api-config';
 
 interface AnalyticsPageProps {
   occupancy?: ReturnType<typeof useOccupancy>;
@@ -45,16 +46,6 @@ const DAYS_OF_WEEK = [
 ];
 
 const HOURS_RANGE = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
-
-const WEEKLY_HEATMAP_DATA: Record<string, number[]> = {
-  Mon: [20, 35, 50, 30, 22, 18, 25, 30, 28, 45, 65, 88, 92, 85, 60, 35, 15],
-  Tue: [22, 38, 48, 28, 20, 15, 22, 28, 25, 42, 68, 90, 95, 82, 55, 30, 12],
-  Wed: [25, 40, 52, 32, 24, 18, 26, 32, 30, 48, 70, 92, 90, 80, 52, 28, 14],
-  Thu: [20, 36, 45, 26, 18, 14, 20, 25, 24, 40, 62, 86, 88, 78, 50, 25, 10],
-  Fri: [18, 30, 42, 25, 18, 12, 22, 28, 32, 50, 72, 82, 75, 60, 38, 20, 8],
-  Sat: [10, 25, 45, 65, 75, 80, 70, 55, 40, 35, 38, 42, 35, 25, 18, 12, 5],
-  Sun: [8, 18, 35, 55, 68, 72, 60, 45, 32, 28, 30, 32, 28, 20, 15, 10, 5],
-};
 
 const EQUIPMENT_ZONES = [
   { id: 'squat', name: 'Power Racks & Squats', icon: Flame, color: 'text-rose-600 dark:text-rose-400', border: 'border-rose-500', bg: 'bg-rose-50 dark:bg-rose-950/40' },
@@ -77,6 +68,10 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'matrix' | 'equipment'>('overview');
   const [selectedDayKey, setSelectedDayKey] = useState<string>('Mon');
   const [hoveredHour, setHoveredHour] = useState<number | null>(null);
+  const [weeklyData, setWeeklyData] = useState<{
+    heatmapCounts: Record<string, number[]>;
+    heatmapPercentages: Record<string, number[]>;
+  } | null>(null);
 
   // Simplified Quick Slot Booking State
   const [selectedZone, setSelectedZone] = useState<string>(EQUIPMENT_ZONES[0].name);
@@ -94,21 +89,36 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
   const capacity = occupancy?.capacity || forecastState.capacity || 30;
   const currentHour = new Date().getHours();
 
+  const fetchWeeklyAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/gym/analytics/weekly`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.heatmapCounts) {
+          setWeeklyData(data);
+        }
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchWeeklyAnalytics();
+  }, [fetchWeeklyAnalytics]);
+
   // Selected Day Hourly Array
-  const dayHourlyPcts = WEEKLY_HEATMAP_DATA[selectedDayKey] || WEEKLY_HEATMAP_DATA.Mon;
-  const dayAveragePct = Math.round(
-    dayHourlyPcts.reduce((a, b) => a + b, 0) / dayHourlyPcts.length
-  );
-  const dayAverageHeadcount = Math.round((dayAveragePct / 100) * capacity);
+  const dayHourlyCounts = weeklyData?.heatmapCounts?.[selectedDayKey] || new Array(17).fill(0);
+  const dayHourlyPcts = weeklyData?.heatmapPercentages?.[selectedDayKey] || new Array(17).fill(0);
+  const totalDayHeadcount = dayHourlyCounts.reduce((a, b) => a + b, 0);
+  const dayAverageHeadcount = Math.round(totalDayHeadcount / Math.max(1, dayHourlyCounts.length));
 
   // Live vs Historical comparison
   const currentHourIdx = Math.max(0, Math.min(HOURS_RANGE.length - 1, currentHour - 6));
   const currentDayIndex = new Date().getDay();
   const currentDayKey = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][currentDayIndex];
-  const typicalPctForNow = WEEKLY_HEATMAP_DATA[currentDayKey]?.[currentHourIdx] || 45;
-  const typicalHeadcountForNow = Math.round((typicalPctForNow / 100) * capacity);
-  const livePeople = occupancy?.peopleCount || 14;
-  const livePct = Math.round((livePeople / capacity) * 100);
+  const typicalHeadcountForNow = weeklyData?.heatmapCounts?.[currentDayKey]?.[currentHourIdx] || 0;
+  const typicalPctForNow = weeklyData?.heatmapPercentages?.[currentDayKey]?.[currentHourIdx] || 0;
+  const livePeople = occupancy?.peopleCount || 0;
+  const livePct = Math.round((livePeople / Math.max(1, capacity)) * 100);
   const diffFromTypical = livePct - typicalPctForNow;
 
   // Format exact time string e.g. "5:30 PM"
@@ -268,9 +278,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
             {DAYS_OF_WEEK.map((d) => {
               const isSelected = selectedDayKey === d.key;
               const isToday = currentDayKey === d.key;
-              const dayPcts = WEEKLY_HEATMAP_DATA[d.key] || [];
-              const dayAvg = Math.round(dayPcts.reduce((a, b) => a + b, 0) / dayPcts.length);
-              const dayHeadcount = Math.round((dayAvg / 100) * capacity);
+              const dayCounts = weeklyData?.heatmapCounts?.[d.key] || [];
+              const dayHeadcountTotal = dayCounts.reduce((a, b) => a + b, 0);
+              const dayHeadcount = Math.round(dayHeadcountTotal / Math.max(1, dayCounts.length));
 
               return (
                 <button
@@ -341,10 +351,10 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
             {/* Interactive Rush Bars */}
             <div className="pt-4 pb-2">
               <div className="flex items-end justify-between gap-1.5 sm:gap-2.5 h-44 w-full relative">
-                {dayHourlyPcts.map((pct, idx) => {
+                {dayHourlyCounts.map((expPeople, idx) => {
                   const hour24 = HOURS_RANGE[idx];
                   const timeLabel = hour24 > 12 ? `${hour24 - 12}:00 PM` : `${hour24}:00 AM`;
-                  const expPeople = Math.round((pct / 100) * capacity);
+                  const pct = dayHourlyPcts[idx] || 0;
                   const isCurrent = currentDayKey === selectedDayKey && currentHour === hour24;
                   const isHovered = hoveredHour === hour24;
 
@@ -392,7 +402,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                         className={`w-full max-w-[24px] sm:max-w-[32px] rounded-t-lg transition-all duration-200 ${barBg} ${
                           isCurrent ? 'ring-2 ring-zinc-900 dark:ring-white ring-offset-2 ring-offset-white dark:ring-offset-zinc-900' : ''
                         }`}
-                        style={{ height: `${Math.max(14, pct)}%` }}
+                        style={{ height: `${pct > 0 ? Math.max(14, pct) : 4}%` }}
                       />
 
                       {/* Headcount Number */}
@@ -408,9 +418,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
               <div className="flex justify-between text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mt-3 px-1 tabular-nums border-t border-zinc-100 dark:border-zinc-800 pt-2">
                 <span>6 AM</span>
                 <span>8 AM</span>
-                <span className="text-emerald-700 dark:text-emerald-400">11 AM (Quiet)</span>
+                <span>11 AM</span>
                 <span>2 PM</span>
-                <span className="text-rose-600 dark:text-rose-400">6 PM (Peak)</span>
+                <span>6 PM</span>
                 <span>8 PM</span>
                 <span>10 PM</span>
               </div>
@@ -432,7 +442,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                   6:00 AM – 8:00 AM
                 </h4>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                  ~{Math.round(capacity * 0.25)} members inside. Instant treadmill and cardio machine access. 0 min wait.
+                  ~{dayHourlyCounts[1] || 0} members inside. Instant treadmill and cardio machine access. 0 min wait.
                 </p>
               </div>
               <Button
@@ -458,7 +468,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                   10:00 AM – 11:30 AM
                 </h4>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                  Lowest daily attendance (~{Math.round(capacity * 0.2)} members). Immediate power rack and bench availability.
+                  Lowest daily attendance (~{dayHourlyCounts[5] || 0} members). Immediate power rack and bench availability.
                 </p>
               </div>
               <Button
@@ -483,7 +493,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
                   8:30 PM – 10:00 PM
                 </h4>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                  Evening rush subsides (~{Math.round(capacity * 0.25)} members). Relaxed workout floor & sauna access.
+                  Evening rush subsides (~{dayHourlyCounts[14] || 0} members). Relaxed workout floor & sauna access.
                 </p>
               </div>
               <Button
@@ -554,12 +564,16 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
           {/* 7 Days Matrix Rows showing Headcounts */}
           <div className="space-y-2">
             {DAYS_OF_WEEK.map((d) => {
-              const rowPcts = WEEKLY_HEATMAP_DATA[d.key] || [];
+              const rowCounts = weeklyData?.heatmapCounts?.[d.key] || new Array(17).fill(0);
+              const rowPcts = weeklyData?.heatmapPercentages?.[d.key] || new Array(17).fill(0);
               const isToday = currentDayKey === d.key;
 
               // Split into brackets
+              const morningCounts = rowCounts.slice(0, 6);
               const morningPcts = rowPcts.slice(0, 6);
+              const afternoonCounts = rowCounts.slice(6, 11);
               const afternoonPcts = rowPcts.slice(6, 11);
+              const eveningCounts = rowCounts.slice(11);
               const eveningPcts = rowPcts.slice(11);
 
               return (
@@ -580,9 +594,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
 
                   {/* Morning Bracket Pills */}
                   <div className="col-span-3 grid grid-cols-6 gap-1">
-                    {morningPcts.map((pct, i) => {
+                    {morningCounts.map((headcount, i) => {
                       const hour24 = 6 + i;
-                      const headcount = Math.round((pct / 100) * capacity);
+                      const pct = morningPcts[i] || 0;
                       return (
                         <button
                           key={hour24}
@@ -600,9 +614,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
 
                   {/* Afternoon Bracket Pills */}
                   <div className="col-span-3 grid grid-cols-5 gap-1">
-                    {afternoonPcts.map((pct, i) => {
+                    {afternoonCounts.map((headcount, i) => {
                       const hour24 = 12 + i;
-                      const headcount = Math.round((pct / 100) * capacity);
+                      const pct = afternoonPcts[i] || 0;
                       return (
                         <button
                           key={hour24}
@@ -620,9 +634,9 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
 
                   {/* Evening Bracket Pills */}
                   <div className="col-span-4 grid grid-cols-6 gap-1">
-                    {eveningPcts.map((pct, i) => {
+                    {eveningCounts.map((headcount, i) => {
                       const hour24 = 17 + i;
-                      const headcount = Math.round((pct / 100) * capacity);
+                      const pct = eveningPcts[i] || 0;
                       return (
                         <button
                           key={hour24}
@@ -860,7 +874,10 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ occupancy }) => {
         initialExactTime={planModalExactTime}
         initialWorkoutFocus={planModalWorkoutFocus}
         forecastSlots={forecastState.forecast}
-        onSuccess={handleRefresh}
+        onSuccess={() => {
+          handleRefresh();
+          fetchWeeklyAnalytics();
+        }}
       />
     </div>
   );

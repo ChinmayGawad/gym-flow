@@ -279,6 +279,7 @@ describe('PUT /api/admin/members/:id', () => {
 describe('POST /api/user/visits (manual workout log)', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    session(null);
   });
 
   it('requires authentication when no users exist to fall back on', async () => {

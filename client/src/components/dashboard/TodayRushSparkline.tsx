@@ -119,12 +119,12 @@ export const TodayRushSparkline: React.FC<TodayRushSparklineProps> = ({
                     )}
 
                     {/* Top Tag (Best, Peak) */}
-                    {item.isOptimal && !isHovered && (
+                    {item.isOptimal && item.predictedCount > 0 && !isHovered && (
                       <span className="text-[8px] font-extrabold uppercase tracking-wider mb-1 hidden sm:block text-emerald-700 dark:text-emerald-400">
                         Best
                       </span>
                     )}
-                    {item.isHighest && !item.isOptimal && !isHovered && (
+                    {item.isHighest && item.predictedCount > 0 && !item.isOptimal && !isHovered && (
                       <span className="text-[8px] font-extrabold uppercase tracking-wider mb-1 hidden sm:block text-rose-600 dark:text-rose-400">
                         Peak
                       </span>
@@ -135,7 +135,7 @@ export const TodayRushSparkline: React.FC<TodayRushSparklineProps> = ({
                       className={`w-full max-w-[18px] sm:max-w-[22px] rounded-t-md transition-all duration-200 ${barBg} ${
                         isNow ? 'ring-2 ring-zinc-900 dark:ring-white ring-offset-1 ring-offset-white dark:ring-offset-zinc-900' : ''
                       } ${item.hasUserBooked ? 'ring-2 ring-emerald-500' : ''}`}
-                      style={{ height: `${Math.max(12, pct)}%` }}
+                      style={{ height: `${pct > 0 ? Math.max(8, pct) : 4}%` }}
                     />
 
                     {/* Current Hour Indicator Dot */}
@@ -154,9 +154,9 @@ export const TodayRushSparkline: React.FC<TodayRushSparklineProps> = ({
         <div className="flex justify-between text-[10px] font-medium text-zinc-400 dark:text-zinc-500 mt-2 px-1 tabular-nums">
           <span>6 AM</span>
           <span>9 AM</span>
-          <span className="text-emerald-700 dark:text-emerald-400 font-bold">11 AM (Quiet)</span>
-          <span>2 PM</span>
-          <span className="text-rose-600 dark:text-rose-400 font-bold">6 PM (Rush)</span>
+          <span>12 PM</span>
+          <span>3 PM</span>
+          <span>6 PM</span>
           <span>9 PM</span>
           <span>10 PM</span>
         </div>
