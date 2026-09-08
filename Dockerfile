@@ -30,4 +30,4 @@ COPY --from=builder /app /app
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "cd /app/server && bunx prisma db push && cd /app && bun server/src/index.ts"]
+CMD ["sh", "-c", "cd /app/server && bunx prisma db push --accept-data-loss && cd /app && bun server/src/index.ts"]

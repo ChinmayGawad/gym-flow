@@ -71,6 +71,7 @@ walkthrough.md
 *_plan.md
 *-plan.md
 *.agent.md
+GYMFLOW_ANDROID_FEATURE_PARITY_AND_IMPLEMENTATION_GUIDE.md
 
 # Agent & Skills Configuration Directories
 .agents/

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "build": "bunx prisma generate && bun build src/index.ts --target=bun --outdir=dist",
-    "start": "bunx prisma db push && bun src/index.ts",
+    "start": "bunx prisma db push --accept-data-loss && bun src/index.ts",
     "create-admin": "bun src/scripts/create-admin.ts",
     "test": "vitest run"
   },
